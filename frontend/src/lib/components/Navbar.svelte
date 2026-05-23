@@ -11,9 +11,7 @@
     ];
 </script>
 
-<header
-    class="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/6"
->
+<header class="fixed top-0 left-0 right-0 z-50 bg-black backdrop-blur-sm border-b border-white/6">
     <nav class="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
         <!-- Logo -->
         <a href="/" class="flex gap-1 items-center shrink-0">
@@ -32,7 +30,7 @@
             {/each}
 
             <a
-                href="/join"
+                href="#join-meeting"
                 class="text-sm text-white/60 hover:text-white transition-colors duration-150"
             >
                 Join Meeting
@@ -83,7 +81,7 @@
                                 </a>
                             {/each}
                             <a
-                                href="/join"
+                                href="#join-meeeing"
                                 class="text-sm text-white/60 hover:text-white transition-colors duration-150"
                             >
                                 Join Meeting
