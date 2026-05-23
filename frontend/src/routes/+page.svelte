@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Navbar from '$lib/components/Navbar.svelte';
     import { Button } from '$lib/components/ui/button';
     import {
         ChartBarBig,
@@ -82,7 +81,6 @@
     <meta property="og:image" content="/og-image.png" />
 </svelte:head>
 
-<Navbar />
 {#if showModal}
     <div
         class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm"

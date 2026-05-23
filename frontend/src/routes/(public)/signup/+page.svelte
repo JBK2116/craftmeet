@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Navbar from '$lib/components/Navbar.svelte';
     import { toast } from 'svelte-sonner';
 
     // signupAttempt state
@@ -153,7 +152,6 @@
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/og-image.png" />
 </svelte:head>
-<Navbar />
 <main
     class="flex min-h-screen items-center justify-center bg-black px-4 py-16 font-['Figtree_Variable',sans-serif]"
 >
