@@ -22,7 +22,7 @@
     let navLinks = $derived(isLandingPage ? landingLinks : []);
 </script>
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-black backdrop-blur-sm border-b border-white/6">
+<header class="fixed top-0 left-0 right-0 z-50 bg-black backdrop-blur-sm">
     <nav class="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
         <!-- Logo -->
         <a href="/" class="flex gap-1 items-center shrink-0">
