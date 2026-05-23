@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang="ts">50
     import Navbar from '$lib/components/Navbar.svelte';
     import { Button } from '$lib/components/ui/button';
     import {
@@ -260,17 +260,17 @@
             <div class="flex gap-6">
                 <a
                     href="/privacy"
-                    class="text-xs text-white/25 hover:text-white/50 transition-colors">Privacy</a
+                    class="text-xs text-white/40 hover:text-white/70 transition-colors">Privacy</a
                 >
-                <a href="/terms" class="text-xs text-white/25 hover:text-white/50 transition-colors"
+                <a href="/terms" class="text-xs text-white/40 hover:text-white/70 transition-colors"
                     >Terms</a
                 >
                 <a
                     href="/contact"
-                    class="text-xs text-white/25 hover:text-white/50 transition-colors">Contact</a
+                    class="text-xs text-white/40 hover:text-white/70 transition-colors">Contact</a
                 >
             </div>
-            <span class="text-xs text-white/20">© 2026 Craftmeet</span>
+            <span class="text-xs text-white/40">© 2026 Craftmeet</span>
         </div>
     </footer>
 </main>
