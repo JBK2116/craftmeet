@@ -1,4 +1,4 @@
-<script lang="ts">50
+<script lang="ts">
     import Navbar from '$lib/components/Navbar.svelte';
     import { Button } from '$lib/components/ui/button';
     import {
