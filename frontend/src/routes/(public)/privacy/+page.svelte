@@ -48,10 +48,10 @@
 
 <!-- Document Head -->
 <svelte:head>
-    <title>Privacy - Craftmeet</title>
+    <title>Privacy Policy - Craftmeet</title>
     <meta name="description" content="Craftmeet's privacy notice and data processing policies." />
-    <link rel="canonical" href="https://craftmeet.com/login" />
-    <meta property="og:title" content="Craftmeet - Privacy" />
+    <link rel="canonical" href="https://craftmeet.com/privacy" />
+    <meta property="og:title" content="Craftmeet - Privacy Policy" />
     <meta
         property="og:description"
         content="Craftmeet's privacy notice and data processing policies."
