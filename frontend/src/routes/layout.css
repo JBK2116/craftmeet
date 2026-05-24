@@ -8,7 +8,6 @@
 @plugin '@tailwindcss/typography';
 
 :root {
-    /* --- Craftmeet Brand Palette (Light Mode / Crisp Off-White Base) --- */
     --background: oklch(0.975 0.004 245); /* Soft premium white/gray canvas */
     --foreground: oklch(0.145 0.01 245); /* Deep Obsidian text for sharp legibility */
 
@@ -35,7 +34,7 @@
     --destructive-foreground: oklch(0.985 0 0);
 
     /* Form Real Estate & Borders */
-    --border: oklch(0.89 0.006 250); /* Very clean, non-intrusive structural lines */
+    --border: oklch(0.89 0.006 250); /* Clean, non-intrusive structural lines */
     --input: oklch(0.89 0.006 250);
     --ring: oklch(0.323 0.28 264 / 40%); /* Soft glow halo of Cobalt */
 
@@ -47,11 +46,21 @@
     --chart-5: oklch(0.246 0.02 250); /* Midnight Slate */
 
     /* Layout Radius Hierarchy */
-    --radius: 0.75rem; /* Large structural corner radius matching reference style */
+    --radius: 0.75rem;
+
+    /* Light mode: warm-tinted shadows to lift cards off the off-white canvas */
+    --shadow-sm: 0 1px 2px 0 oklch(0.145 0.01 245 / 0.06);
+    --shadow-md:
+        0 4px 12px -2px oklch(0.145 0.01 245 / 0.1), 0 1px 3px -1px oklch(0.145 0.01 245 / 0.06);
+    --shadow-lg:
+        0 12px 32px -4px oklch(0.145 0.01 245 / 0.12), 0 4px 10px -2px oklch(0.145 0.01 245 / 0.08);
+    --shadow-xl:
+        0 24px 48px -8px oklch(0.145 0.01 245 / 0.14), 0 8px 20px -4px oklch(0.145 0.01 245 / 0.1);
+    /* Cobalt glow — for primary CTAs, active question cards */
+    --shadow-primary: 0 4px 20px -4px oklch(0.323 0.28 264 / 0.35);
 }
 
 .dark {
-    /* --- Craftmeet Brand Palette (Dark Mode / High-Fidelity Studio Base) --- */
     --background: oklch(0.145 0.01 245); /* Deep Obsidian background */
     --foreground: oklch(0.975 0.004 245); /* Crisp bright text */
 
@@ -62,9 +71,7 @@
     --popover-foreground: oklch(0.975 0.004 245);
 
     /* Interactive Engines */
-    --primary: oklch(
-        0.45 0.26 264
-    ); /* Adjusted light/vibrant Cobalt variant for dark mode contrast */
+    --primary: oklch(0.45 0.26 264); /* Vibrant Cobalt variant for dark mode contrast */
     --primary-foreground: oklch(0.145 0.01 245);
 
     --secondary: oklch(0.246 0.02 250); /* Midnight Slate containers */
@@ -80,15 +87,23 @@
     --destructive-foreground: oklch(0.985 0 0);
 
     /* Form Real Estate & Borders */
-    --border: oklch(1 0 0 / 12%); /* Semi-transparent glowing borders over obsidian elements */
+    --border: oklch(1 0 0 / 12%); /* Semi-transparent glowing borders over obsidian */
     --input: oklch(1 0 0 / 12%);
     --ring: oklch(0.45 0.26 264 / 50%);
+
+    /* Dark mode: deeper, more diffuse shadows since background is already dark */
+    --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.25);
+    --shadow-md: 0 4px 12px -2px oklch(0 0 0 / 0.4), 0 1px 3px -1px oklch(0 0 0 / 0.2);
+    --shadow-lg: 0 12px 32px -4px oklch(0 0 0 / 0.5), 0 4px 10px -2px oklch(0 0 0 / 0.3);
+    --shadow-xl: 0 24px 48px -8px oklch(0 0 0 / 0.6), 0 8px 20px -4px oklch(0 0 0 / 0.35);
+    /* Cobalt glow is more pronounced in dark mode */
+    --shadow-primary: 0 4px 24px -4px oklch(0.45 0.26 264 / 0.5);
 }
 
 @theme inline {
     --font-sans: 'Figtree Variable', sans-serif;
 
-    /* Mapping semantic colors accurately to Tailwind classes */
+    /* Semantic color mappings */
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --color-card: var(--card);
@@ -109,39 +124,181 @@
     --color-input: var(--input);
     --color-ring: var(--ring);
 
-    /* Dynamic scaling of radii across nested layouts */
-    --radius-sm: calc(
-        var(--radius) * 0.5
-    ); /* Crisper, tighter items (buttons, items inside lists) */
-    --radius-md: calc(var(--radius) * 0.75); /* Middle grounds */
-    --radius-lg: var(--radius); /* Structural master panels (Cards, major dialogs) */
-    --radius-xl: calc(var(--radius) * 1.5); /* Ultra-rounded parent shells */
+    /* Radius scale */
+    --radius-sm: calc(var(--radius) * 0.5);
+    --radius-md: calc(var(--radius) * 0.75);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.5);
+
+    --shadow-sm: var(--shadow-sm);
+    --shadow-md: var(--shadow-md);
+    --shadow-lg: var(--shadow-lg);
+    --shadow-xl: var(--shadow-xl);
+    --shadow-primary: var(--shadow-primary);
+
+    /* Display — meeting title on host/participant view */
+    --text-display: clamp(1.75rem, 4vw, 2.5rem);
+    --text-display--line: 1.1;
+
+    /* Heading — question prompts, section headers */
+    --text-heading: clamp(1.25rem, 2.5vw, 1.75rem);
+    --text-heading--line: 1.25;
+
+    /* Subheading — card titles, drawer headers */
+    --text-subheading: 1.125rem;
+    --text-subheading--line: 1.35;
+
+    /* Body — general prose, response text */
+    --text-body: 1rem;
+    --text-body--line: 1.6;
+
+    /* Small — metadata, timestamps, participant count */
+    --text-small: 0.875rem;
+    --text-small--line: 1.5;
+
+    /* Label — form labels, badge text, button copy */
+    --text-label: 0.8125rem;
+    --text-label--line: 1.4;
+
+    /* Mono — room codes */
+    --text-mono: 0.9375rem;
 }
 
 @layer base {
+    /* Only interactive and color-bearing elements get transition-colors */
+    a,
+    button,
+    input,
+    textarea,
+    select,
+    [role='button'],
+    [role='tab'],
+    [role='option'],
+    [role='menuitem'],
+    [role='switch'],
+    [role='checkbox'],
+    label {
+        @apply transition-colors duration-150 ease-out;
+    }
+
+    /* Borders and backgrounds on structural elements only */
+    .card,
+    .popover,
+    aside,
+    nav,
+    header,
+    footer {
+        @apply transition-colors duration-200 ease-out;
+    }
+
     * {
-        @apply border-border outline-ring/40 transition-colors duration-150 ease-out;
+        @apply border-border outline-ring/40;
     }
+
     body {
-        @apply text-foreground bg-background selection:bg-primary/20 min-h-screen antialiased;
+        @apply bg-background text-foreground min-h-screen antialiased;
+        @apply selection:bg-primary/20;
     }
+
     html {
         @apply scroll-smooth font-sans;
+    }
+
+    h1 {
+        font-size: var(--text-display);
+        line-height: var(--text-display--line);
+        @apply text-foreground font-bold tracking-tight;
+    }
+
+    h2 {
+        font-size: var(--text-heading);
+        line-height: var(--text-heading--line);
+        @apply text-foreground font-semibold tracking-tight;
+    }
+
+    h3 {
+        font-size: var(--text-subheading);
+        line-height: var(--text-subheading--line);
+        @apply text-foreground font-semibold;
+    }
+
+    h4,
+    h5,
+    h6 {
+        font-size: var(--text-body);
+        line-height: var(--text-body--line);
+        @apply text-foreground font-semibold;
+    }
+
+    p {
+        font-size: var(--text-body);
+        line-height: var(--text-body--line);
+    }
+
+    small {
+        font-size: var(--text-small);
+        line-height: var(--text-small--line);
+    }
+
+    label {
+        font-size: var(--text-label);
+        line-height: var(--text-label--line);
+        @apply font-medium;
+    }
+
+    /* Room code display */
+    code,
+    kbd {
+        font-size: var(--text-mono);
+        @apply font-mono tracking-widest;
     }
 }
 
 @layer utilities {
-    /* Custom utility for real-time AI summary generation states or dynamic cards */
     .glass-panel {
-        background: oklch(var(--card) / 75%);
+        background: color-mix(in oklch, var(--card) 75%, transparent);
         backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         border: 1px solid var(--border);
     }
 
-    /* Snappy focus interaction for active question/typing fields */
     .active-input-ring {
         box-shadow:
-            0 0 0 2px oklch(var(--background)),
-            0 0 0 4px oklch(var(--primary));
+            0 0 0 2px var(--background),
+            0 0 0 4px var(--primary);
+    }
+
+    /* Elevation helpers using the shadow scale */
+    .shadow-card {
+        box-shadow: var(--shadow-md);
+    }
+    .shadow-raised {
+        box-shadow: var(--shadow-lg);
+    }
+    .shadow-overlay {
+        box-shadow: var(--shadow-xl);
+    }
+    .shadow-cta {
+        box-shadow: var(--shadow-primary);
+    }
+
+    /* Question prompt — large readable text for live sessions */
+    .text-question-prompt {
+        font-size: var(--text-heading);
+        line-height: var(--text-heading--line);
+        @apply text-foreground font-semibold;
+    }
+
+    /* Metadata label pattern */
+    .text-meta {
+        font-size: var(--text-small);
+        line-height: var(--text-small--line);
+        @apply text-muted-foreground;
+    }
+
+    /* Room code display pattern */
+    .text-room-code {
+        font-size: var(--text-mono);
+        @apply text-primary font-mono font-semibold tracking-widest uppercase;
     }
 }

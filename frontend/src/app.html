@@ -9,6 +9,11 @@
         <link rel="manifest" href="%sveltekit.assets%/site.webmanifest" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="text-scale" content="scale" />
+        <!-- Ensure the proper theme is loaded before the page-->
+        <script>
+            const t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        </script>
         <title>Craftmeet</title>
         %sveltekit.head%
     </head>
