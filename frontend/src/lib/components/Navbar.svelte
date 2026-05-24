@@ -32,9 +32,19 @@
 
 <header class="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background">
     <nav class="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-        <a href="/" class="flex shrink-0 items-center gap-1.5">
-            <Logo class="h-7 w-7 transition-colors duration-150 group-hover:text-primary" />
-            <span class="text-sm font-semibold text-foreground">Craftmeet</span>
+        <a
+            href="/"
+            class="group flex shrink-0 items-center gap-2 text-foreground transition-opacity active:opacity-90"
+        >
+            <Logo
+                class="h-6 w-6 text-foreground transition-colors duration-200 group-hover:text-primary"
+            />
+
+            <span
+                class="text-sm font-semibold tracking-tight transition-colors duration-200 group-hover:text-foreground/90"
+            >
+                Craftmeet
+            </span>
         </a>
 
         {#if isLanding}
