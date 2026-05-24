@@ -155,15 +155,6 @@
 <main class="flex min-h-screen items-center justify-center bg-background px-6 py-24">
     <div class="w-full max-w-md space-y-3">
         <div class="rounded-2xl border border-border bg-card px-8 py-9 shadow-sm">
-            <div class="mb-7 flex items-center justify-center gap-2.5">
-                <img
-                    src="/android-chrome-512x512.png"
-                    alt="Craftmeet logo"
-                    class="h-7 w-7 rounded-md object-contain"
-                />
-                <span class="text-lg font-semibold tracking-tight text-foreground">Craftmeet</span>
-            </div>
-
             <h1 class="mb-1 text-center text-2xl font-semibold tracking-tight text-foreground">
                 Create your account
             </h1>

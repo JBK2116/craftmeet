@@ -4,6 +4,8 @@
     import { Sheet, SheetContent, SheetTrigger } from '$lib/components/ui/sheet';
     import { Menu } from '@lucide/svelte';
 
+    import Logo from './Logo.svelte';
+
     type NavLink = { title: string; href: string };
 
     // Route Classification
@@ -31,7 +33,7 @@
 <header class="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background">
     <nav class="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         <a href="/" class="flex shrink-0 items-center gap-1.5">
-            <img src="/android-chrome-512x512.png" alt="Craftmeet" class="h-7 w-7 dark:invert" />
+            <Logo class="h-7 w-7 transition-colors duration-150 group-hover:text-primary" />
             <span class="text-sm font-semibold text-foreground">Craftmeet</span>
         </a>
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Logo from '$lib/components/Logo.svelte';
     import { toast } from 'svelte-sonner';
 
     // loginAttempt state
@@ -106,17 +107,6 @@
 <main class="flex min-h-screen items-center justify-center bg-background px-4 py-16">
     <div class="w-full max-w-[420px] space-y-3">
         <div class="rounded-2xl border border-border bg-card px-8 py-9">
-            <div class="mb-7 flex items-center justify-center gap-2.5">
-                <img
-                    src="/android-chrome-512x512.png"
-                    alt="Craftmeet logo"
-                    class="h-7 w-7 rounded-md object-contain dark:invert-0 light:invert"
-                />
-                <span class="text-[1.15rem] font-semibold tracking-tight text-foreground"
-                    >Craftmeet</span
-                >
-            </div>
-
             <h1 class="mb-1 text-center text-[1.4rem] font-semibold tracking-tight text-foreground">
                 Welcome back
             </h1>
