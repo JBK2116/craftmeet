@@ -108,7 +108,7 @@
 
             <p>
                 These Terms and Conditions constitute a legally binding agreement between you and
-                <strong>Craftmeet</strong> governing your access to and use of our services at
+                <strong class="text-primary">Craftmeet</strong> governing your access to and use of our services at
                 <a href="https://craftmeet.com">https://craftmeet.com</a> and any related services that
                 link to these terms.
             </p>
@@ -167,7 +167,7 @@
 
             <h2 id="user-representations">3. User Representations</h2>
             <p>By using the Services, you represent and warrant that:</p>
-            <ul>
+            <ul class="text-muted-foreground">
                 <li>You are at least 18 years of age.</li>
                 <li>
                     Any registration information you provide is accurate, current, and complete.
@@ -252,7 +252,7 @@
                 You may only use the Services for their intended purpose. The following activities
                 are strictly prohibited:
             </p>
-            <ul>
+            <ul class="text-muted-foreground">
                 <li>
                     Systematically scraping, harvesting, or collecting data from the Services
                     without our written permission.
@@ -288,7 +288,7 @@
                 responses, ideas, votes, ratings, and chat messages (collectively, "Contributions").
                 By submitting Contributions, you represent and warrant that:
             </p>
-            <ul>
+            <ul class="text-muted-foreground">
                 <li>
                     Your Contributions are your own and do not infringe the intellectual property
                     rights of any third party.
@@ -362,7 +362,7 @@
                 please send a written notification to
                 <a href="mailto:support@craftmeet.com">support@craftmeet.com</a> that includes:
             </p>
-            <ul>
+            <ul class="text-muted-foreground">
                 <li>
                     Your physical or electronic signature, or that of a person authorized to act on
                     behalf of the copyright owner.
@@ -481,7 +481,7 @@
                 employees, and agents from and against any claims, losses, damages, liabilities, and
                 expenses (including reasonable legal fees) arising out of or relating to:
             </p>
-            <ul>
+            <ul class="text-muted-foreground">
                 <li>Your use of the Services.</li>
                 <li>Your Contributions.</li>
                 <li>Your breach of these Terms.</li>
