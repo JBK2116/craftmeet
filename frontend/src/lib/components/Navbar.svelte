@@ -61,7 +61,7 @@
             <span
                 class="text-sm font-semibold tracking-tight transition-colors duration-200 group-hover:text-foreground/90"
             >
-                Collaboard
+                Craftmeet
             </span>
         </a>
 

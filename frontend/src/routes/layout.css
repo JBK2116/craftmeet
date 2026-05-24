@@ -7,48 +7,64 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
-:root {
-    --background: oklch(0.975 0.004 245); /* Soft premium white/gray canvas */
-    --foreground: oklch(0.145 0.01 245); /* Deep Obsidian text for sharp legibility */
+/* oklch(lightness chroma hue)
+   lightness: 0 = black, 1 = white
+   chroma: 0 = gray, 0.37 = max saturation
+   hue: 0-360 degrees (264 = blue, 145 = green, 27 = red, 300 = purple)
+   append / 0.5 for 50% opacity */
 
-    --card: oklch(1 0 0); /* Pure white container cards floating on background */
+:root {
+    /* Page canvas. Raise lightness toward 1 for brighter white, lower for gray. */
+    --background: oklch(0.975 0.004 245);
+    /* Default text. Low lightness = dark. Raise for softer body text. */
+    --foreground: oklch(0.145 0.01 245);
+
+    /* Cards sit on top of background. Lower lightness slightly to create depth. */
+    --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0.01 245);
 
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0.01 245);
 
-    /* Interactive Engines */
-    --primary: oklch(0.323 0.28 264); /* Cobalt Core: Electric blue for main CTAs */
-    --primary-foreground: oklch(1 0 0); /* Stark white text over dark cobalt */
+    /* Main CTA color. Change hue to rebrand entirely. Raise chroma for more saturation. */
+    --primary: oklch(0.323 0.28 190);
+    --primary-foreground: oklch(1 0 0);
 
-    --secondary: oklch(0.915 0.008 250); /* Soft Anodized Gray for inactive/secondary states */
+    /* Secondary buttons and inactive states. Raise chroma for a tinted gray. */
+    --secondary: oklch(0.915 0.008 250);
     --secondary-foreground: oklch(0.246 0.02 250);
 
+    /* Background for disabled and muted zones. Widen gap from background for contrast. */
     --muted: oklch(0.94 0.006 250);
-    --muted-foreground: oklch(0.55 0.01 250); /* Mid-tone gray for metadata/placeholders */
+    /* Placeholders, timestamps, helper text. Raise lightness for lighter gray. */
+    --muted-foreground: oklch(0.55 0.01 250);
 
-    --accent: oklch(0.94 0.02 264); /* Light tint of cobalt for menu selection highlights */
-    --accent-foreground: oklch(0.323 0.28 264);
+    /* Hover background on menu items. Raise chroma for a more visible highlight. */
+    --accent: oklch(0.94 0.02 264);
+    /* Text color on top of accent. Match hue to primary to keep it consistent. */
+    --accent-foreground: oklch(0.323 0.10 264);
 
+    /* Error and delete states. Shift hue toward 0 for a truer red. */
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: oklch(0.985 0 0);
 
-    /* Form Real Estate & Borders */
-    --border: oklch(0.89 0.006 250); /* Clean, non-intrusive structural lines */
+    /* Lower lightness for darker, more visible borders. */
+    --border: oklch(0.89 0.006 250);
     --input: oklch(0.89 0.006 250);
-    --ring: oklch(0.323 0.28 264 / 40%); /* Soft glow halo of Cobalt */
+    /* Focus ring glow. Raise opacity (40%) for stronger accessibility indicator. */
+    --ring: oklch(0.323 0.28 190 / 40%);
 
-    /* Chart Sequencing for dynamic live meeting polls */
-    --chart-1: oklch(0.323 0.28 264); /* Cobalt Core */
-    --chart-2: oklch(0.55 0.15 250); /* Slate blue */
-    --chart-3: oklch(0.748 0.01 250); /* Anodized Gray */
-    --chart-4: oklch(0.148 0.09 264); /* Deep Electric Blue */
-    --chart-5: oklch(0.246 0.02 250); /* Midnight Slate */
+    /* Chart colors cycle through poll results. Change freely, no UI impact outside charts. */
+    --chart-1: oklch(0.323 0.28 264);
+    --chart-2: oklch(0.55 0.15 250);
+    --chart-3: oklch(0.748 0.01 250);
+    --chart-4: oklch(0.148 0.09 264);
+    --chart-5: oklch(0.246 0.02 250);
 
-    /* Layout Radius Hierarchy */
-    --radius: 0.75rem;
+    /* Master corner radius. All radius scale values derive from this. Lower for sharper corners. */
+    --radius: 0.70rem;
 
-    /* Light mode: warm-tinted shadows to lift cards off the off-white canvas */
+    /* Shadow opacity values control depth. Raise them for more visible elevation. */
     --shadow-sm: 0 1px 2px 0 oklch(0.145 0.01 245 / 0.06);
     --shadow-md:
         0 4px 12px -2px oklch(0.145 0.01 245 / 0.1), 0 1px 3px -1px oklch(0.145 0.01 245 / 0.06);
@@ -56,54 +72,59 @@
         0 12px 32px -4px oklch(0.145 0.01 245 / 0.12), 0 4px 10px -2px oklch(0.145 0.01 245 / 0.08);
     --shadow-xl:
         0 24px 48px -8px oklch(0.145 0.01 245 / 0.14), 0 8px 20px -4px oklch(0.145 0.01 245 / 0.1);
-    /* Cobalt glow — for primary CTAs, active question cards */
-    --shadow-primary: 0 4px 20px -4px oklch(0.323 0.28 264 / 0.35);
+    /* Raise opacity (0.35) for a more prominent glow on primary buttons. */
+    --shadow-primary: 0 4px 20px -4px oklch(0.323 0.20 264 / 0.35);
 }
 
 .dark {
-    --background: oklch(0.145 0.01 245); /* Deep Obsidian background */
-    --foreground: oklch(0.975 0.004 245); /* Crisp bright text */
+    /* Same variables, inverted lightness. Only touch these for dark mode tweaks. */
 
-    --card: oklch(0.19 0.012 245); /* Slightly elevated deep gray/black panels */
+    --background: oklch(0.145 0.01 245);
+    --foreground: oklch(0.975 0.004 245);
+
+    /* Slightly lighter than background to create card elevation on dark surfaces. */
+    --card: oklch(0.19 0.012 245);
     --card-foreground: oklch(0.975 0.004 245);
 
     --popover: oklch(0.19 0.012 245);
     --popover-foreground: oklch(0.975 0.004 245);
 
-    /* Interactive Engines */
-    --primary: oklch(0.45 0.26 264); /* Vibrant Cobalt variant for dark mode contrast */
+    /* Lightness raised from light mode value so primary is visible on dark surfaces. */
+    --primary: oklch(0.45 0.1 240);
     --primary-foreground: oklch(0.145 0.01 245);
 
-    --secondary: oklch(0.246 0.02 250); /* Midnight Slate containers */
+    --secondary: oklch(0.246 0.02 250);
     --secondary-foreground: oklch(0.975 0.004 245);
 
     --muted: oklch(0.246 0.02 250);
-    --muted-foreground: oklch(0.748 0.01 250); /* Anodized gray for descriptions/subtexts */
+    --muted-foreground: oklch(0.748 0.01 250);
 
-    --accent: oklch(0.22 0.04 264); /* Deep neon-adjacent glow accents for hovers */
+    --accent: oklch(0.22 0.04 264);
     --accent-foreground: oklch(0.975 0.004 245);
 
     --destructive: oklch(0.65 0.21 22.2);
     --destructive-foreground: oklch(0.985 0 0);
 
-    /* Form Real Estate & Borders */
-    --border: oklch(1 0 0 / 12%); /* Semi-transparent glowing borders over obsidian */
+    /* White at low opacity instead of a fixed color adapts to whatever sits behind it.
+       Raise the percentage for more visible borders in dark mode. */
+    --border: oklch(1 0 0 / 12%);
     --input: oklch(1 0 0 / 12%);
-    --ring: oklch(0.45 0.26 264 / 50%);
+    --ring: oklch(0.45 0.10 264 / 50%);
 
-    /* Dark mode: deeper, more diffuse shadows since background is already dark */
+    /* Higher opacity than light mode since dark backgrounds need more contrast. */
     --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.25);
     --shadow-md: 0 4px 12px -2px oklch(0 0 0 / 0.4), 0 1px 3px -1px oklch(0 0 0 / 0.2);
     --shadow-lg: 0 12px 32px -4px oklch(0 0 0 / 0.5), 0 4px 10px -2px oklch(0 0 0 / 0.3);
     --shadow-xl: 0 24px 48px -8px oklch(0 0 0 / 0.6), 0 8px 20px -4px oklch(0 0 0 / 0.35);
-    /* Cobalt glow is more pronounced in dark mode */
-    --shadow-primary: 0 4px 24px -4px oklch(0.45 0.26 264 / 0.5);
+    --shadow-primary: 0 4px 24px -4px oklch(0.45 0.85 123 / 0.5);
 }
 
+/* Maps CSS variables into Tailwind utilities (bg-primary, text-muted-foreground, etc.)
+   Do not edit structure here. Change values in :root and .dark above instead. */
 @theme inline {
+    /* Change 'Figtree Variable' to any other loaded font name to switch typeface. */
     --font-sans: 'Figtree Variable', sans-serif;
 
-    /* Semantic color mappings */
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --color-card: var(--card);
@@ -124,7 +145,7 @@
     --color-input: var(--input);
     --color-ring: var(--ring);
 
-    /* Radius scale */
+    /* Derived from --radius. Change the multipliers to adjust relative sizing. */
     --radius-sm: calc(var(--radius) * 0.5);
     --radius-md: calc(var(--radius) * 0.75);
     --radius-lg: var(--radius);
@@ -136,36 +157,32 @@
     --shadow-xl: var(--shadow-xl);
     --shadow-primary: var(--shadow-primary);
 
-    /* Display — meeting title on host/participant view */
+    /* clamp(min, preferred, max) scales fluidly with viewport width.
+       Adjust min/max to control size range across screen sizes. */
     --text-display: clamp(1.75rem, 4vw, 2.5rem);
     --text-display--line: 1.1;
 
-    /* Heading — question prompts, section headers */
     --text-heading: clamp(1.25rem, 2.5vw, 1.75rem);
     --text-heading--line: 1.25;
 
-    /* Subheading — card titles, drawer headers */
+    /* Change the rem value to resize globally. */
     --text-subheading: 1.125rem;
     --text-subheading--line: 1.35;
 
-    /* Body — general prose, response text */
     --text-body: 1rem;
     --text-body--line: 1.6;
 
-    /* Small — metadata, timestamps, participant count */
     --text-small: 0.875rem;
     --text-small--line: 1.5;
 
-    /* Label — form labels, badge text, button copy */
     --text-label: 0.8125rem;
     --text-label--line: 1.4;
 
-    /* Mono — room codes */
     --text-mono: 0.9375rem;
 }
 
 @layer base {
-    /* Only interactive and color-bearing elements get transition-colors */
+    /* Remove any selector here if you want that element to switch colors instantly. */
     a,
     button,
     input,
@@ -181,7 +198,6 @@
         @apply transition-colors duration-150 ease-out;
     }
 
-    /* Borders and backgrounds on structural elements only */
     .card,
     .popover,
     aside,
@@ -191,6 +207,8 @@
         @apply transition-colors duration-200 ease-out;
     }
 
+    /* All elements default to --border color and a soft focus outline.
+       Raise /40 opacity if focus rings are too subtle for accessibility. */
     * {
         @apply border-border outline-ring/40;
     }
@@ -204,6 +222,7 @@
         @apply scroll-smooth font-sans;
     }
 
+    /* These are global defaults. Component-level classes override them. */
     h1 {
         font-size: var(--text-display);
         line-height: var(--text-display--line);
@@ -246,7 +265,6 @@
         @apply font-medium;
     }
 
-    /* Room code display */
     code,
     kbd {
         font-size: var(--text-mono);
@@ -255,6 +273,7 @@
 }
 
 @layer utilities {
+    /* 75% controls card opacity through the blur. Lower for more transparency. */
     .glass-panel {
         background: color-mix(in oklch, var(--card) 75%, transparent);
         backdrop-filter: blur(16px);
@@ -262,13 +281,14 @@
         border: 1px solid var(--border);
     }
 
+    /* First ring is background color (creates gap), second is primary (visible ring).
+       Change 4px to widen the ring. */
     .active-input-ring {
         box-shadow:
             0 0 0 2px var(--background),
             0 0 0 4px var(--primary);
     }
 
-    /* Elevation helpers using the shadow scale */
     .shadow-card {
         box-shadow: var(--shadow-md);
     }
@@ -282,21 +302,18 @@
         box-shadow: var(--shadow-primary);
     }
 
-    /* Question prompt — large readable text for live sessions */
     .text-question-prompt {
         font-size: var(--text-heading);
         line-height: var(--text-heading--line);
         @apply text-foreground font-semibold;
     }
 
-    /* Metadata label pattern */
     .text-meta {
         font-size: var(--text-small);
         line-height: var(--text-small--line);
         @apply text-muted-foreground;
     }
 
-    /* Room code display pattern */
     .text-room-code {
         font-size: var(--text-mono);
         @apply text-primary font-mono font-semibold tracking-widest uppercase;
