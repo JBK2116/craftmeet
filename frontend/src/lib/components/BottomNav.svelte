@@ -28,12 +28,8 @@
 </script>
 
 {#if isApp}
-    <!--
-        bottom nav authenticated app pages, mobile only.
-        Desktop navigation is handled by Navbar.svelte.
-    -->
     <nav
-        class="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-black pb-[env(safe-area-inset-bottom)] md:hidden"
+        class="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
         aria-label="Mobile navigation"
     >
         <div class="flex h-16 items-stretch">
@@ -42,7 +38,9 @@
                 <a
                     href={item.href}
                     class="flex flex-1 flex-col items-center justify-center gap-1 transition-colors duration-150
-                        {isActive ? 'text-white' : 'text-white/35 hover:text-white/70'}"
+                        {isActive
+                        ? 'text-foreground'
+                        : 'text-muted-foreground/60 hover:text-foreground/80'}"
                     aria-current={isActive ? 'page' : undefined}
                 >
                     <item.icon class="h-5 w-5 shrink-0" />
@@ -52,6 +50,5 @@
         </div>
     </nav>
 
-    <!-- Spacer accounts for nav height + iOS safe area -->
     <div class="h-16 pb-[env(safe-area-inset-bottom)] md:hidden"></div>
 {/if}

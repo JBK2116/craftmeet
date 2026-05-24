@@ -66,22 +66,26 @@
     </style>
 </svelte:head>
 
-<main class="relative min-h-screen bg-black text-white">
+<main class="relative min-h-screen bg-background text-foreground">
+    <!-- Decorative background glow utilizing token safe opacity variables -->
     <div class="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
-        <div class="h-[800px] w-[800px] -translate-y-1/2 rounded-full bg-white/5 blur-3xl"></div>
+        <div class="h-[800px] w-[800px] -translate-y-1/2 rounded-full bg-primary/5 blur-3xl"></div>
     </div>
 
     <div class="mx-auto flex max-w-7xl flex-col gap-12 px-6 py-24 lg:flex-row lg:px-8">
+        <!-- Sidebar Navigation -->
         <aside class="hidden w-64 shrink-0 lg:block">
             <div class="sticky top-24 flex flex-col gap-1">
-                <p class="mb-3 text-xs uppercase tracking-widest text-white/30">Contents</p>
+                <p class="mb-3 text-xs uppercase tracking-widest text-muted-foreground/60">
+                    Contents
+                </p>
                 {#each sections as section}
                     <a
                         href="#{section.id}"
                         class="border-l py-1 pl-4 text-sm transition-all duration-200
                             {activeSection === section.id
-                            ? 'border-white text-white'
-                            : 'border-white/10 text-white/40 hover:border-white/30 hover:text-white/70'}"
+                            ? 'border-foreground text-foreground font-medium'
+                            : 'border-border text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground'}"
                     >
                         {section.title}
                     </a>
@@ -89,13 +93,15 @@
             </div>
         </aside>
 
+        <!-- Document Content -->
         <article
-            class="prose prose-invert prose-p:text-white/60 prose-headings:text-white prose-a:text-white prose-a:underline-offset-4 hover:prose-a:text-white/80 max-w-3xl
-                   [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24"
+            class="prose prose-neutral dark:prose-invert max-w-3xl
+                   prose-p:text-muted-foreground prose-headings:text-foreground prose-a:text-foreground prose-a:underline-offset-4 hover:prose-a:text-muted-foreground
+                   [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24 [&_hr]:border-border [&_blockquote]:border-border"
         >
             <!-- TODO: Update "Last updated" date below every time this notice is modified -->
             <h1>Privacy Notice</h1>
-            <p class="text-sm text-white/40">Last updated: May 23, 2026</p>
+            <p class="text-sm text-muted-foreground/70">Last updated: May 23, 2026</p>
 
             <p>
                 This privacy notice for <strong>Craftmeet</strong>
@@ -119,7 +125,7 @@
                 <a href="mailto:support@craftmeet.com">support@craftmeet.com</a>.
             </p>
 
-            <hr class="border-white/10" />
+            <hr />
 
             <h2 id="summary">Summary of Key Points</h2>
             <blockquote>
@@ -154,7 +160,8 @@
                     <strong
                         >In what situations and with which types of parties do we share personal
                         information?</strong
-                    > We share information with specific service providers (e.g., OpenAI for meeting summaries,
+                    >
+                    We share information with specific service providers (e.g., OpenAI for meeting summaries,
                     DigitalOcean for hosting) purely to facilitate the Service.
                 </li>
                 <li>
@@ -364,7 +371,7 @@
                 <a href="mailto:support@craftmeet.com">support@craftmeet.com</a>. We will respond to
                 all requests within 30 days.
             </p>
-            <address class="not-italic text-white/60">
+            <address class="not-italic text-muted-foreground">
                 <strong>Craftmeet</strong><br />
                 Privacy Officer: <a href="mailto:support@craftmeet.com">support@craftmeet.com</a><br
                 />

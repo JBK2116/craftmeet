@@ -8,124 +8,140 @@
 @plugin '@tailwindcss/typography';
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
+    /* --- Craftmeet Brand Palette (Light Mode / Crisp Off-White Base) --- */
+    --background: oklch(0.975 0.004 245); /* Soft premium white/gray canvas */
+    --foreground: oklch(0.145 0.01 245); /* Deep Obsidian text for sharp legibility */
+
+    --card: oklch(1 0 0); /* Pure white container cards floating on background */
+    --card-foreground: oklch(0.145 0.01 245);
+
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.145 0.01 245);
+
+    /* Interactive Engines */
+    --primary: oklch(0.323 0.28 264); /* Cobalt Core: Electric blue for main CTAs */
+    --primary-foreground: oklch(1 0 0); /* Stark white text over dark cobalt */
+
+    --secondary: oklch(0.915 0.008 250); /* Soft Anodized Gray for inactive/secondary states */
+    --secondary-foreground: oklch(0.246 0.02 250);
+
+    --muted: oklch(0.94 0.006 250);
+    --muted-foreground: oklch(0.55 0.01 250); /* Mid-tone gray for metadata/placeholders */
+
+    --accent: oklch(0.94 0.02 264); /* Light tint of cobalt for menu selection highlights */
+    --accent-foreground: oklch(0.323 0.28 264);
+
     --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --destructive-foreground: oklch(0.985 0 0);
+
+    /* Form Real Estate & Borders */
+    --border: oklch(0.89 0.006 250); /* Very clean, non-intrusive structural lines */
+    --input: oklch(0.89 0.006 250);
+    --ring: oklch(0.323 0.28 264 / 40%); /* Soft glow halo of Cobalt */
+
+    /* Chart Sequencing for dynamic live meeting polls */
+    --chart-1: oklch(0.323 0.28 264); /* Cobalt Core */
+    --chart-2: oklch(0.55 0.15 250); /* Slate blue */
+    --chart-3: oklch(0.748 0.01 250); /* Anodized Gray */
+    --chart-4: oklch(0.148 0.09 264); /* Deep Electric Blue */
+    --chart-5: oklch(0.246 0.02 250); /* Midnight Slate */
+
+    /* Layout Radius Hierarchy */
+    --radius: 0.75rem; /* Large structural corner radius matching reference style */
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    /* --- Craftmeet Brand Palette (Dark Mode / High-Fidelity Studio Base) --- */
+    --background: oklch(0.145 0.01 245); /* Deep Obsidian background */
+    --foreground: oklch(0.975 0.004 245); /* Crisp bright text */
+
+    --card: oklch(0.19 0.012 245); /* Slightly elevated deep gray/black panels */
+    --card-foreground: oklch(0.975 0.004 245);
+
+    --popover: oklch(0.19 0.012 245);
+    --popover-foreground: oklch(0.975 0.004 245);
+
+    /* Interactive Engines */
+    --primary: oklch(
+        0.45 0.26 264
+    ); /* Adjusted light/vibrant Cobalt variant for dark mode contrast */
+    --primary-foreground: oklch(0.145 0.01 245);
+
+    --secondary: oklch(0.246 0.02 250); /* Midnight Slate containers */
+    --secondary-foreground: oklch(0.975 0.004 245);
+
+    --muted: oklch(0.246 0.02 250);
+    --muted-foreground: oklch(0.748 0.01 250); /* Anodized gray for descriptions/subtexts */
+
+    --accent: oklch(0.22 0.04 264); /* Deep neon-adjacent glow accents for hovers */
+    --accent-foreground: oklch(0.975 0.004 245);
+
+    --destructive: oklch(0.65 0.21 22.2);
+    --destructive-foreground: oklch(0.985 0 0);
+
+    /* Form Real Estate & Borders */
+    --border: oklch(1 0 0 / 12%); /* Semi-transparent glowing borders over obsidian elements */
+    --input: oklch(1 0 0 / 12%);
+    --ring: oklch(0.45 0.26 264 / 50%);
 }
 
 @theme inline {
     --font-sans: 'Figtree Variable', sans-serif;
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
+
+    /* Mapping semantic colors accurately to Tailwind classes */
     --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    /* Dynamic scaling of radii across nested layouts */
+    --radius-sm: calc(
+        var(--radius) * 0.5
+    ); /* Crisper, tighter items (buttons, items inside lists) */
+    --radius-md: calc(var(--radius) * 0.75); /* Middle grounds */
+    --radius-lg: var(--radius); /* Structural master panels (Cards, major dialogs) */
+    --radius-xl: calc(var(--radius) * 1.5); /* Ultra-rounded parent shells */
 }
 
 @layer base {
     * {
-        @apply border-border outline-ring/50;
+        @apply border-border outline-ring/40 transition-colors duration-150 ease-out;
     }
     body {
-        @apply text-foreground bg-black;
+        @apply text-foreground bg-background selection:bg-primary/20 min-h-screen antialiased;
     }
     html {
-        @apply font-sans;
+        @apply scroll-smooth font-sans;
+    }
+}
+
+@layer utilities {
+    /* Custom utility for real-time AI summary generation states or dynamic cards */
+    .glass-panel {
+        background: oklch(var(--card) / 75%);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+    }
+
+    /* Snappy focus interaction for active question/typing fields */
+    .active-input-ring {
+        box-shadow:
+            0 0 0 2px oklch(var(--background)),
+            0 0 0 4px oklch(var(--primary));
     }
 }

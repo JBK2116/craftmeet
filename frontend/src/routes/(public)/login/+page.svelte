@@ -86,7 +86,6 @@
     }
 </script>
 
-<!-- Document Head -->
 <svelte:head>
     <title>Sign In - Craftmeet</title>
     <meta
@@ -104,35 +103,32 @@
     <meta property="og:image" content="/og-image.png" />
 </svelte:head>
 
-<main
-    class="flex min-h-screen items-center justify-center bg-black px-4 py-16 font-['Figtree_Variable',sans-serif]"
->
+<main class="flex min-h-screen items-center justify-center bg-background px-4 py-16">
     <div class="w-full max-w-[420px] space-y-3">
-        <!-- Card -->
-        <div class="rounded-2xl border border-white/10 bg-white/[0.03] px-8 py-9">
-            <!-- Logo -->
+        <div class="rounded-2xl border border-border bg-card px-8 py-9">
             <div class="mb-7 flex items-center justify-center gap-2.5">
                 <img
                     src="/android-chrome-512x512.png"
                     alt="Craftmeet logo"
-                    class="h-7 w-7 rounded-md object-contain invert"
+                    class="h-7 w-7 rounded-md object-contain dark:invert-0 light:invert"
                 />
-                <span class="text-[1.15rem] font-semibold tracking-tight text-white">Craftmeet</span
+                <span class="text-[1.15rem] font-semibold tracking-tight text-foreground"
+                    >Craftmeet</span
                 >
             </div>
 
-            <h1 class="mb-1 text-center text-[1.4rem] font-semibold tracking-tight text-white">
+            <h1 class="mb-1 text-center text-[1.4rem] font-semibold tracking-tight text-foreground">
                 Welcome back
             </h1>
-            <p class="mb-7 text-center text-sm text-white/40">
+            <p class="mb-7 text-center text-sm text-muted-foreground">
                 Sign in to continue to your account.
             </p>
 
-            <!-- Form -->
             <div class="space-y-4">
-                <!-- Email -->
                 <div class="space-y-1.5">
-                    <label for="email" class="block text-sm font-medium text-white/70">Email</label>
+                    <label for="email" class="block text-sm font-medium text-muted-foreground"
+                        >Email</label
+                    >
                     <input
                         id="email"
                         type="email"
@@ -140,14 +136,14 @@
                         onblur={validateEmail}
                         placeholder="you@example.com"
                         disabled={isAttempting}
-                        class="w-full rounded-lg border px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none transition bg-white/5
-                            focus:ring-1 focus:ring-white/30 focus:border-white/30 disabled:cursor-not-allowed disabled:opacity-40
+                        class="w-full rounded-lg border px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition bg-background
+                            focus:ring-2 focus:ring-primary/20 focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-40
                             {emailError
-                            ? 'border-red-500/60 bg-red-500/10 focus:ring-red-500/40 focus:border-red-500/40'
-                            : 'border-white/10'}"
+                            ? 'border-destructive bg-destructive/10 focus:ring-destructive/20 focus:border-destructive'
+                            : 'border-border'}"
                     />
                     {#if emailError}
-                        <p class="flex items-center gap-1.5 text-xs text-red-400">
+                        <p class="flex items-center gap-1.5 text-xs text-destructive">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 class="h-3.5 w-3.5 shrink-0"
@@ -165,15 +161,15 @@
                     {/if}
                 </div>
 
-                <!-- Password -->
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between">
-                        <label for="password" class="block text-sm font-medium text-white/70"
-                            >Password</label
+                        <label
+                            for="password"
+                            class="block text-sm font-medium text-muted-foreground">Password</label
                         >
                         <a
                             href="/forgot-password"
-                            class="text-xs text-white/40 transition-colors hover:text-white/70"
+                            class="text-xs text-muted-foreground transition-colors hover:text-foreground"
                         >
                             Forgot password?
                         </a>
@@ -185,14 +181,14 @@
                         onblur={validatePassword}
                         placeholder="Your password"
                         disabled={isAttempting}
-                        class="w-full rounded-lg border px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none transition bg-white/5
-                            focus:ring-1 focus:ring-white/30 focus:border-white/30 disabled:cursor-not-allowed disabled:opacity-40
+                        class="w-full rounded-lg border px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition bg-background
+                            focus:ring-2 focus:ring-primary/20 focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-40
                             {passwordError
-                            ? 'border-red-500/60 bg-red-500/10 focus:ring-red-500/40 focus:border-red-500/40'
-                            : 'border-white/10'}"
+                            ? 'border-destructive bg-destructive/10 focus:ring-destructive/20 focus:border-destructive'
+                            : 'border-border'}"
                     />
                     {#if passwordError}
-                        <p class="flex items-center gap-1.5 text-xs text-red-400">
+                        <p class="flex items-center gap-1.5 text-xs text-destructive">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 class="h-3.5 w-3.5 shrink-0"
@@ -210,23 +206,21 @@
                     {/if}
                 </div>
 
-                <!-- Remember me -->
-                <label class="flex cursor-pointer items-center gap-2.5">
+                <label class="flex cursor-pointer items-center gap-2.5 select-none">
                     <input
                         type="checkbox"
                         bind:checked={rememberMe}
                         disabled={isAttempting}
-                        class="h-4 w-4 rounded border border-white/20 bg-white/5 accent-white disabled:cursor-not-allowed disabled:opacity-40"
+                        class="h-4 w-4 rounded border border-border bg-background text-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
                     />
-                    <span class="text-sm text-white/50">Remember me</span>
+                    <span class="text-sm text-muted-foreground">Remember me</span>
                 </label>
 
-                <!-- Submit -->
                 <button
                     onclick={handleLogin}
                     disabled={isAttempting}
-                    class="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-black transition
-                        hover:bg-white/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                    class="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition
+                        hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {#if isAttempting}
                         <svg
@@ -256,19 +250,19 @@
                 </button>
             </div>
 
-            <!-- Divider -->
             <div class="my-5 flex items-center gap-3">
-                <div class="h-px flex-1 bg-white/8"></div>
-                <span class="text-xs font-medium uppercase tracking-widest text-white/25">or</span>
-                <div class="h-px flex-1 bg-white/8"></div>
+                <div class="h-px flex-1 bg-border"></div>
+                <span class="text-xs font-medium uppercase tracking-widest text-muted-foreground/50"
+                    >or</span
+                >
+                <div class="h-px flex-1 bg-border"></div>
             </div>
 
-            <!-- Google OAuth -->
             <button
                 onclick={handleOAUTH}
                 disabled={isAttempting}
-                class="flex w-full items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-white/70 transition
-                    hover:bg-white/[0.08] hover:text-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                class="flex w-full items-center gap-3 rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm font-medium text-secondary-foreground transition
+                    hover:bg-muted active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
                 <svg
                     class="h-4 w-4 shrink-0"
@@ -296,24 +290,22 @@
             </button>
         </div>
 
-        <!-- Sign up link -->
         <div
-            class="rounded-xl border border-white/10 bg-white/[0.03] px-8 py-4 text-center text-sm text-white/40"
+            class="rounded-xl border border-border bg-card px-8 py-4 text-center text-sm text-muted-foreground"
         >
             Don't have an account?
             <a
                 href="/signup"
-                class="ml-1 font-medium text-white underline-offset-2 hover:underline hover:text-white/70 transition-colors"
+                class="ml-1 font-medium text-foreground underline-offset-2 hover:underline hover:text-muted-foreground transition-colors"
             >
                 Sign up
             </a>
         </div>
 
-        <!-- Footer -->
-        <p class="text-center text-xs text-white/40">
-            <a href="/privacy" class="hover:text-white/70 transition-colors">Privacy Policy</a>
+        <p class="text-center text-xs text-muted-foreground">
+            <a href="/privacy" class="hover:text-foreground transition-colors">Privacy Policy</a>
             <span class="mx-1.5">·</span>
-            <a href="/terms" class="hover:text-white/70 transition-colors">Terms of Service</a>
+            <a href="/terms" class="hover:text-foreground transition-colors">Terms of Service</a>
         </p>
     </div>
 </main>

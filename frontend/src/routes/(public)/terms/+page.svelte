@@ -75,22 +75,22 @@
     </style>
 </svelte:head>
 
-<main class="relative min-h-screen bg-black text-white">
+<main class="relative min-h-screen bg-background text-foreground">
     <div class="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
-        <div class="h-[800px] w-[800px] -translate-y-1/2 rounded-full bg-white/5 blur-3xl"></div>
+        <div class="h-[800px] w-[800px] -translate-y-1/2 rounded-full bg-primary/5 blur-3xl"></div>
     </div>
 
     <div class="mx-auto flex max-w-7xl flex-col gap-12 px-6 py-24 lg:flex-row lg:px-8">
         <aside class="hidden w-64 shrink-0 lg:block">
             <div class="sticky top-24 flex flex-col gap-1">
-                <p class="mb-3 text-xs uppercase tracking-widest text-white/30">Contents</p>
+                <p class="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Contents</p>
                 {#each sections as section}
                     <a
                         href="#{section.id}"
                         class="border-l py-1 pl-4 text-sm transition-all duration-200
                             {activeSection === section.id
-                            ? 'border-white text-white'
-                            : 'border-white/10 text-white/40 hover:border-white/30 hover:text-white/70'}"
+                            ? 'border-primary text-primary font-medium'
+                            : 'border-border text-muted-foreground hover:border-muted hover:text-foreground'}"
                     >
                         {section.title}
                     </a>
@@ -99,12 +99,12 @@
         </aside>
 
         <article
-            class="prose prose-invert prose-p:text-white/60 prose-headings:text-white prose-a:text-white prose-a:underline-offset-4 hover:prose-a:text-white/80 max-w-3xl
-                   [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24"
+            class="prose prose-p:text-muted-foreground prose-headings:text-foreground prose-a:text-primary prose-a:underline-offset-4 hover:prose-a:text-primary/80 max-w-3xl
+                    [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24"
         >
             <!-- TODO: Update "Last updated" date below every time these terms are modified -->
             <h1>Terms and Conditions</h1>
-            <p class="text-sm text-white/40">Last updated: May 24, 2026</p>
+            <p class="text-sm text-muted-foreground">Last updated: May 24, 2026</p>
 
             <p>
                 These Terms and Conditions constitute a legally binding agreement between you and
@@ -122,7 +122,7 @@
                 18, you may not use or register for the Services.
             </p>
 
-            <hr class="border-white/10" />
+            <hr class="border-border" />
 
             <h2 id="our-services">1. Our Services</h2>
             <p>
@@ -533,7 +533,7 @@
                 at <a href="mailto:support@craftmeet.com">support@craftmeet.com</a>. We will respond
                 within 30 days.
             </p>
-            <address class="not-italic text-white/60">
+            <address class="not-italic text-muted-foreground">
                 <strong>Craftmeet</strong><br />
                 Legal inquiries: <a href="mailto:support@craftmeet.com">support@craftmeet.com</a><br
                 />

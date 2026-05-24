@@ -28,82 +28,76 @@
     ];
 </script>
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-black">
+<header class="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background">
     <nav class="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-        <!-- Logo -->
         <a href="/" class="flex shrink-0 items-center gap-1.5">
-            <img src="/android-chrome-512x512.png" alt="Craftmeet" class="h-7 w-7 invert" />
-            <span class="text-sm font-semibold text-white">Craftmeet</span>
+            <img src="/android-chrome-512x512.png" alt="Craftmeet" class="h-7 w-7 dark:invert" />
+            <span class="text-sm font-semibold text-foreground">Craftmeet</span>
         </a>
 
-        <!-- LANDING -->
         {#if isLanding}
-            <!-- Desktop nav links -->
             <div class="hidden items-center gap-8 md:flex">
                 {#each landingLinks as link}
                     <a
                         href={link.href}
-                        class="text-sm text-white/60 transition-colors duration-150 hover:text-white"
+                        class="text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
                     >
                         {link.title}
                     </a>
                 {/each}
             </div>
 
-            <!-- Desktop auth buttons -->
             <div class="hidden items-center gap-3 md:flex">
                 <Button
                     variant="ghost"
                     href="/login"
-                    class="h-8 px-4 text-sm text-white/70 hover:bg-white/5 hover:text-white"
+                    class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                     Log in
                 </Button>
                 <Button
                     href="/signup"
-                    class="h-8 rounded-md border border-white/30 bg-white px-4 text-sm text-black transition-all duration-150 hover:border-black/60 hover:bg-white"
+                    class="h-8 rounded-md bg-primary px-4 text-sm text-primary-foreground transition-all duration-150 hover:bg-primary/90"
                 >
                     Sign up
                 </Button>
             </div>
 
-            <!-- Mobile hamburger (landing only has real content) -->
             <div class="md:hidden">
                 <Sheet>
                     <SheetTrigger>
                         <Button
                             variant="ghost"
                             size="icon"
-                            class="h-8 w-8 text-white/60 hover:bg-white/5 hover:text-white"
+                            class="h-8 w-8 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                         >
                             <Menu class="h-4 w-4" />
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="right" class="w-72 border-white/10 bg-black p-6">
+                    <SheetContent side="right" class="w-72 border-border bg-background p-6">
                         <div class="mt-8 flex flex-col gap-6">
-                            <!-- Nav links -->
                             <div class="flex flex-col gap-4">
                                 {#each landingLinks as link}
                                     <a
                                         href={link.href}
-                                        class="text-sm text-white/60 transition-colors duration-150 hover:text-white"
+                                        class="text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
                                     >
                                         {link.title}
                                     </a>
                                 {/each}
                             </div>
-                            <!-- Auth -->
-                            <div class="flex flex-col gap-2 border-t border-white/10 pt-4">
+                            <div class="flex flex-col gap-2 border-t border-border pt-4">
                                 <Button
                                     variant="ghost"
                                     href="/login"
-                                    class="justify-start px-0 text-sm text-white/70 hover:bg-transparent hover:text-white"
+                                    class="justify-start px-0 text-sm text-muted-foreground hover:bg-transparent hover:text-foreground"
                                 >
                                     Log in
                                 </Button>
                                 <Button
+                                    variant="outline"
                                     href="/signup"
-                                    class="border border-white/30 bg-transparent text-sm text-white transition-all duration-150 hover:border-white/60 hover:bg-white/5"
+                                    class="text-sm text-foreground transition-all duration-150 hover:bg-accent"
                                 >
                                     Sign up
                                 </Button>
@@ -112,65 +106,58 @@
                     </SheetContent>
                 </Sheet>
             </div>
-
-            <!-- AUTH -->
         {:else if isOnboarding}
             <div class="flex items-center gap-3">
                 {#if pathname === '/login'}
-                    <span class="hidden text-sm text-white/40 sm:inline">No account?</span>
+                    <span class="hidden text-sm text-muted-foreground/80 sm:inline"
+                        >No account?</span
+                    >
                     <Button
                         href="/signup"
-                        class="h-8 rounded-md border border-white/30 bg-white px-4 text-sm text-black transition-all duration-150 hover:border-black/60 hover:bg-white"
+                        class="h-8 rounded-md bg-primary px-4 text-sm text-primary-foreground transition-all duration-150 hover:bg-primary/90"
                     >
                         Sign up
                     </Button>
                 {:else}
-                    <span class="hidden text-sm text-white/40 sm:inline">Have an account?</span>
+                    <span class="hidden text-sm text-muted-foreground/80 sm:inline"
+                        >Have an account?</span
+                    >
                     <Button
                         variant="ghost"
                         href="/login"
-                        class="h-8 px-4 text-sm text-white/70 hover:bg-white/5 hover:text-white"
+                        class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     >
                         Log in
                     </Button>
                 {/if}
             </div>
-
-            <!-- PUBLIC -->
         {:else if isPublic}
             <Button
                 href="/login"
                 variant="ghost"
-                class="h-8 px-4 text-sm text-white/70 hover:bg-white/5 hover:text-white"
+                class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
                 Log in
             </Button>
-            <!-- APP (authenticated) -->
         {:else if isApp}
-            <!--
-                TODO: Replace placeholder avatar with real user data from auth store.
-            -->
             <div class="hidden items-center gap-3 md:flex">
                 <Button
                     href="/meetings/create"
-                    class="h-8 rounded-md border border-white/30 bg-white px-4 text-sm text-black transition-all duration-150 hover:border-black/60 hover:bg-white"
+                    class="h-8 rounded-md bg-primary px-4 text-sm text-primary-foreground transition-all duration-150 hover:bg-primary/90"
                 >
                     New meeting
                 </Button>
-                <!-- User avatar wire to auth store -->
                 <button
-                    class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xs font-medium text-white transition hover:bg-white/20"
+                    class="flex h-8 w-8 items-center justify-center rounded-full border border-input bg-muted text-xs font-medium text-muted-foreground transition hover:bg-muted/80"
                     aria-label="Account menu"
                 >
-                    <!-- TODO: Replace with user initials or avatar image -->
                     U
                 </button>
             </div>
 
-            <!-- Mobile: just the avatar (BottomNav handles the rest) -->
             <div class="flex items-center md:hidden">
                 <button
-                    class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xs font-medium text-white transition hover:bg-white/20"
+                    class="flex h-8 w-8 items-center justify-center rounded-full border border-input bg-muted text-xs font-medium text-muted-foreground transition hover:bg-muted/80"
                     aria-label="Account menu"
                 >
                     U
@@ -180,5 +167,4 @@
     </nav>
 </header>
 
-<!-- Spacer so content doesn't sit under fixed nav -->
 <div class="h-14"></div>

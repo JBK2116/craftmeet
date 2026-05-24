@@ -135,7 +135,6 @@
     }
 </script>
 
-<!-- Document Head -->
 <svelte:head>
     <title>Sign Up - Craftmeet</title>
     <meta
@@ -152,37 +151,31 @@
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/og-image.png" />
 </svelte:head>
-<main
-    class="flex min-h-screen items-center justify-center bg-black px-4 py-16 font-['Figtree_Variable',sans-serif]"
->
-    <div class="w-full max-w-[420px] space-y-3">
-        <!-- Card -->
-        <div class="rounded-2xl border border-white/10 bg-white/[0.03] px-8 py-9">
-            <!-- Logo -->
+
+<main class="flex min-h-screen items-center justify-center bg-background px-6 py-24">
+    <div class="w-full max-w-md space-y-3">
+        <div class="rounded-2xl border border-border bg-card px-8 py-9 shadow-sm">
             <div class="mb-7 flex items-center justify-center gap-2.5">
                 <img
                     src="/android-chrome-512x512.png"
-                    alt="Collaboard logo"
-                    class="h-7 w-7 rounded-md object-contain invert"
+                    alt="Craftmeet logo"
+                    class="h-7 w-7 rounded-md object-contain"
                 />
-                <span class="text-[1.15rem] font-semibold tracking-tight text-white">Craftmeet</span
-                >
+                <span class="text-lg font-semibold tracking-tight text-foreground">Craftmeet</span>
             </div>
 
-            <h1 class="mb-1 text-center text-[1.4rem] font-semibold tracking-tight text-white">
+            <h1 class="mb-1 text-center text-2xl font-semibold tracking-tight text-foreground">
                 Create your account
             </h1>
-            <p class="mb-7 text-center text-sm text-white/40">
+            <p class="mb-7 text-center text-sm text-muted-foreground">
                 Start running better meetings today.
             </p>
 
-            <!-- Form -->
             <div class="space-y-4">
-                <!-- Username -->
                 <div class="space-y-1.5">
-                    <label for="username" class="block text-sm font-medium text-white/70"
-                        >Username</label
-                    >
+                    <label for="username" class="block text-sm font-medium text-muted-foreground">
+                        Username
+                    </label>
                     <input
                         id="username"
                         type="text"
@@ -190,14 +183,14 @@
                         onblur={validateName}
                         placeholder="yourname"
                         disabled={isAttempting}
-                        class="w-full rounded-lg border px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none transition bg-white/5
-							focus:ring-1 focus:ring-white/30 focus:border-white/30 disabled:cursor-not-allowed disabled:opacity-40
-							{nameError
-                            ? 'border-red-500/60 bg-red-500/10 focus:ring-red-500/40 focus:border-red-500/40'
-                            : 'border-white/10'}"
+                        class="w-full rounded-lg border bg-input px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition
+                            focus:ring-1 focus:ring-ring focus:border-ring disabled:cursor-not-allowed disabled:opacity-40
+                            {nameError
+                            ? 'border-destructive/60 bg-destructive/10 focus:ring-destructive/40 focus:border-destructive/40'
+                            : 'border-border'}"
                     />
                     {#if nameError}
-                        <p class="flex items-center gap-1.5 text-xs text-red-400">
+                        <p class="flex items-center gap-1.5 text-xs text-destructive">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 class="h-3.5 w-3.5 shrink-0"
@@ -215,9 +208,10 @@
                     {/if}
                 </div>
 
-                <!-- Email -->
                 <div class="space-y-1.5">
-                    <label for="email" class="block text-sm font-medium text-white/70">Email</label>
+                    <label for="email" class="block text-sm font-medium text-muted-foreground">
+                        Email
+                    </label>
                     <input
                         id="email"
                         type="email"
@@ -225,14 +219,14 @@
                         onblur={validateEmail}
                         placeholder="you@example.com"
                         disabled={isAttempting}
-                        class="w-full rounded-lg border px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none transition bg-white/5
-							focus:ring-1 focus:ring-white/30 focus:border-white/30 disabled:cursor-not-allowed disabled:opacity-40
-							{emailError
-                            ? 'border-red-500/60 bg-red-500/10 focus:ring-red-500/40 focus:border-red-500/40'
-                            : 'border-white/10'}"
+                        class="w-full rounded-lg border bg-input px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition
+                            focus:ring-1 focus:ring-ring focus:border-ring disabled:cursor-not-allowed disabled:opacity-40
+                            {emailError
+                            ? 'border-destructive/60 bg-destructive/10 focus:ring-destructive/40 focus:border-destructive/40'
+                            : 'border-border'}"
                     />
                     {#if emailError}
-                        <p class="flex items-center gap-1.5 text-xs text-red-400">
+                        <p class="flex items-center gap-1.5 text-xs text-destructive">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 class="h-3.5 w-3.5 shrink-0"
@@ -250,11 +244,10 @@
                     {/if}
                 </div>
 
-                <!-- Password -->
                 <div class="space-y-1.5">
-                    <label for="password" class="block text-sm font-medium text-white/70"
-                        >Password</label
-                    >
+                    <label for="password" class="block text-sm font-medium text-muted-foreground">
+                        Password
+                    </label>
                     <input
                         id="password"
                         type="password"
@@ -262,14 +255,14 @@
                         onblur={validatePassword}
                         placeholder="12+ characters"
                         disabled={isAttempting}
-                        class="w-full rounded-lg border px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none transition bg-white/5
-							focus:ring-1 focus:ring-white/30 focus:border-white/30 disabled:cursor-not-allowed disabled:opacity-40
-							{passwordError
-                            ? 'border-red-500/60 bg-red-500/10 focus:ring-red-500/40 focus:border-red-500/40'
-                            : 'border-white/10'}"
+                        class="w-full rounded-lg border bg-input px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition
+                            focus:ring-1 focus:ring-ring focus:border-ring disabled:cursor-not-allowed disabled:opacity-40
+                            {passwordError
+                            ? 'border-destructive/60 bg-destructive/10 focus:ring-destructive/40 focus:border-destructive/40'
+                            : 'border-border'}"
                     />
                     {#if passwordError}
-                        <p class="flex items-center gap-1.5 text-xs text-red-400">
+                        <p class="flex items-center gap-1.5 text-xs text-destructive">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 class="h-3.5 w-3.5 shrink-0"
@@ -287,12 +280,11 @@
                     {/if}
                 </div>
 
-                <!-- Submit -->
                 <button
                     onclick={handleSignup}
                     disabled={isAttempting}
-                    class="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-black transition
-						hover:bg-white/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                    class="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition
+                        hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {#if isAttempting}
                         <svg
@@ -322,19 +314,19 @@
                 </button>
             </div>
 
-            <!-- Divider -->
             <div class="my-5 flex items-center gap-3">
-                <div class="h-px flex-1 bg-white/8"></div>
-                <span class="text-xs font-medium uppercase tracking-widest text-white/25">or</span>
-                <div class="h-px flex-1 bg-white/8"></div>
+                <div class="h-px flex-1 bg-border"></div>
+                <span class="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    >or</span
+                >
+                <div class="h-px flex-1 bg-border"></div>
             </div>
 
-            <!-- Google OAuth -->
             <button
                 onclick={handleOAUTH}
                 disabled={isAttempting}
-                class="flex w-full items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-white/70 transition
-					hover:bg-white/[0.08] hover:text-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                class="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm font-medium text-secondary-foreground transition
+                    hover:bg-secondary/80 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
                 <svg
                     class="h-4 w-4 shrink-0"
@@ -362,24 +354,22 @@
             </button>
         </div>
 
-        <!-- Sign in link -->
         <div
-            class="rounded-xl border border-white/10 bg-white/[0.03] px-8 py-4 text-center text-sm text-white/40"
+            class="rounded-xl border border-border bg-card px-8 py-4 text-center text-sm text-muted-foreground shadow-sm"
         >
             Already have an account?
             <a
                 href="/login"
-                class="ml-1 font-medium text-white underline-offset-2 hover:underline hover:text-white/70 transition-colors"
+                class="ml-1 font-medium text-foreground underline-offset-2 hover:underline hover:text-muted-foreground transition-colors"
             >
                 Sign in
             </a>
         </div>
 
-        <!-- Footer -->
-        <p class="text-center text-xs text-white/40">
-            <a href="/privacy" class="hover:text-white/70 transition-colors">Privacy Policy</a>
+        <p class="text-center text-xs text-muted-foreground">
+            <a href="/privacy" class="hover:text-foreground transition-colors">Privacy Policy</a>
             <span class="mx-1.5">·</span>
-            <a href="/terms" class="hover:text-white/70 transition-colors">Terms of Service</a>
+            <a href="/terms" class="hover:text-foreground transition-colors">Terms of Service</a>
         </p>
     </div>
 </main>
