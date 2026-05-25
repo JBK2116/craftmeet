@@ -50,8 +50,6 @@
         return a && b;
     }
 
-    let errorTypes = { password: 'password_error', token: 'token_error', server: 'server_error' };
-
     // reset functionality
     async function handleReset(): Promise<void> {
         // TODO: Submit resetToken + new password to the API to authorize and apply the password change

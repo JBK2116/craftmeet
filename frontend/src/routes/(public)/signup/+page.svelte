@@ -105,11 +105,6 @@
     }
 
     // authentication functionality
-    let errorTypes = {
-        username: 'username_error',
-        email: 'email_error',
-        password: 'password_error',
-    };
     async function handleSignup(): Promise<void> {
         // TODO: Handle this function later
         isAttempting = true;
