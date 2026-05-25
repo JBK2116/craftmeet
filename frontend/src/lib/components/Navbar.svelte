@@ -27,7 +27,7 @@
         { title: 'Join Meeting', href: '#join-meeting' },
     ];
 
-    // --- Theme toggle ---
+    // Theme toggle
     let isDark = $state(
         typeof document !== 'undefined'
             ? document.documentElement.classList.contains('dark')
@@ -41,13 +41,6 @@
     }
 </script>
 
-<!-- Persist theme on load — put this in app.html <head> to avoid flash:
-     <script>
-       const t = localStorage.getItem('theme');
-       if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches))
-         document.documentElement.classList.add('dark');
-     </script>
--->
 
 <header class="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background">
     <nav class="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
