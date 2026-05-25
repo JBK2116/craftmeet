@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Logo from '$lib/components/Logo.svelte';
     import { toast } from 'svelte-sonner';
 
     // loginAttempt state

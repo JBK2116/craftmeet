@@ -185,6 +185,17 @@
                     >
                         Sign up
                     </Button>
+                {:else if pathname === '/forgot-password'}
+                    <span class="hidden text-sm text-muted-foreground/80 sm:inline"
+                        >Back to login?</span
+                    >
+                    <Button
+                        variant="ghost"
+                        href="/login"
+                        class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    >
+                        Log in
+                    </Button>
                 {:else}
                     <span class="hidden text-sm text-muted-foreground/80 sm:inline"
                         >Have an account?</span
