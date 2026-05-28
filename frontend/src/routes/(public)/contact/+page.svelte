@@ -60,7 +60,7 @@
 
         <!-- Contact Methods -->
         <div class="flex flex-col gap-6">
-            <!-- Email — the primary (and only) contact method -->
+            <!-- Email the primary (and only) contact method -->
             <Card.Root class="ring-foreground/10">
                 <Card.Header>
                     <Card.Title class="text-lg">Email Us Directly</Card.Title>
@@ -83,7 +83,7 @@
                 </Card.Content>
             </Card.Root>
 
-            <!-- Mailing Address — not yet available -->
+            <!-- Mailing Address not yet available -->
             <Card.Root class="ring-foreground/10">
                 <Card.Header>
                     <Card.Title class="flex items-center gap-2 text-lg">
