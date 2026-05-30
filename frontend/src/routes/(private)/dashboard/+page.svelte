@@ -21,11 +21,11 @@
     const firstName = $derived(user.name.split(' ')[0]);
 </script>
 
-<div class="mx-auto max-w-5xl space-y-6 px-4 py-6 md:px-6">
+<div class="mx-auto max-w-5xl space-y-5 px-4 py-6 md:px-6">
     <!-- Page header -->
     <header>
-        <h1>Dashboard</h1>
-        <p class="text-meta">Good {greeting}, {firstName}</p>
+        <h2 class="text-lg font-semibold text-foreground">Dashboard</h2>
+        <p class="text-sm text-muted-foreground">Good {greeting}, {firstName}</p>
     </header>
     <!-- Live Meeting Header -->
     {#if liveMeeting}

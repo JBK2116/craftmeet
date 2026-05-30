@@ -29,23 +29,23 @@
 </script>
 
 <!-- cards displayed on page -->
-<div class="grid grid-cols-3 gap-3 sm:gap-4">
+<div class="grid grid-cols-1 overflow-hidden rounded-lg border border-border sm:grid-cols-3">
     {#each cards as card}
         {@const Icon = card.icon}
         <div
-            class="shadow-card flex flex-col gap-2 rounded-lg border border-border bg-card p-3 sm:p-4"
+            class="flex flex-col gap-0.5 border-b border-border bg-card px-4 py-3 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0"
         >
             <div class="flex items-center gap-2 text-muted-foreground">
                 <Icon class="h-4 w-4 shrink-0" />
-                <span class="truncate font-medium" style="font-size: var(--text-label)">
+                <span class="truncate text-xs">
                     {card.label}
                 </span>
             </div>
-            <span class="font-semibold text-foreground" style="font-size: var(--text-heading)">
+            <span class="text-lg font-semibold text-foreground">
                 {card.value}
             </span>
             {#if card.subtext}
-                <span class="text-meta hidden sm:block">{card.subtext}</span>
+                <span class="text-meta hidden text-xs sm:block">{card.subtext}</span>
             {/if}
         </div>
     {/each}

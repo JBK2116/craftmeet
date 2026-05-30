@@ -1,4 +1,4 @@
-import type { MeetingPlan } from "./meeting";
+import type { MeetingPlan } from './meeting';
 
 /** A single user instance. */
 export type User = {

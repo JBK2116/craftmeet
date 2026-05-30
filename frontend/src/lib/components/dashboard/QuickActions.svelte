@@ -4,12 +4,12 @@
 </script>
 
 <!-- quick actions for create meeting and join meeting -->
-<div class="flex flex-col gap-3 sm:flex-row">
-    <Button href="/meetings/create" class="w-full sm:w-auto">
+<div class="flex items-center gap-2">
+    <Button href="/meetings/create" size="sm">
         <Plus class="h-4 w-4" />
         New Meeting
     </Button>
-    <Button href="/join" variant="ghost" class="w-full sm:w-auto">
+    <Button href="/join" variant="outline" size="sm">
         <LogIn class="h-4 w-4" />
         Join Meeting
     </Button>

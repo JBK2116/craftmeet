@@ -24,15 +24,15 @@
 
 <div>
     <!-- Filter tabs -->
-    <div class="mb-4 flex gap-6 border-b border-border" role="tablist">
+    <div class="mb-0 flex gap-0 border-b border-border" role="tablist">
         {#each tabs as tab}
             <button
                 role="tab"
                 aria-selected={activeTab === tab}
                 onclick={() => (activeTab = tab)}
-                class="-mb-px border-b-2 pb-2 text-sm transition-colors {activeTab === tab
-                    ? 'border-primary font-medium text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'}"
+                class={activeTab === tab
+                    ? '-mb-px border-b-2 border-primary px-3 py-2 text-sm font-medium text-foreground'
+                    : 'px-3 py-2 text-sm text-muted-foreground hover:text-foreground'}
             >
                 {tab}
             </button>
@@ -43,18 +43,29 @@
     {#if filtered.length === 0}
         <EmptyState tab={activeTab} />
     {:else}
-        <table class="w-full text-sm">
+        <table class="w-full border-t border-border text-sm">
             <thead>
-                <tr
-                    class="border-b border-border text-xs font-medium tracking-wide text-muted-foreground uppercase"
-                >
-                    <th class="py-2 pr-3 text-left font-medium">Meeting</th>
-                    <th class="hidden px-3 py-2 text-left font-medium md:table-cell">Questions</th>
-                    <th class="hidden px-3 py-2 text-left font-medium md:table-cell"
+                <tr class="border-b border-border">
+                    <th
+                        class="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                        >Meeting</th
+                    >
+                    <th
+                        class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"
+                        >Questions</th
+                    >
+                    <th
+                        class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"
                         >Participants</th
                     >
-                    <th class="hidden px-3 py-2 text-left font-medium md:table-cell">Created</th>
-                    <th class="py-2 pl-3 text-right font-medium">Action</th>
+                    <th
+                        class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"
+                        >Created</th
+                    >
+                    <th
+                        class="px-3 py-2 text-right text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                        >Action</th
+                    >
                 </tr>
             </thead>
             <tbody>

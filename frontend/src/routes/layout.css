@@ -42,7 +42,7 @@
     /* Hover background on menu items. Raise chroma for a more visible highlight. */
     --accent: oklch(0.94 0.02 264);
     /* Text color on top of accent. Match hue to primary to keep it consistent. */
-    --accent-foreground: oklch(0.323 0.10 264);
+    --accent-foreground: oklch(0.323 0.1 264);
 
     /* Error and delete states. Shift hue toward 0 for a truer red. */
     --destructive: oklch(0.577 0.245 27.325);
@@ -62,7 +62,7 @@
     --chart-5: oklch(0.246 0.02 250);
 
     /* Master corner radius. All radius scale values derive from this. Lower for sharper corners. */
-    --radius: 0.70rem;
+    --radius: 0.7rem;
 
     /* Shadow opacity values control depth. Raise them for more visible elevation. */
     --shadow-sm: 0 1px 2px 0 oklch(0.145 0.01 245 / 0.06);
@@ -73,7 +73,7 @@
     --shadow-xl:
         0 24px 48px -8px oklch(0.145 0.01 245 / 0.14), 0 8px 20px -4px oklch(0.145 0.01 245 / 0.1);
     /* Raise opacity (0.35) for a more prominent glow on primary buttons. */
-    --shadow-primary: 0 4px 20px -4px oklch(0.323 0.20 264 / 0.35);
+    --shadow-primary: 0 4px 20px -4px oklch(0.323 0.2 264 / 0.35);
 }
 
 .dark {
@@ -109,7 +109,7 @@
        Raise the percentage for more visible borders in dark mode. */
     --border: oklch(1 0 0 / 12%);
     --input: oklch(1 0 0 / 12%);
-    --ring: oklch(0.45 0.10 264 / 50%);
+    --ring: oklch(0.45 0.1 264 / 50%);
 
     /* Higher opacity than light mode since dark backgrounds need more contrast. */
     --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.25);

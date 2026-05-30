@@ -1,7 +1,7 @@
 <script lang="ts">
-    import * as Card from '$lib/components/ui/card/index.js';
     import { Badge } from '$lib/components/ui/badge/index.js';
     import { buttonVariants } from '$lib/components/ui/button/index.js';
+    import * as Card from '$lib/components/ui/card/index.js';
 </script>
 
 <svelte:head>
@@ -44,13 +44,15 @@
                     class="font-medium text-foreground underline underline-offset-4 hover:text-muted-foreground"
                     >support@craftmeet.com</a
                 >
-                is the fastest and only way to get a response. This is the same address referenced
-                throughout our <a
+                is the fastest and only way to get a response. This is the same address referenced throughout
+                our
+                <a
                     href="/privacy"
                     class="font-medium text-foreground underline underline-offset-4 hover:text-muted-foreground"
                     >Privacy Notice</a
                 >
-                and <a
+                and
+                <a
                     href="/terms"
                     class="font-medium text-foreground underline underline-offset-4 hover:text-muted-foreground"
                     >Terms and Conditions</a

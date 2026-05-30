@@ -108,7 +108,8 @@
 
             <p>
                 These Terms and Conditions constitute a legally binding agreement between you and
-                <strong class="text-primary">Craftmeet</strong> governing your access to and use of our services at
+                <strong class="text-primary">Craftmeet</strong> governing your access to and use of
+                our services at
                 <a href="https://craftmeet.com">https://craftmeet.com</a> and any related services that
                 link to these terms.
             </p>

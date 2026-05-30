@@ -9,17 +9,17 @@
 </script>
 
 <section
-    class="shadow-card flex flex-col gap-4 rounded-lg border border-border border-l-4 border-l-primary bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5"
+    class="flex flex-col gap-4 rounded-lg border border-border border-l-4 border-l-primary bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
     aria-label="Live meeting"
 >
     <!-- Header -->
     <div class="flex min-w-0 flex-col gap-2">
         <div class="flex items-center gap-2">
-            <span class="relative flex h-2.5 w-2.5">
+            <span class="relative flex h-2 w-2">
                 <span
                     class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"
                 ></span>
-                <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary"></span>
+                <span class="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
             </span>
             <span
                 class="font-semibold tracking-wide text-primary uppercase"
@@ -43,7 +43,7 @@
         </div>
     </div>
     <!-- Action Buttons -->
-    <Button href={`/meetings/${meeting.id}/host`} class="shrink-0 sm:self-center">
+    <Button href={`/meetings/${meeting.id}/host`} size="sm" class="shrink-0 sm:self-center">
         Rejoin Session
         <ArrowRight class="h-4 w-4" />
     </Button>
