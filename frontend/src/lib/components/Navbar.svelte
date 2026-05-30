@@ -250,12 +250,6 @@
                         <Moon class="h-4 w-4" />
                     {/if}
                 </Button>
-                <Button
-                    href="/meetings/create"
-                    class="h-8 rounded-md bg-primary px-4 text-sm text-primary-foreground transition-all duration-150 hover:bg-primary/90"
-                >
-                    New meeting
-                </Button>
                 <button
                     class="flex h-8 w-8 items-center justify-center rounded-full border border-input bg-muted text-xs font-medium text-muted-foreground transition hover:bg-muted/80"
                     aria-label="Account menu"

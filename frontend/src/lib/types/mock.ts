@@ -26,11 +26,13 @@ export const mockMeetings: Meeting[] = [
         created_at: '2026-05-29T09:00:00Z',
         started_at: '2026-05-29T09:05:00Z',
     },
+
+    // DRAFT
     {
         id: 'a1b2c3d4-0001-7890-abcd-ef1234560001',
         title: 'Support Team Standup',
         description: 'Daily triage of open tickets and escalations.',
-        status: 'live',
+        status: 'draft',
         room_code: 'JULIET7',
         participant_cap: 15,
         question_count: 5,
@@ -41,7 +43,7 @@ export const mockMeetings: Meeting[] = [
     {
         id: 'a1b2c3d4-0002-7890-abcd-ef1234560002',
         title: 'Marketing Campaign Kickoff',
-        status: 'live',
+        status: 'draft',
         room_code: 'GOLF18',
         participant_cap: 30,
         question_count: 9,
@@ -53,7 +55,7 @@ export const mockMeetings: Meeting[] = [
         id: 'a1b2c3d4-0003-7890-abcd-ef1234560003',
         title: 'Sales Pipeline Review',
         description: 'Live walkthrough of this quarter’s deals and forecast.',
-        status: 'live',
+        status: 'draft',
         room_code: 'HOTEL24',
         participant_cap: 20,
         question_count: 6,
@@ -61,8 +63,6 @@ export const mockMeetings: Meeting[] = [
         created_at: '2026-05-29T06:15:00Z',
         started_at: '2026-05-29T06:20:00Z',
     },
-
-    // DRAFT
     {
         id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
         title: 'Product Roadmap Review — H2',
