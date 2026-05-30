@@ -22,7 +22,7 @@
     const filtered = $derived(meetings.filter((m) => m.status === tabStatus[activeTab]));
 </script>
 
-<div>
+<div class="flex flex-col">
     <!-- Filter tabs -->
     <div class="mb-0 flex gap-0 border-b border-border" role="tablist">
         {#each tabs as tab}
@@ -40,39 +40,41 @@
     </div>
 
     <!-- Meeting Table -->
-    {#if filtered.length === 0}
-        <EmptyState tab={activeTab} />
-    {:else}
-        <table class="w-full border-t border-border text-sm">
-            <thead>
-                <tr class="border-b border-border">
-                    <th
-                        class="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-                        >Meeting</th
-                    >
-                    <th
-                        class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"
-                        >Questions</th
-                    >
-                    <th
-                        class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"
-                        >Participants</th
-                    >
-                    <th
-                        class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"
-                        >Created</th
-                    >
-                    <th
-                        class="px-3 py-2 text-right text-xs font-medium tracking-wide text-muted-foreground uppercase"
-                        >Action</th
-                    >
-                </tr>
-            </thead>
-            <tbody>
-                {#each filtered as meeting (meeting.id)}
-                    <MeetingTableRow {meeting} />
-                {/each}
-            </tbody>
-        </table>
-    {/if}
+    <div class="max-h-[420px] overflow-y-auto scroll-thin">
+        {#if filtered.length === 0}
+            <EmptyState tab={activeTab} />
+        {:else}
+            <table class="w-full border-t border-border text-sm">
+                <thead>
+                    <tr class="border-b border-border">
+                        <th
+                            class="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                            >Meeting</th
+                        >
+                        <th
+                            class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"
+                            >Questions</th
+                        >
+                        <th
+                            class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"
+                            >Participants</th
+                        >
+                        <th
+                            class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"
+                            >Created</th
+                        >
+                        <th
+                            class="px-3 py-2 text-right text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                            >Action</th
+                        >
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each filtered as meeting (meeting.id)}
+                        <MeetingTableRow {meeting} />
+                    {/each}
+                </tbody>
+            </table>
+        {/if}
+    </div>
 </div>
