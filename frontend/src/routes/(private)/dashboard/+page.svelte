@@ -3,11 +3,13 @@
     import MeetingTable from '$lib/components/dashboard/MeetingTable.svelte';
     import QuickActions from '$lib/components/dashboard/QuickActions.svelte';
     import StatsBar from '$lib/components/dashboard/StatsBar.svelte';
+    import type { Meeting } from '$lib/types/meeting';
     import { mockMeetings, mockUser } from '$lib/types/mock';
 
     // swap these for a real `load()` function once the API is wired.
     const user = mockUser;
-    const meetings = mockMeetings;
+    const meetings: Meeting[] = mockMeetings;
+    // TODO: start with loading data initially in here, then in meetings table it should also load it's own meeting data to natively handle scroll functionality
     // find the live meeting if it exists
     const liveMeeting = $derived(meetings.find((m) => m.status === 'live'));
 

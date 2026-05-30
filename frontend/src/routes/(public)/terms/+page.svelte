@@ -535,7 +535,7 @@
                 within 30 days.
             </p>
             <address class="not-italic text-muted-foreground">
-                <strong>Craftmeet</strong><br />
+                <strong class="text-primary">Craftmeet</strong><br />
                 Legal inquiries: <a href="mailto:support@craftmeet.com">support@craftmeet.com</a><br
                 />
                 United States (DigitalOcean NYC)
