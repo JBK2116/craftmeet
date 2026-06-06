@@ -1,0 +1,27 @@
+Alembic Configuration For Craftmeet
+
+Alembic is the database configuration tool for this application.
+It handles initial table creation, and all subsequent migrations.
+
+It is already pre-configured to automatically update the database tables and columns 
+following the existing sqlalchemy models defined in the codebase.
+
+Usage
+
+1. Generate the starting schema: alembic revision --autogenerate -m "Inital Migration"
+2. To generate following migrations: alembic revision --autogenerate -m <Message>
+3. To undo/revert migrations: alembic downgrade <number>
+4. To undo/revert all migrations: alembic downgrade base
+5. To migrate to the latest revision: alembic upgrade head
+6. To view all migration history: alembic history --verbose
+7. To view one migration history: alembic show <revision id>
+
+Nuclear Usage
+
+To permenantely delete specific revisions and alter the migration history,
+follow these steps.
+
+1. Revert all migrations: alembic downgrade base
+2. Delete the folder from alembic/versions
+3. Recreate the new revision now: alembic revision --autogenerate -m "Initial Migration"
+4. Run the migration: alembic upgrade head

@@ -1,0 +1,72 @@
+"""
+Schemas for authentication
+
+Defines Pydantic request/response models used across authentication
+flows including signup, login, OAuth, and password reset.
+"""
+
+from pydantic import BaseModel, EmailStr, field_validator
+
+from src.constants import (
+    MAX_EMAIL_LENGTH,
+    MAX_PASSWORD_LENGTH,
+    MAX_USERNAME_LENGTH,
+    MIN_EMAIL_LENGTH,
+    MIN_PASSWORD_LENGTH,
+    MIN_USERNAME_LENGTH,
+)
+
+
+class SignupRequest(BaseModel):
+    """Pydantic model representing signup request body"""
+
+    username: str
+    email: EmailStr
+    password: str
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, value: str) -> str:
+        if len(value) < MIN_USERNAME_LENGTH:
+            raise ValueError(
+                f"Username must be at least {MIN_USERNAME_LENGTH} characters long"
+            )
+        if len(value) > MAX_USERNAME_LENGTH:
+            raise ValueError(
+                f"Username must not exceed {MAX_USERNAME_LENGTH} characters"
+            )
+        if not value.isalnum():
+            raise ValueError("Username must contain only alphanumeric characters")
+        return value
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        if len(value) < MIN_EMAIL_LENGTH:
+            raise ValueError(
+                f"Email must be at least {MIN_EMAIL_LENGTH} characters long"
+            )
+        if len(value) > MAX_EMAIL_LENGTH:
+            raise ValueError(f"Email must not exceed {MAX_EMAIL_LENGTH} characters")
+        return value
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        if len(value) < MIN_PASSWORD_LENGTH:
+            raise ValueError(
+                f"Password must be at least {MIN_PASSWORD_LENGTH} characters long"
+            )
+        if len(value) > MAX_PASSWORD_LENGTH:
+            raise ValueError(
+                f"Password must not exceed {MAX_PASSWORD_LENGTH} characters"
+            )
+        if not any(char.isupper() for char in value):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not any(char.islower() for char in value):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not any(char.isdigit() for char in value):
+            raise ValueError("Password must contain at least one digit")
+        if not any(not char.isalnum() for char in value):
+            raise ValueError("Password must contain at least one special character")
+        return value

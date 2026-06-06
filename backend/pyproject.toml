@@ -1,0 +1,71 @@
+[project]
+name = "craftmeet"
+version = "0.1.0"
+description = "Craftmeet is a dynamic real-time meeting application designed to host structured, idea-driven sessions. Build your meetings with a flexible set of interactive question formats, launch them live with your group, and walk away with an AI-generated summary of every idea your room produced."
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.18.4",
+    "asyncpg>=0.31.0",
+    "email-validator>=2.3.0",
+    "fastapi[standard]>=0.136.3",
+    "psycopg2-binary>=2.9.12",
+    "sqlalchemy>=2.0.50",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.13",
+    "ty>=0.0.38",
+]
+
+# Ruff Configuration
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "S",    # bandit (security)
+    "N",    # pep8-naming
+]
+ignore = ["E501", "B008"]  # line too long (handled by formatter) and dependency injection (handled by fastapi)
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# Ty Configuration
+[tool.ty.environment]
+python = ".venv"          # path to the virtual environment used for import resolution
+python-version = "3.14"  # target Python version for type analysis
+extra-paths = ["."]  # source root used for module discovery and import resolution
+
+[tool.ty.rules]
+unresolved-import = "error"              # import cannot be resolved to any known module
+possibly-unresolved-reference = "warn"  # reference may not exist at runtime (e.g. guarded by TYPE_CHECKING)
+invalid-return-type = "error"            # returned type is inconsistent with the annotated return type
+missing-argument = "error"               # required argument omitted at a call site
+division-by-zero = "error"               # statically detectable division or modulo by zero
+call-non-callable = "error"              # object that is not callable is invoked as a function
+
+[tool.ty.analysis]
+respect-type-ignore-comments = true  # honour `# type: ignore` comments to locally suppress diagnostics
+# Suppress unresolved-import noise from third-party packages with incomplete stubs.
+# Expand this list as new dependencies are added.
+allowed-unresolved-imports = [
+    "fastapi.**",
+    "starlette.**",
+    "pydantic.**",
+    "uvicorn.**",
+]
+
+[tool.ty.terminal]
+error-on-warning = false  # do not exit with a non-zero code when only warnings are emitted
+

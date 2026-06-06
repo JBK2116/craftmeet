@@ -1,0 +1,16 @@
+# Environment
+IS_DEV="true or false"
+
+# Logging 
+LOG_LEVEL="DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+
+# Service
+# Label embedded in every JSON log record as { "service": "..." }
+SERVICE_NAME="craftmeet"
+
+# Database
+DB_HOST=
+DB_PORT=
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
