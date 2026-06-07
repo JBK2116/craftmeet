@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int
     DB_NAME: str
+    # Email
+    SENGRID_API_KEY: str
+    SENGRID_EMAIL_FROM: str
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
