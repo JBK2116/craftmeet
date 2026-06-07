@@ -14,3 +14,6 @@ DB_PORT=
 DB_NAME=
 DB_USER=
 DB_PASSWORD=
+
+# Sendgrid Email
+SENDGRID_API_KEY=
