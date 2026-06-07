@@ -2,6 +2,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
+import src.auth.models  # noqa: F401 - required for autogenerate to detect models
 import src.models  # noqa: F401 - required for autogenerate to detect models
 from alembic import context
 from src.database import DATABASE_URL, Base
