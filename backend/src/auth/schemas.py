@@ -8,6 +8,7 @@ flows including signup, login, OAuth, and password reset.
 from pydantic import BaseModel, EmailStr, field_validator
 
 from src.constants import (
+    BCRYPT_MAX_BYTES,
     MAX_EMAIL_LENGTH,
     MAX_PASSWORD_LENGTH,
     MAX_USERNAME_LENGTH,
@@ -61,6 +62,8 @@ class SignupRequest(BaseModel):
             raise ValueError(
                 f"Password must not exceed {MAX_PASSWORD_LENGTH} characters"
             )
+        if len(value.encode("utf-8")) > BCRYPT_MAX_BYTES:
+            raise ValueError("Password is too long")
         if not any(char.isupper() for char in value):
             raise ValueError("Password must contain at least one uppercase letter")
         if not any(char.islower() for char in value):
