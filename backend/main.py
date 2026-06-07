@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -11,6 +13,7 @@ settings = get_settings()
 
 # intialise logger
 setup_logging()
+logging.getLogger("python_http_client").setLevel(logging.WARNING)
 logger = get_logger(__name__)
 
 
