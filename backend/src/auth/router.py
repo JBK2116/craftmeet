@@ -1,11 +1,19 @@
 import logging
 
 from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.exceptions import (
+    EmailDeliveryError,
+    EmailExistsError,
+    VerifyEmailTokenCooldownError,
+)
 from src.auth.schemas import SignupRequest
 from src.auth.service import handle_signup
 from src.database import get_db
+from src.exceptions import DatabaseError
+from src.types import ErrorTypes
 
 logger = logging.getLogger(__name__)
 
@@ -20,4 +28,29 @@ auth_router = APIRouter(
 @auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
 async def signup(payload: SignupRequest, db: AsyncSession = Depends(get_db)):
     logger.debug(msg="Received signup payload", extra={"payload": payload})
-    await handle_signup(db, payload)
+    try:
+        await handle_signup(db, payload)
+    except (DatabaseError, EmailDeliveryError):
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.SERVER.type,
+                "message": ErrorTypes.SERVER.message,
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    except EmailExistsError:
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.EMAIL_ALREADY_EXISTS.type,
+                "message": ErrorTypes.EMAIL_ALREADY_EXISTS.message,
+            },
+            status_code=status.HTTP_409_CONFLICT,
+        )
+    except VerifyEmailTokenCooldownError:
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.VERIFY_EMAIL_TOKEN_COOLDOWN.type,
+                "message": ErrorTypes.VERIFY_EMAIL_TOKEN_COOLDOWN.message,
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )

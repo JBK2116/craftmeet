@@ -3,17 +3,27 @@
 Defines the custom types used throughout the application
 """
 
-from enum import StrEnum
+from enum import Enum, StrEnum
 
 
-class ErrorTypes(StrEnum):
-    """Custom error types sent to frontend"""
+class ErrorTypes(Enum):
+    USERNAME = ("username", "Invalid username.")
+    EMAIL = ("email", "Invalid email address.")
+    EMAIL_ALREADY_EXISTS = (
+        "email_already_exists",
+        "An account with this email already exists.",
+    )
+    PASSWORD = ("password", "Invalid password.")
+    TOKEN = ("token", "Invalid or expired token.")
+    VERIFY_EMAIL_TOKEN_COOLDOWN = (
+        "verify_email_token_cooldown",
+        "Please wait at least a minute before requesting another verification email.",
+    )
+    SERVER = ("server", "An unexpected server error occurred.")
 
-    USERNAME = "username"
-    EMAIL = "email"
-    PASSWORD = "password"  # noqa: S105
-    TOKEN = "token"  # noqa: S105
-    SERVER = "server"
+    def __init__(self, type: str, message: str):
+        self.type = type
+        self.message = message
 
 
 class MeetingPlan(StrEnum):

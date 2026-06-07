@@ -17,10 +17,11 @@
     </main>
     <BottomNav />
     <Toaster
-        position="top-center"
+        position="bottom-right"
         theme="system"
+        closeButton={true}
         expand={true}
-        richColors
+        richColors={true}
         toastOptions={{
             style: 'background: var(--card); color: var(--foreground); border: 1px solid var(--border); border-radius: var(--radius-md);',
         }}

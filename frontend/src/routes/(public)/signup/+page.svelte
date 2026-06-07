@@ -129,8 +129,14 @@
                     case ErrorTypes.EMAIL:
                         emailError = body.message;
                         return;
+                    case ErrorTypes.EMAIL_ALREADY_EXISTS:
+                        toast.error(body.message);
+                        return;
                     case ErrorTypes.PASSWORD:
                         passwordError = body.message;
+                        return;
+                    case ErrorTypes.VERIFY_EMAIL_TOKEN_COOLDOWN:
+                        toast.error(body.message);
                         return;
                     case ErrorTypes.SERVER:
                         toast.error(`Server Error: ${body.message}`);

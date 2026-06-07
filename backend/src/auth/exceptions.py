@@ -11,11 +11,13 @@ from src.exceptions import BaseError
 
 
 class EmailExistsError(BaseError):
-    """Email already exists error"""
+    """Email already exists with a verified user error"""
 
     def __init__(self, email: str) -> None:
         self.email = email
-        super().__init__(f"email: {email} already exists in the database")
+        super().__init__(
+            f"email: {email} already exists in the database with a verified user"
+        )
 
 
 class EmailDeliveryError(BaseError):
@@ -24,3 +26,12 @@ class EmailDeliveryError(BaseError):
     def __init__(self, email: str) -> None:
         self.email = email
         super().__init__(f"failed to send verification email to: {email}")
+
+
+class VerifyEmailTokenCooldownError(BaseError):
+    """Verify Email Token Cooldown error"""
+
+    def __init__(self, email: str) -> None:
+        super().__init__(
+            f"verify email token cooldown period has not elapsed for user: {email}"
+        )
