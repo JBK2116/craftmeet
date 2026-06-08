@@ -38,7 +38,10 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
     OAUTH_SECRET_KEY: str
+    # Token
     JWT_SECRET_KEY: str
+    ACCESS_TOKEN_TTL_MINUTES: int
+    REFRESH_TOKEN_TTL_HOURS: int
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
