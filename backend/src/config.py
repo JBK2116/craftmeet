@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str
     SERVICE_NAME: str
+    DOMAIN: str
     # Database
     DB_USER: str
     DB_PASSWORD: str
