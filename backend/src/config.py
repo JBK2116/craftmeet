@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     # Email
     SENDGRID_API_KEY: str
     SENDGRID_EMAIL_FROM: str
+    # Google
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+    OAUTH_SECRET_KEY: str
+    JWT_SECRET_KEY: str
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
