@@ -44,7 +44,7 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
         return user
     except SQLAlchemyError as e:
         logger.exception(f"failed to get user with email: {email}")
-        raise DatabaseError("database error occured") from e
+        raise DatabaseError("database error occurred") from e
 
 
 async def get_user_verify_email_token(
@@ -74,7 +74,7 @@ async def get_user_verify_email_token(
         return token
     except SQLAlchemyError as e:
         logger.exception(f"failed to retrieve verify email token for user ID: {u_id}")
-        raise DatabaseError("database error occured") from e
+        raise DatabaseError("database error occurred") from e
 
 
 async def insert_user(db: AsyncSession, user: User) -> User:
@@ -100,7 +100,7 @@ async def insert_user(db: AsyncSession, user: User) -> User:
     except SQLAlchemyError as e:
         await db.rollback()
         logger.exception(f"failed to insert user with email: {user.email}")
-        raise DatabaseError("database error occured") from e
+        raise DatabaseError("database error occurred") from e
 
 
 async def insert_verify_email_token(
@@ -128,7 +128,7 @@ async def insert_verify_email_token(
     except SQLAlchemyError as e:
         await db.rollback()
         logger.exception(f"failed to insert verify email token for user ID: {token.user_id}")
-        raise DatabaseError("database error occured") from e
+        raise DatabaseError("database error occurred") from e
 
 
 async def insert_refresh_token(db: AsyncSession, token: RefreshToken) -> RefreshToken:
@@ -154,7 +154,7 @@ async def insert_refresh_token(db: AsyncSession, token: RefreshToken) -> Refresh
     except SQLAlchemyError as e:
         await db.rollback()
         logger.exception(f"failed to insert refresh token for user ID: {token.user_id}")
-        raise DatabaseError("database error occured") from e
+        raise DatabaseError("database error occurred") from e
 
 
 async def update_user_username(db: AsyncSession, u_id: uuid.UUID, new: str) -> User:
@@ -229,7 +229,7 @@ async def delete_verify_email_token(db: AsyncSession, token: VerifyEmailToken) -
     except SQLAlchemyError as e:
         await db.rollback()
         logger.exception(f"failed to delete verify email token for user ID: {token.user_id}")
-        raise DatabaseError("database error occured") from e
+        raise DatabaseError("database error occurred") from e
 
 
 async def delete_refresh_tokens(db: AsyncSession, u_id: uuid.UUID) -> None:
@@ -251,4 +251,4 @@ async def delete_refresh_tokens(db: AsyncSession, u_id: uuid.UUID) -> None:
     except SQLAlchemyError as e:
         await db.rollback()
         logger.exception(f"failed to delete refresh tokens for user ID: {u_id}")
-        raise DatabaseError("database error occured") from e
+        raise DatabaseError("database error occurred") from e

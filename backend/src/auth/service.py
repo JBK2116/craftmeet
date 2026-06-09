@@ -167,7 +167,7 @@ async def handle_login(
         await send_verification_email(user, token)
         raise EmailNotVerifiedError(user.email)
     # create the jwt tokens to handle user authentication now that they are logged in
-    # tokens must be handle as httponly on the frontend
+    # tokens must be handled as HttpOnly on the frontend
     # additionally the user's refresh tokens must be cleared for security purposes
     logger.debug("creating jwt tokens", extra={"email": user.email})
     access_t = generate_access_token(user.id)
