@@ -12,7 +12,8 @@ export const mockUser: User = {
     total_meetings: 12,
     total_participants: 87,
     meeting_plan: 'free',
-    is_verified: false,
+    verified: false,
+    verified_at: '2025-01-15T10:00:00Z',
     created_at: '2025-01-15T10:00:00Z',
     updated_at: '2025-01-15T10:00:00Z',
 };

@@ -14,7 +14,8 @@ export type User = {
     total_participants: number;
     meeting_plan: MeetingPlan;
     // verification_status
-    is_verified: boolean;
+    verified: boolean;
+    verified_at: string;
     // Time
     created_at: string;
     updated_at: string;

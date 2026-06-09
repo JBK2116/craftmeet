@@ -6,27 +6,40 @@ including session management, token handling and more.
 
 import logging
 
+from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.crypto import check_password, hash_password
 from src.auth.email import send_verification_email
-from src.auth.exceptions import EmailExistsError, VerifyEmailTokenCooldownError
+from src.auth.exceptions import (
+    EmailExistsError,
+    EmailNotVerifiedError,
+    UserInvalidPasswordError,
+    UserNotFoundError,
+    VerifyEmailTokenCooldownError,
+)
 from src.auth.repository import (
+    delete_refresh_tokens,
     delete_verify_email_token,
     get_user_by_email,
     get_user_verify_email_token,
+    insert_refresh_token,
     insert_user,
     insert_verify_email_token,
     update_user_password,
     update_user_username,
 )
-from src.auth.schemas import SignupRequest
+from src.auth.schemas import LoginRequest, SignupRequest
 from src.auth.token import (
     check_verify_email_token_cooldown,
+    generate_access_token,
+    generate_refresh_token,
     generate_verify_email_token,
 )
+from src.config import get_settings
 from src.models import User
 
+settings = get_settings()
 logger = logging.getLogger(__name__)
 
 
@@ -112,3 +125,84 @@ async def handle_signup(db: AsyncSession, payload: SignupRequest) -> None:
         token = await insert_verify_email_token(db, token)
         logger.debug(f"sending verification email to user with email: {user.email}")
         await send_verification_email(user, token)
+
+
+async def handle_login(
+    db: AsyncSession, payload: LoginRequest, response: Response
+) -> User:
+    user = await get_user_by_email(db, payload.email)
+    if user is None:
+        logger.debug("unable to find user in database", extra={"email": payload.email})
+        raise UserNotFoundError(payload.email)
+    # perform a standard password check to ensure the user has provided the correct credentials
+    # if the password is None, then the user signed up with oauth so just provide a simple error message for security
+    if user.password is None:
+        logger.debug(
+            "user signed up with oauth, cannot login with password",
+            extra={"email": user.email},
+        )
+        raise UserInvalidPasswordError(user.email)
+    ok = check_password(payload.password, user.password)
+    if not ok:
+        logger.debug("invalid password provided for user", extra={"email": user.email})
+        raise UserInvalidPasswordError(user.email)
+    # resend a verify email message to the user prompting them to verify their account so they can login
+    # only resend the message if the token cooldown has passed else, just prompt them to check their email to prevent spam
+    if not user.verified:
+        token = await get_user_verify_email_token(db, user.id)
+        if token is None:
+            logger.debug(
+                "creating new verify email token for user", extra={"email": user.email}
+            )
+            token = generate_verify_email_token(user.id)
+            token = await insert_verify_email_token(db, token)
+            logger.debug(
+                "sending verification email to user", extra={"email": user.email}
+            )
+            await send_verification_email(user, token)
+            raise EmailNotVerifiedError(user.email)
+        time_passed = check_verify_email_token_cooldown(token.created_at)
+        if not time_passed:
+            logger.debug(
+                "verify email token cooldown has not elapsed for user",
+                extra={"email": user.email},
+            )
+            raise EmailNotVerifiedError(user.email)
+        logger.debug(
+            "deleting verify email token for user", extra={"email": user.email}
+        )
+        await delete_verify_email_token(db, token)
+        token = generate_verify_email_token(user.id)
+        token = await insert_verify_email_token(db, token)
+        logger.debug(
+            "resending verification email to user", extra={"email": user.email}
+        )
+        await send_verification_email(user, token)
+        raise EmailNotVerifiedError(user.email)
+    # create the jwt tokens to handle user authentication now that they are logged in
+    # tokens must be handle as httponly on the frontend
+    # additionally the user's refresh tokens must be cleared for security purposes
+    logger.debug("creating jwt tokens", extra={"email": user.email})
+    access_t = generate_access_token(user.id)
+    refresh_t = generate_refresh_token(user.id)
+    await delete_refresh_tokens(db, user.id)
+    refresh_t = await insert_refresh_token(db, refresh_t)
+    # max_age expects seconds so adjust the value accordingly
+    response.set_cookie(
+        key="access_token",
+        value=access_t,
+        httponly=True,
+        secure=False if settings.IS_DEV else True,
+        samesite="strict",
+        max_age=settings.ACCESS_TOKEN_TTL_MINUTES * 60,
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_t.token_hash,
+        httponly=True,
+        secure=False if settings.IS_DEV else True,
+        samesite="strict",
+        max_age=settings.REFRESH_TOKEN_TTL_HOURS * 60 * 60,
+    )
+    logger.debug("user login successful", extra={"email": user.email})
+    return user

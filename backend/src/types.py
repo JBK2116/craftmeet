@@ -7,11 +7,18 @@ from enum import Enum, StrEnum
 
 
 class ErrorTypes(Enum):
+    """Error types and messages sent to the frontend"""
+
+    INVALID_CREDENTIALS = ("invalid_credentials", "Invalid email or password.")
     USERNAME = ("username", "Invalid username.")
     EMAIL = ("email", "Invalid email address.")
     EMAIL_ALREADY_EXISTS = (
         "email_already_exists",
         "An account with this email already exists.",
+    )
+    EMAIL_NOT_VERIFIED = (
+        "email_not_verified",
+        "Your email is not verified. Please check your email inbox for a verification message we recently sent you to verify your account.",
     )
     PASSWORD = ("password", "Invalid password.")
     TOKEN = ("token", "Invalid or expired token.")

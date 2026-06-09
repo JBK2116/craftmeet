@@ -1,16 +1,19 @@
 import logging
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.exceptions import (
     EmailDeliveryError,
     EmailExistsError,
+    EmailNotVerifiedError,
+    UserInvalidPasswordError,
+    UserNotFoundError,
     VerifyEmailTokenCooldownError,
 )
-from src.auth.schemas import SignupRequest
-from src.auth.service import handle_signup
+from src.auth.schemas import LoginRequest, SignupRequest, UserOut
+from src.auth.service import handle_login, handle_signup
 from src.database import get_db
 from src.exceptions import DatabaseError
 from src.types import ErrorTypes
@@ -53,4 +56,39 @@ async def signup(payload: SignupRequest, db: AsyncSession = Depends(get_db)):
                 "message": ErrorTypes.VERIFY_EMAIL_TOKEN_COOLDOWN.message,
             },
             status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+@auth_router.post("/login", status_code=status.HTTP_200_OK, response_model=UserOut)
+async def login(
+    payload: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)
+):
+    logger.debug(msg="Received login payload", extra={"payload": payload})
+    try:
+        user = await handle_login(db, payload, response)
+        return user
+
+    except (DatabaseError, EmailDeliveryError):
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.SERVER.type,
+                "message": ErrorTypes.SERVER.message,
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    except EmailNotVerifiedError:
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.EMAIL_NOT_VERIFIED.type,
+                "message": ErrorTypes.EMAIL_NOT_VERIFIED.message,
+            },
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+    except (UserNotFoundError, UserInvalidPasswordError):
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.INVALID_CREDENTIALS.type,
+                "message": ErrorTypes.INVALID_CREDENTIALS.message,
+            },
+            status_code=status.HTTP_401_UNAUTHORIZED,
         )

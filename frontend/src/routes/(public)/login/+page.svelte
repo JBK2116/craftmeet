@@ -1,8 +1,12 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
+    import EmailModal from '$lib/components/EmailModal.svelte';
+    import { ErrorTypes } from '$lib/types/errors';
     import { toast } from 'svelte-sonner';
 
     // loginAttempt state
     let isAttempting = $state(false);
+    let showEmailModal = $state(false);
 
     // email functionality
     let email = $state('');
@@ -60,15 +64,35 @@
     }
 
     // authentication functionality
+    const url = `/api/v1/auth/login`;
     async function handleLogin(): Promise<void> {
-        // TODO: Handle this function later
         isAttempting = true;
         try {
             if (!validateLogin()) return;
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const body = { email: email, password: password };
+            const response = await fetch(url, {
+                body: JSON.stringify(body),
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (!response.ok) {
+                // handle the error response sent by the backend
+                const body = await response.json();
+                switch (body.type) {
+                    case ErrorTypes.INVALID_CREDENTIALS:
+                        toast.error(body.message);
+                        return;
+                    case ErrorTypes.SERVER:
+                        toast.error(body.message);
+                        return;
+                    case ErrorTypes.EMAIL_NOT_VERIFIED:
+                        showEmailModal = true;
+                        return;
+                }
+            }
+            goto('/dashboard');
         } catch (err: any) {
         } finally {
-            toast.error('Unable to sign in', { position: 'bottom-right' });
             isAttempting = false;
         }
     }
@@ -298,3 +322,8 @@
         </p>
     </div>
 </main>
+<EmailModal
+    bind:open={showEmailModal}
+    title="Verify your email"
+    message={`We've recently sent a verification link to ${email}. Please confirm your email address to activate your account before you can use the app.`}
+/>

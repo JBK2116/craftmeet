@@ -8,11 +8,11 @@ authentication state persistence.
 import logging
 import uuid
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.models import VerifyEmailToken
+from src.auth.models import RefreshToken, VerifyEmailToken
 from src.exceptions import DatabaseError
 from src.models import User
 
@@ -118,6 +118,30 @@ async def insert_verify_email_token(
         raise DatabaseError("database error occured") from e
 
 
+async def insert_refresh_token(db: AsyncSession, token: RefreshToken) -> RefreshToken:
+    """Inserts a new refresh token into the database.
+
+    Args:
+        db: Async database session.
+        token: RefreshToken object to insert.
+
+    Returns:
+        RefreshToken object that was inserted.
+
+    Raises:
+        DatabaseError if an error occurs during the database execution process.
+    """
+    try:
+        db.add(token)
+        await db.commit()
+        await db.refresh(token)
+        return token
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logger.exception("failed to insert refresh token")
+        raise DatabaseError("database error occured") from e
+
+
 async def update_user_username(db: AsyncSession, u_id: uuid.UUID, new: str) -> User:
     """Updates the username for a user.
 
@@ -184,4 +208,24 @@ async def delete_verify_email_token(db: AsyncSession, token: VerifyEmailToken) -
     except SQLAlchemyError as e:
         await db.rollback()
         logger.exception("failed to delete verify email token")
+        raise DatabaseError("database error occured") from e
+
+
+async def delete_refresh_tokens(db: AsyncSession, u_id: uuid.UUID) -> None:
+    """Deletes all refresh tokens for a user.
+
+    Args:
+        db: Async database session.
+        u_id: User ID to delete refresh tokens for.
+
+    Raises:
+        DatabaseError if an error occurs during the database execution process.
+    """
+    try:
+        stmt = delete(RefreshToken).where(RefreshToken.user_id == u_id)
+        await db.execute(stmt)
+        await db.commit()
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logger.exception("failed to delete refresh tokens")
         raise DatabaseError("database error occured") from e
