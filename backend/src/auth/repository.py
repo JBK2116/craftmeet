@@ -36,9 +36,14 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
         logger.debug(f"getting user with email: {email}")
         stmt = select(User).where(User.email == email)
         result = await db.execute(stmt)
-        return result.scalar_one_or_none()
+        user = result.scalar_one_or_none()
+        if user:
+            logger.debug(f"user found with email: {email}, user_id: {user.id}")
+        else:
+            logger.debug(f"no user found with email: {email}")
+        return user
     except SQLAlchemyError as e:
-        logger.exception(f"failed to get user with email: {str}")
+        logger.exception(f"failed to get user with email: {email}")
         raise DatabaseError("database error occured") from e
 
 
@@ -58,12 +63,17 @@ async def get_user_verify_email_token(
         DatabaseError if an error occurs during the database execution process.
     """
     try:
-        logger.debug(f"getting verify email token of user with ID: {str(u_id)}")
+        logger.debug(f"retrieving verify email token for user ID: {u_id}")
         stmt = select(VerifyEmailToken).where(VerifyEmailToken.user_id == u_id)
         result = await db.execute(stmt)
-        return result.scalar_one_or_none()
+        token = result.scalar_one_or_none()
+        if token:
+            logger.debug(f"verify email token found for user ID: {u_id}")
+        else:
+            logger.debug(f"no verify email token found for user ID: {u_id}")
+        return token
     except SQLAlchemyError as e:
-        logger.exception(f"failed to get verify email token of user with ID: {u_id}")
+        logger.exception(f"failed to retrieve verify email token for user ID: {u_id}")
         raise DatabaseError("database error occured") from e
 
 
@@ -81,10 +91,11 @@ async def insert_user(db: AsyncSession, user: User) -> User:
         DatabaseError if an error occurs during the database execution process.
     """
     try:
+        logger.debug(f"inserting new user with email: {user.email}")
         db.add(user)
         await db.commit()
         await db.refresh(user)
-        logger.debug(f"inserted user with email into database: {user.email}")
+        logger.debug(f"successfully inserted user with email: {user.email}, user_id: {user.id}")
         return user
     except SQLAlchemyError as e:
         await db.rollback()
@@ -108,13 +119,15 @@ async def insert_verify_email_token(
         DatabaseError if an error occurs during the database execution process.
     """
     try:
+        logger.debug(f"inserting verify email token for user ID: {token.user_id}")
         db.add(token)
         await db.commit()
         await db.refresh(token)
+        logger.debug(f"successfully inserted verify email token for user ID: {token.user_id}")
         return token
     except SQLAlchemyError as e:
         await db.rollback()
-        logger.exception("failed to insert verify email token")
+        logger.exception(f"failed to insert verify email token for user ID: {token.user_id}")
         raise DatabaseError("database error occured") from e
 
 
@@ -132,13 +145,15 @@ async def insert_refresh_token(db: AsyncSession, token: RefreshToken) -> Refresh
         DatabaseError if an error occurs during the database execution process.
     """
     try:
+        logger.debug(f"inserting refresh token for user ID: {token.user_id}")
         db.add(token)
         await db.commit()
         await db.refresh(token)
+        logger.debug(f"successfully inserted refresh token for user ID: {token.user_id}")
         return token
     except SQLAlchemyError as e:
         await db.rollback()
-        logger.exception("failed to insert refresh token")
+        logger.exception(f"failed to insert refresh token for user ID: {token.user_id}")
         raise DatabaseError("database error occured") from e
 
 
@@ -157,13 +172,15 @@ async def update_user_username(db: AsyncSession, u_id: uuid.UUID, new: str) -> U
         DatabaseError if an error occurs during the database execution process.
     """
     try:
+        logger.debug(f"updating username for user ID: {u_id} to: {new}")
         stmt = update(User).where(User.id == u_id).values(username=new).returning(User)
         result = await db.execute(stmt)
         await db.commit()
+        logger.debug(f"successfully updated username for user ID: {u_id}")
         return result.scalar_one()
     except SQLAlchemyError as e:
         await db.rollback()
-        logger.exception("failed to update user username")
+        logger.exception(f"failed to update username for user ID: {u_id}")
         raise DatabaseError("database error occurred") from e
 
 
@@ -182,13 +199,15 @@ async def update_user_password(db: AsyncSession, u_id: uuid.UUID, new: str) -> U
         DatabaseError if an error occurs during the database execution process.
     """
     try:
+        logger.debug(f"updating password for user ID: {u_id}")
         stmt = update(User).where(User.id == u_id).values(password=new).returning(User)
         result = await db.execute(stmt)
         await db.commit()
+        logger.debug(f"successfully updated password for user ID: {u_id}")
         return result.scalar_one()
     except SQLAlchemyError as e:
         await db.rollback()
-        logger.exception("failed to update user password")
+        logger.exception(f"failed to update password for user ID: {u_id}")
         raise DatabaseError("database error occurred") from e
 
 
@@ -203,11 +222,13 @@ async def delete_verify_email_token(db: AsyncSession, token: VerifyEmailToken) -
         DatabaseError if an error occurs during the database execution process.
     """
     try:
+        logger.debug(f"deleting verify email token for user ID: {token.user_id}")
         await db.delete(token)
         await db.commit()
+        logger.debug(f"successfully deleted verify email token for user ID: {token.user_id}")
     except SQLAlchemyError as e:
         await db.rollback()
-        logger.exception("failed to delete verify email token")
+        logger.exception(f"failed to delete verify email token for user ID: {token.user_id}")
         raise DatabaseError("database error occured") from e
 
 
@@ -222,10 +243,12 @@ async def delete_refresh_tokens(db: AsyncSession, u_id: uuid.UUID) -> None:
         DatabaseError if an error occurs during the database execution process.
     """
     try:
+        logger.debug(f"deleting all refresh tokens for user ID: {u_id}")
         stmt = delete(RefreshToken).where(RefreshToken.user_id == u_id)
         await db.execute(stmt)
         await db.commit()
+        logger.debug(f"successfully deleted all refresh tokens for user ID: {u_id}")
     except SQLAlchemyError as e:
         await db.rollback()
-        logger.exception("failed to delete refresh tokens")
+        logger.exception(f"failed to delete refresh tokens for user ID: {u_id}")
         raise DatabaseError("database error occured") from e

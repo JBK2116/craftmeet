@@ -58,72 +58,67 @@ async def handle_signup(db: AsyncSession, payload: SignupRequest) -> None:
     user = await get_user_by_email(db, payload.email)
     if not user:
         # create a new user, token and send the email to begin their signup process
-        logger.debug(f"creating new user with email: {payload.email}")
+        logger.debug("creating new user", extra={"email": payload.email})
         user = User(
             email=payload.email,
             username=payload.username,
             password=hash_password(payload.password),
         )
         user = await insert_user(db, user)
-        logger.debug(
-            f"creating new verify email token for user with email: {user.email}"
-        )
+        logger.debug("creating new verify email token", extra={"email": user.email})
         token = generate_verify_email_token(user.id)
         token = await insert_verify_email_token(db, token)
-        logger.debug(f"sending verification email to user with email: {user.email}")
+        logger.debug("sending verification email", extra={"email": user.email})
         await send_verification_email(user, token)
     else:
-        logger.debug(f"user with email already exists: {user.email}")
+        logger.debug("user already exists", extra={"email": user.email})
         if user.verified:
             # verified user already exists so they are not permitted to signup again
-            logger.debug(f"user with email is already verified: {user.email}")
+            logger.debug("user is already verified", extra={"email": user.email})
             raise EmailExistsError(user.email)
         token = await get_user_verify_email_token(db, user.id)
         if token is None:
             # update the user password and username as well to remain consistent with what they expect
             if user.username != payload.username:
-                logger.debug(f"updating username of user with email: {user.email}")
+                logger.debug("updating username", extra={"email": user.email})
                 user = await update_user_username(db, user.id, payload.username)
             if user.password:
                 if not check_password(payload.password, user.password):
-                    logger.debug(f"updating password of user with email: {user.email}")
+                    logger.debug("updating password", extra={"email": user.email})
                     user = await update_user_password(
                         db, user.id, hash_password(payload.password)
                     )
             # recreate the token to give the user another attempt to signup
-            logger.debug(
-                f"creating new verify email token for user with email: {user.email}"
-            )
+            logger.debug("creating new verify email token", extra={"email": user.email})
             token = generate_verify_email_token(user.id)
             token = await insert_verify_email_token(db, token)
-            logger.debug(f"sending verification email to user with email: {user.email}")
+            logger.debug("sending verification email", extra={"email": user.email})
             await send_verification_email(user, token)
             return
         # recreate the token only if enough time has passed since last attempt to prevent email spamming
         time_passed = check_verify_email_token_cooldown(token.created_at)
         if not time_passed:
             logger.debug(
-                f"verify email token cooldown has not elapsed for user: {user.email}"
+                "verify email token cooldown has not elapsed",
+                extra={"email": user.email},
             )
             raise VerifyEmailTokenCooldownError(user.email)
         # update the user password and username as well to remain consistent with what they expect
         if user.username != payload.username:
-            logger.debug(f"updating username of user with email: {user.email}")
+            logger.debug("updating username", extra={"email": user.email})
             user = await update_user_username(db, user.id, payload.username)
         if user.password:
             if not check_password(payload.password, user.password):
-                logger.debug(f"updating password of user with email: {user.email}")
+                logger.debug("updating password", extra={"email": user.email})
                 user = await update_user_password(
                     db, user.id, hash_password(payload.password)
                 )
-        logger.debug(f"deleting verify email token associated with user: {user.email}")
+        logger.debug("deleting verify email token", extra={"email": user.email})
         await delete_verify_email_token(db, token)
         token = generate_verify_email_token(user.id)
-        logger.debug(
-            f"creating new verify email token for user with email: {user.email}"
-        )
+        logger.debug("creating new verify email token", extra={"email": user.email})
         token = await insert_verify_email_token(db, token)
-        logger.debug(f"sending verification email to user with email: {user.email}")
+        logger.debug("sending verification email", extra={"email": user.email})
         await send_verification_email(user, token)
 
 
@@ -132,7 +127,7 @@ async def handle_login(
 ) -> User:
     user = await get_user_by_email(db, payload.email)
     if user is None:
-        logger.debug("unable to find user in database", extra={"email": payload.email})
+        logger.debug("user not found in database", extra={"email": payload.email})
         raise UserNotFoundError(payload.email)
     # perform a standard password check to ensure the user has provided the correct credentials
     # if the password is None, then the user signed up with oauth so just provide a simple error message for security
@@ -144,39 +139,31 @@ async def handle_login(
         raise UserInvalidPasswordError(user.email)
     ok = check_password(payload.password, user.password)
     if not ok:
-        logger.debug("invalid password provided for user", extra={"email": user.email})
+        logger.debug("invalid password provided", extra={"email": user.email})
         raise UserInvalidPasswordError(user.email)
     # resend a verify email message to the user prompting them to verify their account so they can login
     # only resend the message if the token cooldown has passed else, just prompt them to check their email to prevent spam
     if not user.verified:
         token = await get_user_verify_email_token(db, user.id)
         if token is None:
-            logger.debug(
-                "creating new verify email token for user", extra={"email": user.email}
-            )
+            logger.debug("creating new verify email token", extra={"email": user.email})
             token = generate_verify_email_token(user.id)
             token = await insert_verify_email_token(db, token)
-            logger.debug(
-                "sending verification email to user", extra={"email": user.email}
-            )
+            logger.debug("sending verification email", extra={"email": user.email})
             await send_verification_email(user, token)
             raise EmailNotVerifiedError(user.email)
         time_passed = check_verify_email_token_cooldown(token.created_at)
         if not time_passed:
             logger.debug(
-                "verify email token cooldown has not elapsed for user",
+                "verify email token cooldown has not elapsed",
                 extra={"email": user.email},
             )
             raise EmailNotVerifiedError(user.email)
-        logger.debug(
-            "deleting verify email token for user", extra={"email": user.email}
-        )
+        logger.debug("deleting verify email token", extra={"email": user.email})
         await delete_verify_email_token(db, token)
         token = generate_verify_email_token(user.id)
         token = await insert_verify_email_token(db, token)
-        logger.debug(
-            "resending verification email to user", extra={"email": user.email}
-        )
+        logger.debug("resending verification email", extra={"email": user.email})
         await send_verification_email(user, token)
         raise EmailNotVerifiedError(user.email)
     # create the jwt tokens to handle user authentication now that they are logged in
