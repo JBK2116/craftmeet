@@ -13,12 +13,7 @@
             value: stats.total_meetings_month,
             subtext: 'Free plan · unlimited during launch',
         },
-        {
-            icon: Video,
-            label: 'Total Meetings Run',
-            value: stats.total_meetings,
-            subtext: null,
-        },
+        { icon: Video, label: 'Total Meetings Run', value: stats.total_meetings, subtext: null },
         {
             icon: Users,
             label: 'Total Participants',
