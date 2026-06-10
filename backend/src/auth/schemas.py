@@ -10,6 +10,7 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
+from src.auth.constants import VERIFY_EMAIL_TOKEN_LENGTH
 from src.constants import (
     BCRYPT_MAX_BYTES,
     MAX_EMAIL_LENGTH,
@@ -131,4 +132,19 @@ class LoginRequest(BaseModel):
             raise ValueError(
                 f"Password must not exceed {MAX_PASSWORD_LENGTH} characters"
             )
+        return value
+
+
+class VerifyEmailRequest(BaseModel):
+    """Pydantic model representing verify email request body"""
+
+    token: str
+
+    @field_validator("token")
+    @classmethod
+    def validate_token(cls, value: str) -> str:
+        if len(value) != VERIFY_EMAIL_TOKEN_LENGTH:
+            # minimal validation is needed here as the database will verify if this token is valid by attempting to match it to an existing token
+            # we just need to ensure the token is a non-empty string
+            raise ValueError("Invalid token provided")
         return value

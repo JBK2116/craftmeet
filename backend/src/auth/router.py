@@ -8,12 +8,13 @@ from src.auth.exceptions import (
     EmailDeliveryError,
     EmailExistsError,
     EmailNotVerifiedError,
+    InvalidTokenError,
     UserInvalidPasswordError,
     UserNotFoundError,
     VerifyEmailTokenCooldownError,
 )
-from src.auth.schemas import LoginRequest, SignupRequest, UserOut
-from src.auth.service import handle_login, handle_signup
+from src.auth.schemas import LoginRequest, SignupRequest, UserOut, VerifyEmailRequest
+from src.auth.service import handle_login, handle_signup, handle_verify_email
 from src.database import get_db
 from src.exceptions import DatabaseError
 from src.types import ErrorTypes
@@ -32,7 +33,7 @@ auth_router = APIRouter(
 async def signup(payload: SignupRequest, db: AsyncSession = Depends(get_db)):
     logger.debug(msg="Received signup payload", extra={"payload": payload})
     try:
-        await handle_signup(db, payload)
+        await handle_signup(db=db, payload=payload)
     except (DatabaseError, EmailDeliveryError):
         return JSONResponse(
             content={
@@ -65,7 +66,7 @@ async def login(
 ):
     logger.debug(msg="Received login payload", extra={"payload": payload})
     try:
-        user = await handle_login(db, payload, response)
+        user = await handle_login(db=db, payload=payload, response=response)
         return user
 
     except (DatabaseError, EmailDeliveryError):
@@ -92,3 +93,14 @@ async def login(
             },
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
+
+
+@auth_router.post("/verify-email", status_code=status.HTTP_200_OK)
+async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = Depends(get_db)):
+    logger.debug(msg="Received verify email payload", extra={"payload": payload})
+    try:
+        await handle_verify_email(db=db, payload=payload)
+    except DatabaseError:
+        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except InvalidTokenError:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST)

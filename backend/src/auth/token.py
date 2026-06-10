@@ -16,6 +16,7 @@ from typing import Any
 import jwt
 
 from src.auth.constants import (
+    VERIFY_EMAIL_TOKEN_BYTES,
     VERIFY_EMAIL_TOKEN_COOLDOWN_DURATION_MINUTES,
     VERIFY_EMAIL_TOKEN_MAX_DURATION_MINUTES,
 )
@@ -44,7 +45,7 @@ def generate_verify_email_token(u_id: uuid.UUID) -> VerifyEmailToken:
     """
     return VerifyEmailToken(
         user_id=u_id,
-        token_hash=secrets.token_urlsafe(32),
+        token_hash=secrets.token_urlsafe(VERIFY_EMAIL_TOKEN_BYTES),
         expires_at=datetime.datetime.now(datetime.UTC)
         + datetime.timedelta(minutes=VERIFY_EMAIL_TOKEN_MAX_DURATION_MINUTES),
     )
@@ -67,6 +68,23 @@ def check_verify_email_token_cooldown(created_at: datetime.datetime) -> bool:
     return datetime.datetime.now(datetime.UTC) - created_at > datetime.timedelta(
         minutes=VERIFY_EMAIL_TOKEN_COOLDOWN_DURATION_MINUTES
     )
+
+
+def check_verify_email_token_expiry(expires_at: datetime.datetime) -> bool:
+    """
+    Checks if the verify email token has expired.
+
+    Determines whether the token's expiration time has passed by comparing
+    it to the current time. This is used to validate whether a verify email
+    token is still valid for use.
+
+    Args:
+        expires_at: The datetime when the token expires.
+
+    Returns:
+        bool: True if the token has expired, False otherwise.
+    """
+    return expires_at > datetime.datetime.now(tz=datetime.UTC)
 
 
 def generate_access_token(u_id: uuid.UUID) -> str:

@@ -1,7 +1,9 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
+    import { page } from '$app/state';
     import EmailModal from '$lib/components/EmailModal.svelte';
     import { ErrorTypes } from '$lib/types/errors';
+    import { onMount } from 'svelte';
     import { toast } from 'svelte-sonner';
 
     // loginAttempt state
@@ -97,6 +99,21 @@
         }
     }
 
+    onMount(() => {
+        const verified_email = page.url.searchParams.get('verified_email');
+        if (!verified_email) {
+            return;
+        }
+        const isTrue = verified_email.toLowerCase() === 'true';
+        if (isTrue) {
+            toast.success('Email verified! You can now log in.', { duration: Infinity });
+        } else {
+            toast.error(
+                'Your verification link is invalid or has expired. Sign up again with the same email to receive a new one.',
+                { duration: Infinity },
+            );
+        }
+    });
     async function handleOAUTH(): Promise<void> {
         // TODO: Handle this function later
         isAttempting = true;
