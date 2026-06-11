@@ -2,6 +2,7 @@
     import { page } from '$app/state';
     import { Button } from '$lib/components/ui/button';
     import { Sheet, SheetContent, SheetTrigger } from '$lib/components/ui/sheet';
+    import { user } from '$lib/stores/stores';
     import { Menu, Moon, Sun } from '@lucide/svelte';
 
     import Logo from './Logo.svelte';
@@ -83,19 +84,29 @@
                         <Moon class="h-4 w-4" />
                     {/if}
                 </Button>
-                <Button
-                    variant="ghost"
-                    href="/login"
-                    class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                >
-                    Log in
-                </Button>
-                <Button
-                    href="/signup"
-                    class="h-8 rounded-md bg-primary px-4 text-sm text-primary-foreground transition-all duration-150 hover:bg-primary/90"
-                >
-                    Sign up
-                </Button>
+                {#if $user}
+                    <Button
+                        variant="ghost"
+                        href="/dashboard"
+                        class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    >
+                        Dashboard
+                    </Button>
+                {:else}
+                    <Button
+                        variant="ghost"
+                        href="/login"
+                        class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    >
+                        Log in
+                    </Button>
+                    <Button
+                        href="/signup"
+                        class="h-8 rounded-md bg-primary px-4 text-sm text-primary-foreground transition-all duration-150 hover:bg-primary/90"
+                    >
+                        Sign up
+                    </Button>
+                {/if}
             </div>
 
             <div class="md:hidden">
@@ -122,20 +133,29 @@
                                 {/each}
                             </div>
                             <div class="flex flex-col gap-2 border-t border-border pt-4">
-                                <Button
-                                    variant="ghost"
-                                    href="/login"
-                                    class="justify-start px-0 text-sm text-muted-foreground hover:bg-transparent hover:text-foreground"
-                                >
-                                    Log in
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    href="/signup"
-                                    class="text-sm text-foreground transition-all duration-150 hover:bg-accent"
-                                >
-                                    Sign up
-                                </Button>
+                                {#if $user}
+                                    <Button
+                                        variant="ghost"
+                                        href="/dashboard"
+                                        class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                    >
+                                        Dashboard
+                                    </Button>
+                                {:else}
+                                    <Button
+                                        variant="ghost"
+                                        href="/login"
+                                        class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                    >
+                                        Log in
+                                    </Button>
+                                    <Button
+                                        href="/signup"
+                                        class="h-8 rounded-md bg-primary px-4 text-sm text-primary-foreground transition-all duration-150 hover:bg-primary/90"
+                                    >
+                                        Sign up
+                                    </Button>
+                                {/if}
                                 <button
                                     onclick={toggleTheme}
                                     class="flex items-center gap-2 pt-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -227,13 +247,23 @@
                         <Moon class="h-4 w-4" />
                     {/if}
                 </Button>
-                <Button
-                    href="/login"
-                    variant="ghost"
-                    class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                >
-                    Log in
-                </Button>
+                {#if $user}
+                    <Button
+                        href="/dashboard"
+                        variant="ghost"
+                        class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    >
+                        Dashboard
+                    </Button>
+                {:else}
+                    <Button
+                        href="/login"
+                        variant="ghost"
+                        class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    >
+                        Log in
+                    </Button>
+                {/if}
             </div>
         {:else if isApp}
             <div class="hidden items-center gap-3 md:flex">

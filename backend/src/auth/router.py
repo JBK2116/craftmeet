@@ -117,10 +117,10 @@ async def verify_email(db: DB, payload: VerifyEmailRequest):
 
 
 @auth_router.get("/me", status_code=status.HTTP_200_OK, response_model=UserOut)
-async def me(db: DB, access_token: Access_Token):
+async def me(db: DB, access_token: Access_Token = None):
     logger.debug("Received access token", extra={"token": access_token})
     if access_token is None:
-        raise InvalidTokenError
+        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
     try:
         user = await handle_me(db=db, access_token=access_token)
         return user
@@ -131,10 +131,10 @@ async def me(db: DB, access_token: Access_Token):
 
 
 @auth_router.post("/refresh", status_code=status.HTTP_200_OK)
-async def refresh(db: DB, response: Response, refresh_token: Refresh_Token):
+async def refresh(db: DB, response: Response, refresh_token: Refresh_Token = None):
     logger.debug("Received refresh token", extra={"token": refresh_token})
     if refresh_token is None:
-        raise InvalidTokenError
+        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
     try:
         await handle_refresh(db=db, response=response, refresh_token=refresh_token)
     except DatabaseError:

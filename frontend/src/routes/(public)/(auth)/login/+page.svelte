@@ -2,6 +2,7 @@
     import { goto } from '$app/navigation';
     import { page } from '$app/state';
     import EmailModal from '$lib/components/EmailModal.svelte';
+    import { user } from '$lib/stores/stores';
     import { ErrorTypes } from '$lib/types/errors';
     import { onMount } from 'svelte';
     import { toast } from 'svelte-sonner';
@@ -92,6 +93,7 @@
                         return;
                 }
             }
+            user.set(await response.json());
             goto('/dashboard');
         } catch (err: any) {
         } finally {

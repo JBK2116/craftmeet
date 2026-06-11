@@ -8,7 +8,12 @@
 export async function refreshTokens(customFetch: typeof fetch = fetch): Promise<boolean> {
     try {
         const url = `/api/v1/auth/refresh`;
-        const response = await fetch(url, { method: 'POST', credentials: 'include' });
+        const headers = { 'Content-Type': 'application/json' };
+        const response = await customFetch(url, {
+            method: 'POST',
+            credentials: 'include',
+            headers,
+        });
         return response.ok;
     } catch (err: any) {
         return false;

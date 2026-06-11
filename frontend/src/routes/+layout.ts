@@ -12,7 +12,8 @@ export async function load({ fetch }) {
         return;
     }
     const url = `/api/v1/auth/me`;
-    let response = await fetch(url, { method: 'GET', credentials: 'include' });
+    const headers = { 'Content-Type': 'application/json' };
+    let response = await fetch(url, { method: 'GET', credentials: 'include', headers });
     if (response.status === 401) {
         // access token failed validation and will need to be refreshed
         const isRefreshed = await refreshTokens(fetch);
