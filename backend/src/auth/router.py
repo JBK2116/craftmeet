@@ -15,7 +15,13 @@ from src.auth.exceptions import (
     VerifyEmailTokenCooldownError,
 )
 from src.auth.schemas import LoginRequest, SignupRequest, UserOut, VerifyEmailRequest
-from src.auth.service import handle_login, handle_me, handle_signup, handle_verify_email
+from src.auth.service import (
+    handle_login,
+    handle_me,
+    handle_refresh,
+    handle_signup,
+    handle_verify_email,
+)
 from src.database import get_db
 from src.exceptions import DatabaseError
 from src.types import ErrorTypes
@@ -118,6 +124,19 @@ async def me(db: DB, access_token: Access_Token):
     try:
         user = await handle_me(db=db, access_token=access_token)
         return user
+    except DatabaseError:
+        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except InvalidTokenError:
+        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+
+
+@auth_router.post("/refresh", status_code=status.HTTP_200_OK)
+async def refresh(db: DB, response: Response, refresh_token: Refresh_Token):
+    logger.debug("Received refresh token", extra={"token": refresh_token})
+    if refresh_token is None:
+        raise InvalidTokenError
+    try:
+        await handle_refresh(db=db, response=response, refresh_token=refresh_token)
     except DatabaseError:
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except InvalidTokenError:

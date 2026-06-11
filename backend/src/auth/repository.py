@@ -100,6 +100,52 @@ async def get_verify_email_token(
         raise DatabaseError("database error occurred") from e
 
 
+async def get_refresh_token(
+    db: AsyncSession, u_id: uuid.UUID | None = None, token_hash: str | None = None
+) -> RefreshToken | None:
+    """Retrieves a refresh token from the database.
+
+    Queries the database for a refresh token matching either the provided user ID
+    or token hash. Exactly one of u_id or token_hash should be provided.
+
+    Args:
+        db: Async database session.
+        u_id: User ID to retrieve the refresh token for. Defaults to None.
+        token_hash: Token hash to retrieve the refresh token for. Defaults to None.
+
+    Returns:
+        RefreshToken object if found, None otherwise.
+
+    Raises:
+        DatabaseError: If an error occurs during the database execution process.
+    """
+    try:
+        if u_id:
+            logger.debug(f"getting refresh token for user ID: {u_id}")
+            stmt = select(RefreshToken).where(RefreshToken.user_id == u_id)
+        elif token_hash:
+            logger.debug("getting refresh token by token hash")
+            stmt = select(RefreshToken).where(RefreshToken.token_hash == token_hash)
+        else:
+            logger.debug("no user ID or token hash provided, returning None")
+            return None
+        result = await db.execute(stmt)
+        token = result.scalar_one_or_none()
+        if token:
+            logger.debug(
+                "refresh token found", extra={"u_id": u_id, "token_hash": token_hash}
+            )
+        else:
+            logger.debug(
+                "refresh token not found",
+                extra={"u_id": u_id, "token_hash": token_hash},
+            )
+        return token
+    except SQLAlchemyError as e:
+        logger.exception(f"failed to retrieve refresh token for user ID: {u_id}")
+        raise DatabaseError("database error occurred") from e
+
+
 async def insert_user(db: AsyncSession, user: User) -> User:
     """Inserts a new user into the database.
 

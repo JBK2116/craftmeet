@@ -24,6 +24,7 @@ from src.auth.exceptions import (
 from src.auth.repository import (
     delete_refresh_tokens,
     delete_verify_email_token,
+    get_refresh_token,
     get_user,
     get_verify_email_token,
     insert_refresh_token,
@@ -36,6 +37,7 @@ from src.auth.token import (
     check_verify_email_token_cooldown,
     check_verify_email_token_expiry,
     decode_access_token,
+    decode_refresh_token,
     generate_access_token,
     generate_refresh_token,
     generate_verify_email_token,
@@ -129,7 +131,7 @@ async def handle_signup(db: AsyncSession, payload: SignupRequest) -> None:
 
 
 async def handle_login(
-    db: AsyncSession, payload: LoginRequest, response: Response
+    db: AsyncSession, response: Response, payload: LoginRequest
 ) -> User:
     """
     Handle user login functionality.
@@ -305,3 +307,74 @@ async def handle_me(db: AsyncSession, access_token: str) -> User:
         raise InvalidTokenError
     logger.debug("user retrieved successfully", extra={"email": user.email})
     return user
+
+
+async def handle_refresh(
+    db: AsyncSession, response: Response, refresh_token: str
+) -> None:
+    """
+    Handle refresh token rotation and token pair regeneration.
+
+    Validates the provided refresh token, rotates it in the database following
+    security best practices, and generates a new pair of access and refresh tokens.
+    Both tokens are set as HttpOnly cookies in the response.
+
+    Args:
+        db: Async database session
+        response: FastAPI Response object to set authentication cookies
+        refresh_token: JWT refresh token string
+
+    Raises:
+        InvalidTokenError: If the token is invalid, malformed, expired,
+                          user_id is not found in claims, or token is not in database
+    """
+    logger.debug("decoding refresh tokens")
+    claims = decode_refresh_token(token=refresh_token)
+    user_id = claims.get("user_id")
+    if user_id is None:
+        logger.debug("user_id not found in token claims")
+        raise InvalidTokenError
+    try:
+        user_id = uuid.UUID(hex=user_id)
+    except ValueError as e:
+        logger.debug("invalid user_id format in token", extra={"user_id": user_id})
+        raise InvalidTokenError from e
+    logger.debug("retrieving refresh token from database", extra={"user_id": user_id})
+    token = await get_refresh_token(db=db, token_hash=refresh_token)
+    if token is None:
+        logger.debug("refresh token not found in database", extra={"user_id": user_id})
+        raise InvalidTokenError
+    if user_id != token.user_id:
+        logger.debug(
+            "refresh token user_id mismatch",
+            extra={"token_user_id": token.user_id, "claims_user_id": user_id},
+        )
+        raise InvalidTokenError
+    # at this point the provided refresh token is valid
+    # the refresh token must be rotated in the database to follow security best practices
+    # and a new pair of access and refresh tokens must be resent to the frontend
+    logger.debug("rotating refresh token", extra={"user_id": user_id})
+    await delete_refresh_tokens(db=db, u_id=user_id)
+    refresh_token = generate_refresh_token(u_id=user_id)
+    refresh_token = await insert_refresh_token(db=db, token=refresh_token)
+    access_token = generate_access_token(u_id=user_id)
+    logger.debug("setting authentication cookies", extra={"user_id": user_id})
+    # max_age expects seconds so adjust the value accordingly
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=False if settings.IS_DEV else True,
+        samesite="strict",
+        max_age=settings.ACCESS_TOKEN_TTL_MINUTES * 60,
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token.token_hash,
+        httponly=True,
+        secure=False if settings.IS_DEV else True,
+        samesite="strict",
+        max_age=settings.REFRESH_TOKEN_TTL_HOURS * 60 * 60,
+    )
+    logger.debug("refresh token rotation successful", extra={"user_id": user_id})
+    return None
