@@ -1,4 +1,5 @@
 import logging
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.responses import JSONResponse
@@ -21,6 +22,9 @@ from src.types import ErrorTypes
 
 logger = logging.getLogger(__name__)
 
+# Annotated values for reusability
+DB = Annotated[AsyncSession, Depends(get_db)]
+
 auth_router = APIRouter(
     prefix="/auth",
     tags=["authentication"],
@@ -30,7 +34,7 @@ auth_router = APIRouter(
 
 
 @auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def signup(payload: SignupRequest, db: AsyncSession = Depends(get_db)):
+async def signup(db: DB, payload: SignupRequest):
     logger.debug(msg="Received signup payload", extra={"payload": payload})
     try:
         await handle_signup(db=db, payload=payload)
@@ -61,9 +65,7 @@ async def signup(payload: SignupRequest, db: AsyncSession = Depends(get_db)):
 
 
 @auth_router.post("/login", status_code=status.HTTP_200_OK, response_model=UserOut)
-async def login(
-    payload: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)
-):
+async def login(db: DB, response: Response, payload: LoginRequest):
     logger.debug(msg="Received login payload", extra={"payload": payload})
     try:
         user = await handle_login(db=db, payload=payload, response=response)
@@ -96,7 +98,7 @@ async def login(
 
 
 @auth_router.post("/verify-email", status_code=status.HTTP_200_OK)
-async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = Depends(get_db)):
+async def verify_email(db: DB, payload: VerifyEmailRequest):
     logger.debug(msg="Received verify email payload", extra={"payload": payload})
     try:
         await handle_verify_email(db=db, payload=payload)
