@@ -6,6 +6,7 @@ including session management, token handling and more.
 
 import datetime
 import logging
+import uuid
 
 from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,6 +35,7 @@ from src.auth.schemas import LoginRequest, SignupRequest, VerifyEmailRequest
 from src.auth.token import (
     check_verify_email_token_cooldown,
     check_verify_email_token_expiry,
+    decode_access_token,
     generate_access_token,
     generate_refresh_token,
     generate_verify_email_token,
@@ -263,3 +265,43 @@ async def handle_verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> 
     )
     logger.debug("user email verification successful", extra={"email": user.email})
     return
+
+
+async def handle_me(db: AsyncSession, access_token: str) -> User:
+    """
+    Handle retrieving the current authenticated user.
+
+    Decodes the provided access token, validates it, and retrieves the associated user
+    from the database. This endpoint is typically used to get the current user's information.
+
+    Args:
+        db: Async database session
+        access_token: JWT access token string
+
+    Returns:
+        User: The authenticated user object
+
+    Raises:
+        InvalidTokenError: If the token is invalid, expired, malformed,
+                          or the user_id is not found in the token claims
+    """
+    logger.debug("decoding access token")
+    claims = decode_access_token(token=access_token)
+    user_id = claims.get("user_id")
+    if user_id is None:
+        logger.debug("user_id not found in token claims")
+        raise InvalidTokenError
+    try:
+        user_id = uuid.UUID(hex=user_id)
+    except ValueError as e:
+        logger.debug("invalid user_id format in token", extra={"user_id": user_id})
+        raise InvalidTokenError from e
+    logger.debug("retrieving user from database", extra={"user_id": user_id})
+    user = await get_user(db=db, u_id=user_id)
+    if user is None:
+        # uuid embedded in access_token somehow is not linked to a valid user
+        # this should never happen but necessary to check
+        logger.debug("user not found for token user_id", extra={"user_id": user_id})
+        raise InvalidTokenError
+    logger.debug("user retrieved successfully", extra={"email": user.email})
+    return user

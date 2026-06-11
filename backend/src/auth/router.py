@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Cookie, Depends, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +15,7 @@ from src.auth.exceptions import (
     VerifyEmailTokenCooldownError,
 )
 from src.auth.schemas import LoginRequest, SignupRequest, UserOut, VerifyEmailRequest
-from src.auth.service import handle_login, handle_signup, handle_verify_email
+from src.auth.service import handle_login, handle_me, handle_signup, handle_verify_email
 from src.database import get_db
 from src.exceptions import DatabaseError
 from src.types import ErrorTypes
@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 # Annotated values for reusability
 DB = Annotated[AsyncSession, Depends(get_db)]
+Access_Token = Annotated[str | None, Cookie()]
+Refresh_Token = Annotated[str | None, Cookie()]
 
 auth_router = APIRouter(
     prefix="/auth",
@@ -106,3 +108,17 @@ async def verify_email(db: DB, payload: VerifyEmailRequest):
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except InvalidTokenError:
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@auth_router.get("/me", status_code=status.HTTP_200_OK, response_model=UserOut)
+async def me(db: DB, access_token: Access_Token):
+    logger.debug("Received access token", extra={"token": access_token})
+    if access_token is None:
+        raise InvalidTokenError
+    try:
+        user = await handle_me(db=db, access_token=access_token)
+        return user
+    except DatabaseError:
+        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except InvalidTokenError:
+        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
