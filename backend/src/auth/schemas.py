@@ -135,6 +135,12 @@ class LoginRequest(BaseModel):
         return value
 
 
+class ForgotPasswordRequest(BaseModel):
+    """Pydantic model representing forgot password request"""
+
+    email: EmailStr
+
+
 class VerifyEmailRequest(BaseModel):
     """Pydantic model representing verify email request body"""
 

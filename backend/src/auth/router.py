@@ -15,12 +15,14 @@ from src.auth.exceptions import (
     VerifyEmailTokenCooldownError,
 )
 from src.auth.schemas import (
+    ForgotPasswordRequest,
     LoginRequest,
     SignupRequest,
     UserOut,
     VerifyEmailRequest,
 )
 from src.auth.service import (
+    handle_forgot_password,
     handle_login,
     handle_logout,
     handle_me,
@@ -142,6 +144,21 @@ async def verify_email(db: DB, payload: VerifyEmailRequest):
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except InvalidTokenError:
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@auth_router.post("/forgot-password", status_code=status.HTTP_200_OK)
+async def forgot_password(db: DB, payload: ForgotPasswordRequest):
+    logger.debug("Received forgot-password payload", extra={"payload": payload})
+    try:
+        await handle_forgot_password(db=db, payload=payload)
+    except (DatabaseError, EmailDeliveryError):
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.SERVER.type,
+                "message": ErrorTypes.SERVER.message,
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @auth_router.get("/me", status_code=status.HTTP_200_OK, response_model=UserOut)

@@ -1,5 +1,7 @@
 <script lang="ts">
     import EmailModal from '$lib/components/EmailModal.svelte';
+    import { ErrorTypes } from '$lib/types/errors';
+    import { toast } from 'svelte-sonner';
 
     let isSubmitting = $state(false);
     let showSuccessModal = $state(false);
@@ -36,15 +38,43 @@
         emailError = '';
         return true;
     }
-
+    const url = `/api/v1/auth/forgot-password`;
     async function handleSubmit(): Promise<void> {
         if (!validateEmail()) return;
         isSubmitting = true;
         try {
-            // TODO: call password reset API
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const body = { email: email };
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify(body),
+                headers,
+            });
+            if (!response.ok) {
+                const body = await response.json();
+                if (response.status === 422) {
+                    emailError = 'Please enter a valid email address';
+                    return;
+                }
+                switch (body.type) {
+                    case ErrorTypes.EMAIL:
+                        emailError = body.message;
+                        return;
+                    case ErrorTypes.SERVER:
+                        toast.error(
+                            'We could not send your reset link. There was a temporary problem with our service. Please try again in a few minutes.',
+                            { duration: Infinity },
+                        );
+                        return;
+                }
+            }
+            await new Promise((resolve) => setTimeout(resolve, 2000));
             showSuccessModal = true;
         } catch (err: any) {
+            toast.error(
+                'We could not send your reset link. There was a temporary problem with our service. Please try again in a few minutes.',
+                { duration: Infinity },
+            );
         } finally {
             isSubmitting = false;
         }

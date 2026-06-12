@@ -16,12 +16,15 @@ from typing import Any
 import jwt
 
 from src.auth.constants import (
+    RESET_PASSWORD_COOLDOWN_DURATION_MINUTES,
+    RESET_PASSWORD_TOKEN_BYTES,
+    RESET_PASSWORD_TOKEN_MAX_DURATION_MINUTES,
     VERIFY_EMAIL_TOKEN_BYTES,
     VERIFY_EMAIL_TOKEN_COOLDOWN_DURATION_MINUTES,
     VERIFY_EMAIL_TOKEN_MAX_DURATION_MINUTES,
 )
 from src.auth.exceptions import InvalidTokenError
-from src.auth.models import RefreshToken, VerifyEmailToken
+from src.auth.models import RefreshToken, ResetPasswordToken, VerifyEmailToken
 from src.config import get_settings
 
 settings = get_settings()
@@ -85,6 +88,64 @@ def check_verify_email_token_expiry(expires_at: datetime.datetime) -> bool:
         bool: True if the token has expired, False otherwise.
     """
     return expires_at > datetime.datetime.now(tz=datetime.UTC)
+
+
+def generate_reset_password_token(u_id: uuid.UUID) -> ResetPasswordToken:
+    """
+    Generates a reset password token for the given user.
+
+    Creates a new ResetPasswordToken with a secure token hash and expiry time.
+    This token is used for password reset workflows.
+
+    Args:
+        u_id: The user ID to associate with the token.
+
+    Returns:
+        ResetPasswordToken: A token object containing the user ID, token hash,
+            and expiry datetime.
+    """
+    return ResetPasswordToken(
+        user_id=u_id,
+        token_hash=secrets.token_urlsafe(RESET_PASSWORD_TOKEN_BYTES),
+        expires_at=datetime.datetime.now(datetime.UTC)
+        + datetime.timedelta(minutes=RESET_PASSWORD_TOKEN_MAX_DURATION_MINUTES),
+    )
+
+
+def check_reset_password_cooldown(created_at: datetime.datetime) -> bool:
+    """
+    Checks if the cooldown period for reset password token has elapsed.
+
+    Determines whether enough time has passed since the token was created
+    to allow generating a new reset password token. This prevents abuse by
+    limiting the frequency of token generation requests.
+
+    Args:
+        created_at: The datetime when the previous token was created.
+
+    Returns:
+        bool: True if the cooldown period has elapsed, False otherwise.
+    """
+    return datetime.datetime.now(datetime.UTC) - created_at > datetime.timedelta(
+        minutes=RESET_PASSWORD_COOLDOWN_DURATION_MINUTES
+    )
+
+
+def check_reset_password_token_expiry(expires_at: datetime.datetime) -> bool:
+    """
+    Checks if the reset password token has expired.
+
+    Determines whether the token's expiration time has passed by comparing
+    it to the current time. This is used to validate whether a reset password
+    token is still valid for use.
+
+    Args:
+        expires_at: The datetime when the token expires.
+
+    Returns:
+        bool: True if the token has not expired, False otherwise.
+    """
+    return expires_at > datetime.datetime.now(datetime.UTC)
 
 
 def generate_access_token(u_id: uuid.UUID) -> str:

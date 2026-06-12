@@ -12,7 +12,7 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.models import RefreshToken, VerifyEmailToken
+from src.auth.models import RefreshToken, ResetPasswordToken, VerifyEmailToken
 from src.exceptions import DatabaseError
 from src.models import User
 
@@ -100,6 +100,49 @@ async def get_verify_email_token(
         raise DatabaseError("database error occurred") from e
 
 
+async def get_reset_password_token(
+    db: AsyncSession, u_id: uuid.UUID | None = None, token_val: str | None = None
+) -> ResetPasswordToken | None:
+    """Retrieves the reset password token for a user.
+
+    Queries the database for a reset password token matching either the provided
+    user ID or token hash. Exactly one of u_id or token_val should be provided.
+
+    Args:
+        db: Async database session.
+        u_id: User ID to retrieve the reset password token for. Defaults to None.
+        token_val: Token hash to retrieve the reset password token for. Defaults to None.
+
+    Returns:
+        ResetPasswordToken object if found, None otherwise.
+
+    Raises:
+        DatabaseError: If an error occurs during the database execution process.
+    """
+    try:
+        if u_id:
+            logger.debug(f"getting reset password token for user ID: {u_id}")
+            stmt = select(ResetPasswordToken).where(ResetPasswordToken.user_id == u_id)
+        elif token_val:
+            logger.debug("getting reset password token by token value")
+            stmt = select(ResetPasswordToken).where(
+                ResetPasswordToken.token_hash == token_val
+            )
+        else:
+            logger.debug("no user ID or token provided, returning None")
+            return None
+        result = await db.execute(stmt)
+        token_obj = result.scalar_one_or_none()
+        if token_obj:
+            logger.debug(f"reset password token found for user ID: {u_id}")
+        else:
+            logger.debug(f"no reset password token found for user ID: {u_id}")
+        return token_obj
+    except SQLAlchemyError as e:
+        logger.exception(f"failed to retrieve reset password token for user ID: {u_id}")
+        raise DatabaseError("database error occurred") from e
+
+
 async def get_refresh_token(
     db: AsyncSession, u_id: uuid.UUID | None = None, token_hash: str | None = None
 ) -> RefreshToken | None:
@@ -171,6 +214,38 @@ async def insert_user(db: AsyncSession, user: User) -> User:
     except SQLAlchemyError as e:
         await db.rollback()
         logger.exception(f"failed to insert user with email: {user.email}")
+        raise DatabaseError("database error occurred") from e
+
+
+async def insert_reset_password_token(
+    db: AsyncSession, token: ResetPasswordToken
+) -> ResetPasswordToken:
+    """Inserts a new reset password token into the database.
+
+    Args:
+        db: Async database session.
+        token: ResetPasswordToken object to insert.
+
+    Returns:
+        ResetPasswordToken object that was inserted.
+
+    Raises:
+        DatabaseError if an error occurs during the database execution process.
+    """
+    try:
+        logger.debug(f"inserting reset password token for user ID: {token.user_id}")
+        db.add(token)
+        await db.commit()
+        await db.refresh(token)
+        logger.debug(
+            f"successfully inserted reset password token for user ID: {token.user_id}"
+        )
+        return token
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logger.exception(
+            f"failed to insert reset password token for user ID: {token.user_id}"
+        )
         raise DatabaseError("database error occurred") from e
 
 
@@ -308,4 +383,29 @@ async def delete_refresh_tokens(db: AsyncSession, u_id: uuid.UUID) -> None:
     except SQLAlchemyError as e:
         await db.rollback()
         logger.exception(f"failed to delete refresh tokens for user ID: {u_id}")
+        raise DatabaseError("database error occurred") from e
+
+
+async def delete_reset_password_tokens(db: AsyncSession, u_id: uuid.UUID) -> None:
+    """Deletes all reset password tokens for a user.
+
+    Args:
+        db: Async database session.
+        u_id: User ID to delete reset password tokens for.
+
+    Raises:
+        DatabaseError if an error occurs during the database execution process.
+    """
+    try:
+        logger.debug(f"deleting all reset password tokens for user ID: {u_id}")
+        stmt = delete(ResetPasswordToken).where(ResetPasswordToken.user_id == u_id)
+        await db.execute(stmt)
+        await db.commit()
+        logger.debug(
+            f"successfully deleted all reset password tokens for user ID: {u_id}"
+        )
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logger.exception(f"failed to delete reset password tokens for user ID: {u_id}")
         raise DatabaseError("database error occurred") from e

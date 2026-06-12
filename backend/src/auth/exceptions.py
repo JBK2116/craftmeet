@@ -45,6 +45,15 @@ class VerifyEmailTokenCooldownError(BaseError):
         )
 
 
+class ResetPasswordTokenCooldownError(BaseError):
+    """Reset Password Token Cooldown error"""
+
+    def __init__(self, email: str) -> None:
+        super().__init__(
+            f"reset password token cooldown period has not elapsed for user: {email}"
+        )
+
+
 class UserNotFoundError(BaseError):
     """User not found in database"""
 

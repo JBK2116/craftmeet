@@ -12,7 +12,7 @@ from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.crypto import check_password, hash_password
-from src.auth.email import send_verification_email
+from src.auth.email import send_reset_password_email, send_verification_email
 from src.auth.exceptions import (
     EmailExistsError,
     EmailNotVerifiedError,
@@ -23,23 +23,33 @@ from src.auth.exceptions import (
 )
 from src.auth.repository import (
     delete_refresh_tokens,
+    delete_reset_password_tokens,
     delete_verify_email_token,
     get_refresh_token,
+    get_reset_password_token,
     get_user,
     get_verify_email_token,
     insert_refresh_token,
+    insert_reset_password_token,
     insert_user,
     insert_verify_email_token,
     update_user,
 )
-from src.auth.schemas import LoginRequest, SignupRequest, VerifyEmailRequest
+from src.auth.schemas import (
+    ForgotPasswordRequest,
+    LoginRequest,
+    SignupRequest,
+    VerifyEmailRequest,
+)
 from src.auth.token import (
+    check_reset_password_cooldown,
     check_verify_email_token_cooldown,
     check_verify_email_token_expiry,
     decode_access_token,
     decode_refresh_token,
     generate_access_token,
     generate_refresh_token,
+    generate_reset_password_token,
     generate_verify_email_token,
 )
 from src.config import get_settings
@@ -253,6 +263,68 @@ async def handle_logout(db: AsyncSession, refresh_token: str) -> None:
     await delete_refresh_tokens(db=db, u_id=user_id)
     logger.debug("user logout successful", extra={"user_id": user_id})
     return
+
+
+async def handle_forgot_password(
+    db: AsyncSession, payload: ForgotPasswordRequest
+) -> None:
+    """
+    Handle forgot password functionality.
+
+    Looks up the user by email and sends a password reset email if the user
+    exists. If a reset token already exists, checks the cooldown period before
+    rotating the token and resending the email. The response is always identical
+    regardless of whether the email matches a real user, following security best
+    practices to prevent email enumeration.
+
+    Args:
+        db: Async database session
+        payload: Forgot password request containing the user's email
+
+    Raises:
+        EmailDeliveryError: If the reset password email fails to send
+    """
+    logger.debug("looking up user for password reset", extra={"email": payload.email})
+    user = await get_user(db=db, email=payload.email)
+    if user is None:
+        # the provided email does not match an existing user
+        # in cases like this, the frontend user must still think
+        # the email got sent, this follows security best practices
+        logger.debug(
+            "user not found, silently returning", extra={"email": payload.email}
+        )
+        return
+    logger.debug(
+        "retrieving existing reset password token", extra={"email": user.email}
+    )
+    token = await get_reset_password_token(db=db, u_id=user.id)
+    if token is None:
+        # create a standard ResetPasswordToken for this user and send the email
+        logger.debug(
+            "no existing token found, creating reset password token",
+            extra={"email": user.email},
+        )
+        token = generate_reset_password_token(u_id=user.id)
+        token = await insert_reset_password_token(db=db, token=token)
+        logger.debug("sending reset password email", extra={"email": user.email})
+        await send_reset_password_email(user=user, token=token)
+        return
+    # check the token cooldown, if it has not elapsed, just return
+    # as the user likely needs to re-check their email
+    # if the cooldown has passed, rotate the tokens
+    has_elapsed = check_reset_password_cooldown(created_at=token.created_at)
+    if not has_elapsed:
+        logger.debug(
+            "reset password token cooldown has not elapsed", extra={"email": user.email}
+        )
+        return
+    logger.debug("deleting existing reset password token", extra={"email": user.email})
+    await delete_reset_password_tokens(db=db, u_id=user.id)
+    logger.debug("creating new reset password token", extra={"email": user.email})
+    token = generate_reset_password_token(u_id=user.id)
+    token = await insert_reset_password_token(db=db, token=token)
+    logger.debug("sending reset password email", extra={"email": user.email})
+    await send_reset_password_email(user=user, token=token)
 
 
 async def handle_verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
