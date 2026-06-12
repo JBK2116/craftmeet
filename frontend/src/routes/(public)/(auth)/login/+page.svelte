@@ -96,6 +96,7 @@
             user.set(await response.json());
             goto('/dashboard');
         } catch (err: any) {
+            toast.error('An unexpected error occurred, please try again soon.');
         } finally {
             isAttempting = false;
         }
