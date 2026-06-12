@@ -14,9 +14,15 @@ from src.auth.exceptions import (
     UserNotFoundError,
     VerifyEmailTokenCooldownError,
 )
-from src.auth.schemas import LoginRequest, SignupRequest, UserOut, VerifyEmailRequest
+from src.auth.schemas import (
+    LoginRequest,
+    SignupRequest,
+    UserOut,
+    VerifyEmailRequest,
+)
 from src.auth.service import (
     handle_login,
+    handle_logout,
     handle_me,
     handle_refresh,
     handle_signup,
@@ -103,6 +109,28 @@ async def login(db: DB, response: Response, payload: LoginRequest):
             },
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
+
+
+@auth_router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout(db: DB, response: Response, refresh_token: Refresh_Token):
+    logger.debug(
+        "received logout refresh token", extra={"refresh_token": refresh_token}
+    )
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+    try:
+        if refresh_token is None:
+            response.status_code = status.HTTP_204_NO_CONTENT
+            return response
+        await handle_logout(db=db, refresh_token=refresh_token)
+        response.status_code = status.HTTP_204_NO_CONTENT
+    except DatabaseError:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return response
+    except InvalidTokenError:
+        response.status_code = status.HTTP_204_NO_CONTENT
+        return response
+    return response
 
 
 @auth_router.post("/verify-email", status_code=status.HTTP_200_OK)

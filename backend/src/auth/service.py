@@ -223,6 +223,38 @@ async def handle_login(
     return user
 
 
+async def handle_logout(db: AsyncSession, refresh_token: str) -> None:
+    """
+    Handle user logout functionality.
+
+    Decodes the provided refresh token, validates it, and deletes all refresh tokens
+    associated with the user from the database to invalidate all active sessions.
+
+    Args:
+        db: Async database session
+        refresh_token: JWT refresh token string
+
+    Raises:
+        InvalidTokenError: If the token is invalid, malformed,
+                          user_id is not found in claims, or user_id format is invalid
+    """
+    logger.debug("decoding refresh token")
+    claims = decode_refresh_token(token=refresh_token, return_anyway=True)
+    user_id = claims.get("user_id")
+    if user_id is None:
+        logger.debug("user_id not found in token claims")
+        raise InvalidTokenError
+    try:
+        user_id = uuid.UUID(hex=user_id)
+    except Exception as e:
+        logger.debug("invalid user_id format in token", extra={"user_id": user_id})
+        raise InvalidTokenError from e
+    logger.debug("deleting all refresh tokens", extra={"user_id": user_id})
+    await delete_refresh_tokens(db=db, u_id=user_id)
+    logger.debug("user logout successful", extra={"user_id": user_id})
+    return
+
+
 async def handle_verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
     """
     Handle email verification for a user.
@@ -329,7 +361,7 @@ async def handle_refresh(
                           user_id is not found in claims, or token is not in database
     """
     logger.debug("decoding refresh tokens")
-    claims = decode_refresh_token(token=refresh_token)
+    claims = decode_refresh_token(token=refresh_token, return_anyway=False)
     user_id = claims.get("user_id")
     if user_id is None:
         logger.debug("user_id not found in token claims")

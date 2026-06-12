@@ -14,7 +14,7 @@
     // Route Classification (mirrors Navbar.svelte)
     // Keep these in sync with Navbar if routes are added to any category.
     const landingRoutes = ['/'];
-    const onboardingRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
+    const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
     const publicRoutes = ['/privacy', '/terms', '/contact'];
 
     let pathname = $derived(page.url.pathname);
@@ -22,7 +22,7 @@
     // Only render on authenticated app pages
     let isApp = $derived(
         !landingRoutes.includes(pathname) &&
-            !onboardingRoutes.includes(pathname) &&
+            !authRoutes.includes(pathname) &&
             !publicRoutes.includes(pathname),
     );
 </script>

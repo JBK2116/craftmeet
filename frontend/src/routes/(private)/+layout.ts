@@ -10,8 +10,8 @@ export async function load({ parent }) {
     // ensure that the root layout.ts runs first
     // this allows it to check the /me endpoint and set the user store depending the user's auth status
     await parent();
-    // if the user is already authenticated, redirect them to the dashboard page
-    if (get(user)) {
-        throw redirect(302, '/dashboard');
+    // if the user is not authenticated, redirect them to the login page
+    if (!get(user)) {
+        throw redirect(302, '/login');
     }
 }

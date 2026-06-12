@@ -175,7 +175,7 @@ def generate_refresh_token(u_id: uuid.UUID) -> RefreshToken:
     return RefreshToken(user_id=u_id, token_hash=token_hash, expires_at=expire)
 
 
-def decode_refresh_token(token: str) -> dict[str, Any]:
+def decode_refresh_token(token: str, return_anyway: bool = False) -> dict[str, Any]:
     """
     Decodes and validates a JWT refresh token.
 
@@ -185,6 +185,7 @@ def decode_refresh_token(token: str) -> dict[str, Any]:
 
     Args:
         token: The JWT refresh token string to decode.
+        return_anyway: If True, return claims even if token is expired.
 
     Returns:
         dict: The decoded token claims.
@@ -200,6 +201,19 @@ def decode_refresh_token(token: str) -> dict[str, Any]:
         if claims["type"] != "refresh":
             raise InvalidTokenError
         return claims
+    except jwt.ExpiredSignatureError as e:
+        if return_anyway:
+            # decode without verification to get claims from expired token
+            claims = jwt.decode(
+                jwt=token,
+                key=settings.JWT_SECRET_KEY,
+                algorithms=[JWT_ALGORITHM],
+                options={"verify_exp": False},
+            )
+            if claims["type"] != "refresh":
+                raise InvalidTokenError from e
+            return claims
+        raise InvalidTokenError from e
     except jwt.PyJWTError as e:
         raise InvalidTokenError from e
     except Exception as e:

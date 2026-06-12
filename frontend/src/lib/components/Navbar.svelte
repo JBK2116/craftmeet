@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
     import { page } from '$app/state';
+    import { logout } from '$lib/api/auth';
     import { Button } from '$lib/components/ui/button';
     import { Sheet, SheetContent, SheetTrigger } from '$lib/components/ui/sheet';
     import { user } from '$lib/stores/stores';
@@ -12,14 +14,14 @@
     // Route Classification
     const landingRoutes = ['/'];
     const publicRoutes = ['/privacy', '/terms', '/contact'];
-    const onBoardingRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
+    const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
 
     let pathname = $derived(page.url.pathname);
 
     let isLanding = $derived(landingRoutes.includes(pathname));
     let isPublic = $derived(publicRoutes.includes(pathname));
-    let isOnboarding = $derived(onBoardingRoutes.includes(pathname));
-    let isApp = $derived(!isLanding && !isOnboarding);
+    let isAuth = $derived(authRoutes.includes(pathname));
+    let isApp = $derived(!isLanding && !isAuth);
 
     const landingLinks: NavLink[] = [
         { title: 'How it Works', href: '#how-it-works' },
@@ -34,6 +36,13 @@
             ? document.documentElement.classList.contains('dark')
             : false,
     );
+
+    async function handleLogout() {
+        await logout();
+        // remove the user from the store and also clear local storage to prevent reauthentication
+        user.set(null);
+        await goto('/login');
+    }
 
     function toggleTheme() {
         isDark = !isDark;
@@ -172,7 +181,7 @@
                     </SheetContent>
                 </Sheet>
             </div>
-        {:else if isOnboarding}
+        {:else if isAuth}
             <div class="flex items-center gap-3">
                 <Button
                     variant="ghost"
@@ -286,6 +295,14 @@
                 >
                     U
                 </button>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onclick={handleLogout}
+                    class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:cursor-pointer"
+                >
+                    Logout
+                </Button>
             </div>
 
             <div class="flex items-center gap-2 md:hidden">
@@ -308,6 +325,14 @@
                 >
                     U
                 </button>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onclick={handleLogout}
+                    class="h-8 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:cursor-pointer"
+                >
+                    Logout
+                </Button>
             </div>
         {/if}
     </nav>
