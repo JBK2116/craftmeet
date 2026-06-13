@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
     OAUTH_SECRET_KEY: str
+    STARLETTE_SESSION_KEY: str
     # Token
     JWT_SECRET_KEY: str
     ACCESS_TOKEN_TTL_MINUTES: int
