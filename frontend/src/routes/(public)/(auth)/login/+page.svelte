@@ -103,6 +103,7 @@
     }
 
     onMount(() => {
+        // handle verified_email query param
         const verified_email = page.url.searchParams.get('verified_email');
         if (!verified_email) {
             return;
@@ -116,17 +117,21 @@
                 { duration: Infinity },
             );
         }
+        // handle oauth query param
+        const errors = page.url.searchParams.get('error');
+        if (!errors) {
+            return;
+        }
+        const oauth_failed = errors === 'oauth_failed';
+        if (oauth_failed) {
+            toast.error(
+                'OAuth authentication failed. Please try again or sign up with your email.',
+                { duration: Infinity },
+            );
+        }
     });
     async function handleOAUTH(): Promise<void> {
-        // TODO: Handle this function later
-        isAttempting = true;
-        try {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-        } catch (err: any) {
-        } finally {
-            toast.error('Unable to sign in', { position: 'bottom-right' });
-            isAttempting = false;
-        }
+        window.location.href = '/api/v1/auth/google';
     }
 </script>
 

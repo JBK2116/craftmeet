@@ -7,6 +7,7 @@ including session management, token handling and more.
 import datetime
 import logging
 import uuid
+from typing import Any
 
 from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -234,6 +235,100 @@ async def handle_login(
     )
     logger.debug("user login successful", extra={"email": user.email})
     return user
+
+
+async def handle_google_login(
+    db: AsyncSession, user_info: dict[str, Any], response: Response
+) -> None:
+    """
+    Handle Google OAuth login and signup functionality.
+
+    Authenticates or registers a user via Google OAuth. If the user doesn't exist,
+    creates a new verified user account. If the user exists but hasn't linked their
+    Google account, links it. Generates JWT tokens (access and refresh) and sets
+    them as HttpOnly cookies in the response.
+
+    Args:
+        db: Async database session
+        user_info: User information dictionary from Google OAuth containing 'email' and 'sub' (Google ID)
+        response: FastAPI Response object to set authentication cookies
+
+    Raises:
+        KeyError: If required keys ('email' or 'sub') are missing from user_info
+    """
+    # user_info is a dictionary we receive directly from google if oauth passes
+    # therefore we can assume that these two keys will always be present
+    logger.debug(
+        "extracting user info from google oauth",
+        extra={"has_email": "email" in user_info},
+    )
+    email = user_info["email"]
+    google_id = user_info["sub"]
+    logger.debug("looking up user by email", extra={"email": email})
+    user = await get_user(db=db, email=email)
+    if user is None:
+        logger.debug(
+            "user not found, creating new google oauth user", extra={"email": email}
+        )
+        user = User(
+            email=email,
+            google_id=google_id,
+            verified=True,
+            verified_at=datetime.datetime.now(tz=datetime.UTC),
+        )
+        user = await insert_user(db=db, user=user)
+        logger.debug(
+            "new google oauth user created successfully",
+            extra={"email": user.email, "user_id": user.id},
+        )
+    elif not user.google_id and not user.verified:
+        logger.debug(
+            "linking google account to existing user", extra={"email": user.email}
+        )
+        user = await update_user(
+            db=db,
+            u_id=user.id,
+            google_id=google_id,
+            verified=True,
+            verified_at=datetime.datetime.now(tz=datetime.UTC),
+        )
+        logger.debug("google account linked successfully", extra={"email": user.email})
+    elif not user.google_id:
+        logger.debug(
+            "linking google account to existing user", extra={"email": user.email}
+        )
+        user = await update_user(db=db, u_id=user.id, google_id=google_id)
+        logger.debug("google account linked successfully", extra={"email": user.email})
+    else:
+        logger.debug(
+            "user already has google account linked", extra={"email": user.email}
+        )
+    # this endpoint handles both google signup and login automatically
+    logger.debug("creating jwt tokens", extra={"email": user.email})
+    access_t = generate_access_token(u_id=user.id)
+    refresh_t = generate_refresh_token(u_id=user.id)
+    logger.debug("deleting existing refresh tokens", extra={"user_id": user.id})
+    await delete_refresh_tokens(db=db, u_id=user.id)
+    refresh_t = await insert_refresh_token(db=db, token=refresh_t)
+    logger.debug("setting authentication cookies", extra={"email": user.email})
+    # max_age expects seconds so adjust the value accordingly
+    response.set_cookie(
+        key="access_token",
+        value=access_t,
+        httponly=True,
+        secure=False if settings.IS_DEV else True,
+        samesite="strict",
+        max_age=settings.ACCESS_TOKEN_TTL_MINUTES * 60,
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_t.token_hash,
+        httponly=True,
+        secure=False if settings.IS_DEV else True,
+        samesite="strict",
+        max_age=settings.REFRESH_TOKEN_TTL_HOURS * 60 * 60,
+    )
+    logger.debug("google oauth login successful", extra={"email": user.email})
 
 
 async def handle_logout(db: AsyncSession, refresh_token: str) -> None:

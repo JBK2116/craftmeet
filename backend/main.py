@@ -3,8 +3,12 @@ import logging
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.middleware.sessions import SessionMiddleware
 
-from src.auth.router import auth_router
+from src.auth.router import (  # noqa: F401 - ensures oauth is registered at app startup
+    auth_router,
+    oauth,
+)
 from src.config import get_settings
 from src.logging_config import get_logger, setup_logging
 
@@ -35,6 +39,14 @@ app = FastAPI(
     redirect_slashes=True,
     root_path="/api/v1",
     strict_content_type=True,
+)
+
+# initialise middleware
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.STARLETTE_SESSION_KEY,
+    https_only=False if settings.IS_DEV else True,
 )
 
 

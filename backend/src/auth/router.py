@@ -1,8 +1,9 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, Response, status
-from fastapi.responses import JSONResponse
+from authlib.integrations.starlette_client import OAuth
+from fastapi import APIRouter, Cookie, Depends, Request, Response, status
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.exceptions import (
@@ -24,6 +25,7 @@ from src.auth.schemas import (
 )
 from src.auth.service import (
     handle_forgot_password,
+    handle_google_login,
     handle_login,
     handle_logout,
     handle_me,
@@ -32,11 +34,23 @@ from src.auth.service import (
     handle_signup,
     handle_verify_email,
 )
+from src.config import get_settings
 from src.database import get_db
 from src.exceptions import DatabaseError
 from src.types import ErrorTypes
 
+settings = get_settings()
+
 logger = logging.getLogger(__name__)
+
+oauth = OAuth()
+oauth.register(
+    name="google",
+    client_id=settings.GOOGLE_CLIENT_ID,
+    client_secret=settings.GOOGLE_CLIENT_SECRET,
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid profile email"},
+)
 
 # Annotated values for reusability
 DB = Annotated[AsyncSession, Depends(get_db)]
@@ -49,6 +63,43 @@ auth_router = APIRouter(
     strict_content_type=True,
     include_in_schema=True,
 )
+
+
+@auth_router.get("/google")
+async def google_login(request: Request):
+    return await oauth.google.authorize_redirect(request, settings.GOOGLE_REDIRECT_URI)
+
+
+@auth_router.get("/google/callback", name="google_callback")
+async def google_callback(request: Request, db: DB):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except Exception:
+        logger.exception("Google OAuth token exchange failed")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error=oauth_failed",
+            status_code=status.HTTP_302_FOUND,
+        )
+
+    user_info = token.get("userinfo")
+    if not user_info:
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error=oauth_failed",
+            status_code=status.HTTP_302_FOUND,
+        )
+
+    redirect = RedirectResponse(
+        url=f"{settings.FRONTEND_URL}/dashboard",
+        status_code=status.HTTP_302_FOUND,
+    )
+    try:
+        await handle_google_login(db=db, user_info=user_info, response=redirect)
+    except (DatabaseError, KeyError):
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?error=oauth_failed",
+            status_code=status.HTTP_302_FOUND,
+        )
+    return redirect
 
 
 @auth_router.post("/signup", status_code=status.HTTP_201_CREATED)

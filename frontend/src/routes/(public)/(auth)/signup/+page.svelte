@@ -153,15 +153,7 @@
         }
     }
     async function handleOAUTH(): Promise<void> {
-        // TODO: Handle this function later
-        isAttempting = true;
-        try {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-        } catch (err: any) {
-        } finally {
-            toast.error('Unable to signup', { position: 'bottom-right' });
-            isAttempting = false;
-        }
+        window.location.href = '/api/v1/auth/google';
     }
 </script>
 
