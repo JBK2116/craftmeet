@@ -4,24 +4,6 @@
     import * as Card from '$lib/components/ui/card/index.js';
 </script>
 
-<svelte:head>
-    <title>Contact - Craftmeet</title>
-    <meta
-        name="description"
-        content="Get in touch with the Craftmeet team. Reach us directly by email at support@craftmeet.com."
-    />
-    <link rel="canonical" href="https://craftmeet.com/contact" />
-    <meta property="og:title" content="Craftmeet - Contact" />
-    <meta
-        property="og:description"
-        content="Get in touch with the Craftmeet team. Reach us directly by email at support@craftmeet.com."
-    />
-    <meta property="og:url" content="https://craftmeet.com/contact" />
-    <meta property="og:type" content="website" />
-    <!-- TODO: Create and place og-image.png in the static directory before launch -->
-    <meta property="og:image" content="/og-image.png" />
-</svelte:head>
-
 <main class="relative min-h-screen bg-background text-foreground">
     <!-- Decorative background glow utilizing token safe opacity variables -->
     <div class="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">

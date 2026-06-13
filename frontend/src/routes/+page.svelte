@@ -63,23 +63,6 @@
     }
 </script>
 
-<svelte:head>
-    <title>Craftmeet</title>
-    <meta
-        name="description"
-        content="Host real-time structured meetings with flexible question formats, live collaboration, and AI-generated summaries of every idea your room produces."
-    />
-    <link rel="canonical" href="https://craftmeet.com" />
-    <meta property="og:title" content="Craftmeet - Structured, Idea-Driven Meetings" />
-    <meta
-        property="og:description"
-        content="Host real-time structured meetings with flexible question formats, live collaboration, and AI-generated summaries of every idea your room produces."
-    />
-    <meta property="og:url" content="https://craftmeet.com" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/og-image.png" />
-</svelte:head>
-
 {#if showModal}
     <div
         class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm"

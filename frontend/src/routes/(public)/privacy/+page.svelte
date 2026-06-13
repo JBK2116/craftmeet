@@ -46,19 +46,7 @@
     });
 </script>
 
-<!-- Document Head -->
 <svelte:head>
-    <title>Privacy Policy - Craftmeet</title>
-    <meta name="description" content="Craftmeet's privacy notice and data processing policies." />
-    <link rel="canonical" href="https://craftmeet.com/privacy" />
-    <meta property="og:title" content="Craftmeet - Privacy Policy" />
-    <meta
-        property="og:description"
-        content="Craftmeet's privacy notice and data processing policies."
-    />
-    <meta property="og:url" content="https://craftmeet.com/privacy" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/og-image.png" />
     <style>
         html {
             scroll-behavior: smooth;

@@ -81,17 +81,6 @@
     }
 </script>
 
-<svelte:head>
-    <title>Forgot Password - Craftmeet</title>
-    <meta name="description" content="Reset your Craftmeet account password." />
-    <link rel="canonical" href="https://craftmeet.com/forgot-password" />
-    <meta property="og:title" content="Craftmeet - Forgot Password" />
-    <meta property="og:description" content="Reset your Craftmeet account password." />
-    <meta property="og:url" content="https://craftmeet.com/forgot-password" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/og-image.png" />
-</svelte:head>
-
 <main class="flex min-h-screen items-center justify-center bg-background px-4 py-16">
     <div class="w-full max-w-[420px] space-y-3">
         <div class="rounded-2xl border border-border bg-card px-8 py-9">

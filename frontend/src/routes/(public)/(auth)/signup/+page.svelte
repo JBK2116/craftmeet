@@ -165,23 +165,6 @@
     }
 </script>
 
-<svelte:head>
-    <title>Sign Up - Craftmeet</title>
-    <meta
-        name="description"
-        content="Create your Craftmeet account and start hosting real-time structured meetings with AI-generated summaries."
-    />
-    <link rel="canonical" href="https://craftmeet.com/signup" />
-    <meta property="og:title" content="Craftmeet - Sign Up" />
-    <meta
-        property="og:description"
-        content="Create your Craftmeet account and start hosting real-time structured meetings with AI-generated summaries."
-    />
-    <meta property="og:url" content="https://craftmeet.com/signup" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/og-image.png" />
-</svelte:head>
-
 <main class="flex min-h-screen items-center justify-center bg-background px-6 py-24">
     <div class="w-full max-w-md space-y-3">
         <div class="rounded-2xl border border-border bg-card px-8 py-9 shadow-sm">

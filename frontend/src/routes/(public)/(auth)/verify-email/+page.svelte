@@ -44,17 +44,6 @@
     });
 </script>
 
-<svelte:head>
-    <title>Verify Email - Craftmeet</title>
-    <meta name="description" content="Confirming your Craftmeet email address." />
-    <link rel="canonical" href="https://craftmeet.com/verify-email" />
-    <meta property="og:title" content="Craftmeet - Verify Email" />
-    <meta property="og:description" content="Confirming your Craftmeet email address." />
-    <meta property="og:url" content="https://craftmeet.com/verify-email" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/og-image.png" />
-</svelte:head>
-
 <div
     class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm"
 >

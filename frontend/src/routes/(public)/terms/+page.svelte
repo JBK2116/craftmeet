@@ -59,15 +59,6 @@
 </script>
 
 <svelte:head>
-    <title>Terms and Conditions - Craftmeet</title>
-    <meta name="description" content="Craftmeet's terms and conditions of service." />
-    <link rel="canonical" href="https://craftmeet.com/terms" />
-    <meta property="og:title" content="Craftmeet - Terms and Conditions" />
-    <meta property="og:description" content="Craftmeet's terms and conditions of service." />
-    <meta property="og:url" content="https://craftmeet.com/terms" />
-    <meta property="og:type" content="website" />
-    <!-- TODO: Create and place og-image.png in the static directory before launch -->
-    <meta property="og:image" content="/og-image.png" />
     <style>
         html {
             scroll-behavior: smooth;
