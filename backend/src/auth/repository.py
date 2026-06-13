@@ -339,6 +339,45 @@ async def update_user(db: AsyncSession, u_id: uuid.UUID, **kwargs) -> User:
         raise DatabaseError("database error occurred") from e
 
 
+async def update_reset_password_token(
+    db: AsyncSession, token_id: uuid.UUID, **kwargs
+) -> ResetPasswordToken:
+    """Updates a reset password token in the database with the provided fields.
+
+    Args:
+        db: Async database session.
+        token_id: Reset password token ID to update.
+        **kwargs: Field names and values to update on the token.
+
+    Returns:
+        Updated ResetPasswordToken object if found, None otherwise.
+
+    Raises:
+        DatabaseError: If an error occurs during the database execution process.
+    """
+    try:
+        logger.debug(
+            f"updating reset password token ID: {token_id} with fields: {list(kwargs.keys())}"
+        )
+        stmt = (
+            update(ResetPasswordToken)
+            .where(ResetPasswordToken.id == token_id)
+            .values(**kwargs)
+            .returning(ResetPasswordToken)
+        )
+        result = await db.execute(stmt)
+        await db.commit()
+        token = result.scalar_one()
+        if token:
+            logger.debug(f"successfully updated reset password token ID: {token_id}")
+        return token
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logger.exception(f"failed to update reset password token ID: {token_id}")
+        raise DatabaseError("database error occurred") from e
+
+
 async def delete_verify_email_token(db: AsyncSession, token: VerifyEmailToken) -> None:
     """Deletes the verify email token for a user.
 

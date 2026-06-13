@@ -33,16 +33,19 @@ from src.auth.repository import (
     insert_reset_password_token,
     insert_user,
     insert_verify_email_token,
+    update_reset_password_token,
     update_user,
 )
 from src.auth.schemas import (
     ForgotPasswordRequest,
     LoginRequest,
+    ResetPasswordRequest,
     SignupRequest,
     VerifyEmailRequest,
 )
 from src.auth.token import (
     check_reset_password_cooldown,
+    check_reset_password_token_expiry,
     check_verify_email_token_cooldown,
     check_verify_email_token_expiry,
     decode_access_token,
@@ -325,6 +328,64 @@ async def handle_forgot_password(
     token = await insert_reset_password_token(db=db, token=token)
     logger.debug("sending reset password email", extra={"email": user.email})
     await send_reset_password_email(user=user, token=token)
+
+
+async def handle_reset_password(
+    db: AsyncSession, payload: ResetPasswordRequest
+) -> None:
+    """
+    Handle password reset functionality.
+
+    Validates the provided reset password token, checks its expiry and usage status,
+    updates the user's password, and invalidates all existing refresh tokens for security.
+    The reset token is marked as used to prevent reuse.
+
+    Args:
+        db: Async database session
+        payload: Reset password request containing the token and new password
+
+    Raises:
+        InvalidTokenError: If the token is not found, has expired,
+                          has already been used, or is matched to a non-existing user
+    """
+    logger.debug("retrieving reset password token", extra={"token": payload.token})
+    token = await get_reset_password_token(db=db, token_val=payload.token)
+    if token is None:
+        logger.debug("reset password token not found", extra={"token": payload.token})
+        raise InvalidTokenError
+    logger.debug("checking reset password token expiry", extra={"token": payload.token})
+    not_expired = check_reset_password_token_expiry(expires_at=token.expires_at)
+    if not not_expired:
+        logger.debug(
+            "reset password token has expired", extra={"user_id": token.user_id}
+        )
+        raise InvalidTokenError
+    if token.used_at is not None:
+        logger.debug(
+            "reset password token has already been used",
+            extra={"user_id": token.user_id},
+        )
+        raise InvalidTokenError
+    logger.debug("retrieving user for password reset", extra={"user_id": token.user_id})
+    user = await get_user(db=db, u_id=token.user_id)
+    if user is None:
+        logger.debug(
+            "user not found for reset password token", extra={"user_id": token.user_id}
+        )
+        raise InvalidTokenError
+    # at this point the token is valid and the password is valid via pydantic validation
+    logger.debug("marking reset password token as used", extra={"email": user.email})
+    _ = await update_reset_password_token(
+        db=db, token_id=token.id, used_at=datetime.datetime.now(tz=datetime.UTC)
+    )
+    logger.debug("hashing new password", extra={"email": user.email})
+    hashed_password = hash_password(raw=payload.password)
+    logger.debug("updating user password", extra={"email": user.email})
+    _ = await update_user(db=db, u_id=user.id, password=hashed_password)
+    logger.debug("deleting all refresh tokens", extra={"email": user.email})
+    await delete_refresh_tokens(db=db, u_id=user.id)
+    logger.debug("password reset successful", extra={"email": user.email})
+    return
 
 
 async def handle_verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:

@@ -1,12 +1,12 @@
 <script lang="ts">
     import { page } from '$app/state';
+    import { ErrorTypes } from '$lib/types/errors';
     import { toast } from 'svelte-sonner';
 
     // resetAttempt state
     let isAttempting = $state(false);
 
-    // TODO: Extract reset token from URL - will later be used in handleReset to authorize the password change
-    // e.g. GET /reset-password?token=<jwt>
+    // e.g. GET /reset-password?token=<token>
     let resetToken = $derived(page.url.searchParams.get('token') ?? '');
 
     // password functionality
@@ -51,19 +51,52 @@
     }
 
     // reset functionality
+    const url = `/api/v1/auth/reset-password`;
     async function handleReset(): Promise<void> {
-        // TODO: Submit resetToken + new password to the API to authorize and apply the password change
         isAttempting = true;
         try {
             if (!resetToken) {
-                toast.error('Invalid or missing reset token', { position: 'bottom-right' });
+                toast.error('Invalid or missing reset token', { duration: Infinity });
                 return;
             }
             if (!validateReset()) return;
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            toast.success('Password updated please sign in.', { position: 'bottom-right' });
+            const body = {
+                token: resetToken,
+                password: password,
+                confirm_password: confirmPassword,
+            };
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body),
+            });
+            if (!response.ok) {
+                const body = await response.json();
+                switch (body.type) {
+                    case ErrorTypes.TOKEN:
+                        toast.error('Invalid or missing reset token', {
+                            position: 'bottom-right',
+                            duration: Infinity,
+                        });
+                        return;
+                    case ErrorTypes.PASSWORD:
+                        passwordError = body.message;
+                        return;
+                    case ErrorTypes.CONFIRM_PASSWORD:
+                        confirmPasswordError = body.message;
+                        return;
+                    case ErrorTypes.BODY:
+                        passwordError = body.message;
+                        return;
+                    case ErrorTypes.SERVER:
+                        toast.error(body.message, { duration: Infinity });
+                        return;
+                }
+            }
+            toast.success('Password updated please sign in.', { duration: Infinity });
         } catch (err: any) {
-            toast.error('Unable to reset password', { position: 'bottom-right' });
+            toast.error('Unable to reset password', { duration: Infinity });
         } finally {
             isAttempting = false;
         }

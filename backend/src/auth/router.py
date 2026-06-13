@@ -17,6 +17,7 @@ from src.auth.exceptions import (
 from src.auth.schemas import (
     ForgotPasswordRequest,
     LoginRequest,
+    ResetPasswordRequest,
     SignupRequest,
     UserOut,
     VerifyEmailRequest,
@@ -27,6 +28,7 @@ from src.auth.service import (
     handle_logout,
     handle_me,
     handle_refresh,
+    handle_reset_password,
     handle_signup,
     handle_verify_email,
 )
@@ -158,6 +160,29 @@ async def forgot_password(db: DB, payload: ForgotPasswordRequest):
                 "message": ErrorTypes.SERVER.message,
             },
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@auth_router.post("/reset-password", status_code=status.HTTP_200_OK)
+async def reset_password(db: DB, payload: ResetPasswordRequest):
+    logger.debug("Received reset-password payload", extra={"payload": payload})
+    try:
+        await handle_reset_password(db=db, payload=payload)
+    except DatabaseError:
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.SERVER.type,
+                "message": ErrorTypes.SERVER.message,
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    except InvalidTokenError:
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.TOKEN.type,
+                "message": ErrorTypes.TOKEN.message,
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
         )
 
 

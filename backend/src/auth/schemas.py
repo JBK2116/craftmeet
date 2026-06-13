@@ -7,7 +7,7 @@ flows including signup, login, OAuth, and password reset.
 
 import datetime
 import uuid
-from typing import Annotated
+from typing import Annotated, Self
 
 from pydantic import (
     AfterValidator,
@@ -15,9 +15,10 @@ from pydantic import (
     ConfigDict,
     EmailStr,
     Field,
+    model_validator,
 )
 
-from src.auth.constants import VERIFY_EMAIL_TOKEN_LENGTH
+from src.auth.constants import RESET_PASSWORD_TOKEN_LENGTH, VERIFY_EMAIL_TOKEN_LENGTH
 from src.constants import (
     BCRYPT_MAX_BYTES,
     MAX_EMAIL_LENGTH,
@@ -118,6 +119,22 @@ class ForgotPasswordRequest(BaseModel):
     """Pydantic model representing forgot password request"""
 
     email: Annotated[EmailStr, AfterValidator(validate_email_length)]
+
+
+class ResetPasswordRequest(BaseModel):
+    """Pydantic model representing reset password request"""
+
+    token: str = Field(
+        min_length=RESET_PASSWORD_TOKEN_LENGTH, max_length=RESET_PASSWORD_TOKEN_LENGTH
+    )
+    password: Annotated[str, AfterValidator(validate_password)]
+    confirm_password: Annotated[str, AfterValidator(validate_password_length)]
+
+    @model_validator(mode="after")
+    def check_passwords_match(self) -> Self:
+        if self.password != self.confirm_password:
+            raise ValueError("Passwords don't match")
+        return self
 
 
 class VerifyEmailRequest(BaseModel):
