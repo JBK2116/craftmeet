@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     "Stores all .env variables loaded into memory for use"
 
     IS_DEV: bool
+    FRONTEND_URL: str
     # Logging
     LOG_LEVEL: str
     SERVICE_NAME: str
