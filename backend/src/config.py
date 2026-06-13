@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     # Google
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
+    GOOGLE_REDIRECT_URI: str
     OAUTH_SECRET_KEY: str
     STARLETTE_SESSION_KEY: str
     # Token
