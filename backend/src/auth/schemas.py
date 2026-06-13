@@ -7,8 +7,15 @@ flows including signup, login, OAuth, and password reset.
 
 import datetime
 import uuid
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+)
 
 from src.auth.constants import VERIFY_EMAIL_TOKEN_LENGTH
 from src.constants import (
@@ -21,6 +28,51 @@ from src.constants import (
     MIN_USERNAME_LENGTH,
 )
 from src.types import MeetingPlan
+
+
+def validate_username(value: str) -> str:
+    if len(value) < MIN_USERNAME_LENGTH:
+        raise ValueError(
+            f"Username must be at least {MIN_USERNAME_LENGTH} characters long"
+        )
+    if len(value) > MAX_USERNAME_LENGTH:
+        raise ValueError(f"Username must not exceed {MAX_USERNAME_LENGTH} characters")
+    if not value.isalnum():
+        raise ValueError("Username must contain only alphanumeric characters")
+    return value
+
+
+def validate_email_length(value: str) -> str:
+    if len(value) < MIN_EMAIL_LENGTH:
+        raise ValueError(f"Email must be at least {MIN_EMAIL_LENGTH} characters long")
+    if len(value) > MAX_EMAIL_LENGTH:
+        raise ValueError(f"Email must not exceed {MAX_EMAIL_LENGTH} characters")
+    return value
+
+
+def validate_password_length(value: str) -> str:
+    if len(value) < MIN_PASSWORD_LENGTH:
+        raise ValueError(
+            f"Password must be at least {MIN_PASSWORD_LENGTH} characters long"
+        )
+    if len(value) > MAX_PASSWORD_LENGTH:
+        raise ValueError(f"Password must not exceed {MAX_PASSWORD_LENGTH} characters")
+    return value
+
+
+def validate_password(value: str) -> str:
+    validate_password_length(value)
+    if len(value.encode("utf-8")) > BCRYPT_MAX_BYTES:
+        raise ValueError("Password is too long")
+    if not any(char.isupper() for char in value):
+        raise ValueError("Password must contain at least one uppercase letter")
+    if not any(char.islower() for char in value):
+        raise ValueError("Password must contain at least one lowercase letter")
+    if not any(char.isdigit() for char in value):
+        raise ValueError("Password must contain at least one digit")
+    if not any(not char.isalnum() for char in value):
+        raise ValueError("Password must contain at least one special character")
+    return value
 
 
 class UserOut(BaseModel):
@@ -50,107 +102,27 @@ class UserOut(BaseModel):
 class SignupRequest(BaseModel):
     """Pydantic model representing signup request body"""
 
-    username: str
-    email: EmailStr
-    password: str
-
-    @field_validator("username")
-    @classmethod
-    def validate_username(cls, value: str) -> str:
-        if len(value) < MIN_USERNAME_LENGTH:
-            raise ValueError(
-                f"Username must be at least {MIN_USERNAME_LENGTH} characters long"
-            )
-        if len(value) > MAX_USERNAME_LENGTH:
-            raise ValueError(
-                f"Username must not exceed {MAX_USERNAME_LENGTH} characters"
-            )
-        if not value.isalnum():
-            raise ValueError("Username must contain only alphanumeric characters")
-        return value
-
-    @field_validator("email")
-    @classmethod
-    def validate_email(cls, value: str) -> str:
-        if len(value) < MIN_EMAIL_LENGTH:
-            raise ValueError(
-                f"Email must be at least {MIN_EMAIL_LENGTH} characters long"
-            )
-        if len(value) > MAX_EMAIL_LENGTH:
-            raise ValueError(f"Email must not exceed {MAX_EMAIL_LENGTH} characters")
-        return value
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, value: str) -> str:
-        if len(value) < MIN_PASSWORD_LENGTH:
-            raise ValueError(
-                f"Password must be at least {MIN_PASSWORD_LENGTH} characters long"
-            )
-        if len(value) > MAX_PASSWORD_LENGTH:
-            raise ValueError(
-                f"Password must not exceed {MAX_PASSWORD_LENGTH} characters"
-            )
-        if len(value.encode("utf-8")) > BCRYPT_MAX_BYTES:
-            raise ValueError("Password is too long")
-        if not any(char.isupper() for char in value):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not any(char.islower() for char in value):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not any(char.isdigit() for char in value):
-            raise ValueError("Password must contain at least one digit")
-        if not any(not char.isalnum() for char in value):
-            raise ValueError("Password must contain at least one special character")
-        return value
+    username: Annotated[str, AfterValidator(validate_username)]
+    email: Annotated[EmailStr, AfterValidator(validate_email_length)]
+    password: Annotated[str, AfterValidator(validate_password)]
 
 
 class LoginRequest(BaseModel):
     """Pydantic model representing login request body"""
 
-    email: str
-    password: str
-
-    @field_validator("email")
-    @classmethod
-    def validate_email(cls, value: str) -> str:
-        if len(value) < MIN_EMAIL_LENGTH:
-            raise ValueError(
-                f"Email must be at least {MIN_EMAIL_LENGTH} characters long"
-            )
-        if len(value) > MAX_EMAIL_LENGTH:
-            raise ValueError(f"Email must not exceed {MAX_EMAIL_LENGTH} characters")
-        return value
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, value: str) -> str:
-        if len(value) < MIN_PASSWORD_LENGTH:
-            raise ValueError(
-                f"Password must be at least {MIN_PASSWORD_LENGTH} characters long"
-            )
-        if len(value) > MAX_PASSWORD_LENGTH:
-            raise ValueError(
-                f"Password must not exceed {MAX_PASSWORD_LENGTH} characters"
-            )
-        return value
+    email: Annotated[EmailStr, AfterValidator(validate_email_length)]
+    password: Annotated[str, AfterValidator(validate_password_length)]
 
 
 class ForgotPasswordRequest(BaseModel):
     """Pydantic model representing forgot password request"""
 
-    email: EmailStr
+    email: Annotated[EmailStr, AfterValidator(validate_email_length)]
 
 
 class VerifyEmailRequest(BaseModel):
     """Pydantic model representing verify email request body"""
 
-    token: str
-
-    @field_validator("token")
-    @classmethod
-    def validate_token(cls, value: str) -> str:
-        if len(value) != VERIFY_EMAIL_TOKEN_LENGTH:
-            # minimal validation is needed here as the database will verify if this token is valid by attempting to match it to an existing token
-            # we just need to ensure the token is a non-empty string
-            raise ValueError("Invalid token provided")
-        return value
+    token: str = Field(
+        min_length=VERIFY_EMAIL_TOKEN_LENGTH, max_length=VERIFY_EMAIL_TOKEN_LENGTH
+    )

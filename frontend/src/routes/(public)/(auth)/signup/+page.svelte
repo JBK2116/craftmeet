@@ -127,7 +127,7 @@
                         nameError = body.message;
                         return;
                     case ErrorTypes.EMAIL:
-                        emailError = body.message;
+                        emailError = 'Please enter a valid email address';
                         return;
                     case ErrorTypes.EMAIL_ALREADY_EXISTS:
                         toast.error(body.message);
