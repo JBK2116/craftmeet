@@ -88,6 +88,7 @@ async def handle_signup(db: AsyncSession, payload: SignupRequest) -> None:
         logger.debug("creating new verify email token", extra={"email": user.email})
         token = generate_verify_email_token(u_id=user.id)
         token = await insert_verify_email_token(db=db, token=token)
+        await db.commit()
         logger.debug("sending verification email", extra={"email": user.email})
         await send_verification_email(user=user, token=token)
     else:
@@ -115,6 +116,7 @@ async def handle_signup(db: AsyncSession, payload: SignupRequest) -> None:
             token = generate_verify_email_token(u_id=user.id)
             token = await insert_verify_email_token(db=db, token=token)
             logger.debug("sending verification email", extra={"email": user.email})
+            await db.commit()
             await send_verification_email(user=user, token=token)
             return
         # recreate the token only if enough time has passed since last attempt to prevent email spamming
@@ -140,6 +142,7 @@ async def handle_signup(db: AsyncSession, payload: SignupRequest) -> None:
         token = generate_verify_email_token(u_id=user.id)
         logger.debug("creating new verify email token", extra={"email": user.email})
         token = await insert_verify_email_token(db=db, token=token)
+        await db.commit()
         logger.debug("sending verification email", extra={"email": user.email})
         await send_verification_email(user=user, token=token)
 
@@ -192,6 +195,7 @@ async def handle_login(
             logger.debug("creating new verify email token", extra={"email": user.email})
             token = generate_verify_email_token(u_id=user.id)
             token = await insert_verify_email_token(db=db, token=token)
+            await db.commit()
             logger.debug("sending verification email", extra={"email": user.email})
             await send_verification_email(user=user, token=token)
             raise EmailNotVerifiedError(user.email)
@@ -205,6 +209,7 @@ async def handle_login(
         await delete_verify_email_token(db=db, token=token)
         token = generate_verify_email_token(u_id=user.id)
         token = await insert_verify_email_token(db=db, token=token)
+        await db.commit()
         logger.debug("resending verification email", extra={"email": user.email})
         await send_verification_email(user=user, token=token)
         raise EmailNotVerifiedError(user.email)
@@ -216,6 +221,7 @@ async def handle_login(
     refresh_t = generate_refresh_token(u_id=user.id)
     await delete_refresh_tokens(db=db, u_id=user.id)
     refresh_t = await insert_refresh_token(db=db, token=refresh_t)
+    await db.commit()
     # max_age expects seconds so adjust the value accordingly
     response.set_cookie(
         key="access_token",
@@ -310,6 +316,7 @@ async def handle_google_login(
     logger.debug("deleting existing refresh tokens", extra={"user_id": user.id})
     await delete_refresh_tokens(db=db, u_id=user.id)
     refresh_t = await insert_refresh_token(db=db, token=refresh_t)
+    await db.commit()
     logger.debug("setting authentication cookies", extra={"email": user.email})
     # max_age expects seconds so adjust the value accordingly
     response.set_cookie(
@@ -359,6 +366,7 @@ async def handle_logout(db: AsyncSession, refresh_token: str) -> None:
         raise InvalidTokenError from e
     logger.debug("deleting all refresh tokens", extra={"user_id": user_id})
     await delete_refresh_tokens(db=db, u_id=user_id)
+    await db.commit()
     logger.debug("user logout successful", extra={"user_id": user_id})
     return
 
@@ -405,6 +413,7 @@ async def handle_forgot_password(
         token = generate_reset_password_token(u_id=user.id)
         token = await insert_reset_password_token(db=db, token=token)
         logger.debug("sending reset password email", extra={"email": user.email})
+        await db.commit()
         await send_reset_password_email(user=user, token=token)
         return
     # check the token cooldown, if it has not elapsed, just return
@@ -421,6 +430,7 @@ async def handle_forgot_password(
     logger.debug("creating new reset password token", extra={"email": user.email})
     token = generate_reset_password_token(u_id=user.id)
     token = await insert_reset_password_token(db=db, token=token)
+    await db.commit()
     logger.debug("sending reset password email", extra={"email": user.email})
     await send_reset_password_email(user=user, token=token)
 
@@ -479,6 +489,7 @@ async def handle_reset_password(
     _ = await update_user(db=db, u_id=user.id, password=hashed_password)
     logger.debug("deleting all refresh tokens", extra={"email": user.email})
     await delete_refresh_tokens(db=db, u_id=user.id)
+    await db.commit()
     logger.debug("password reset successful", extra={"email": user.email})
     return
 
@@ -525,6 +536,7 @@ async def handle_verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> 
         verified=True,
         verified_at=datetime.datetime.now(tz=datetime.UTC),
     )
+    await db.commit()
     logger.debug("user email verification successful", extra={"email": user.email})
     return
 
@@ -617,6 +629,7 @@ async def handle_refresh(
     await delete_refresh_tokens(db=db, u_id=user_id)
     refresh_token = generate_refresh_token(u_id=user_id)
     refresh_token = await insert_refresh_token(db=db, token=refresh_token)
+    await db.commit()
     access_token = generate_access_token(u_id=user_id)
     logger.debug("setting authentication cookies", extra={"user_id": user_id})
     # max_age expects seconds so adjust the value accordingly

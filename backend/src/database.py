@@ -53,9 +53,10 @@ after a commit, which avoids implicit lazy-load errors in async contexts.
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Yield a database session for use as a FastAPI dependency.
 
-    Opens an ``AsyncSession`` for the duration of a request and ensures it is
-    properly closed afterwards, regardless of whether the request succeeded or
-    raised an exception.
+    Opens an ``AsyncSession`` and begins an explicit transaction for the
+    duration of a request. The caller is responsible for committing via
+    ``await db.commit()``. On any unhandled exception the transaction is
+    rolled back automatically, ensuring partial writes never persist.
 
     Yields:
         AsyncSession: An active SQLAlchemy async session bound to the
@@ -69,7 +70,13 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             db: AsyncSession = Depends(get_db),
         ):
             db.add(Item(**payload.model_dump()))
-            await db.commit()
+            await db.flush()   # stage within the open transaction
+            await db.commit()  # caller decides when to commit
     """
     async with AsyncSessionLocal() as session:
-        yield session
+        await session.begin()
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise

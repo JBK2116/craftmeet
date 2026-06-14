@@ -11,6 +11,7 @@ from src.auth.router import (  # noqa: F401 - ensures oauth is registered at app
 )
 from src.config import get_settings
 from src.logging_config import get_logger, setup_logging
+from src.middleware.request_logging import RequestLoggingMiddleware
 
 # initialise settings
 settings = get_settings()
@@ -48,6 +49,7 @@ app.add_middleware(
     secret_key=settings.STARLETTE_SESSION_KEY,
     https_only=False if settings.IS_DEV else True,
 )
+app.add_middleware(RequestLoggingMiddleware)
 
 
 # global exception handler
