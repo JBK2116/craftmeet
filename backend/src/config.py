@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     IS_DEV: bool
     FRONTEND_URL: str
+    BACKEND_URL: str
     # Logging
     LOG_LEVEL: str
     SERVICE_NAME: str

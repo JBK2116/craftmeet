@@ -1,6 +1,7 @@
 # Environment
 IS_DEV="true or false"
 FRONTEND_URL=
+BACKEND_URL=
 
 # Logging 
 LOG_LEVEL="DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
