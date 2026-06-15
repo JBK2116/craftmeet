@@ -2,6 +2,7 @@ import logging
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -43,6 +44,8 @@ app = FastAPI(
 )
 
 # initialise middleware
+if not settings.IS_DEV:
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 app.add_middleware(
     SessionMiddleware,
