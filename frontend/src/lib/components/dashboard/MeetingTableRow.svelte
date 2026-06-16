@@ -1,10 +1,10 @@
 <script lang="ts">
     import { Button } from '$lib/components/ui/button';
-    import type { Meeting } from '$lib/types/meeting';
+    import type { MeetingIn } from '$lib/types/meeting';
     import { timeAgo } from '$lib/utils/time';
 
     // current selected meeting in the table
-    const { meeting }: { meeting: Meeting } = $props();
+    const { meeting }: { meeting: MeetingIn } = $props();
 </script>
 
 <tr class="border-b border-border transition-colors last:border-0 hover:bg-muted/40">

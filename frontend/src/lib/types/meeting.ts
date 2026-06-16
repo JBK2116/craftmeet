@@ -1,11 +1,13 @@
+import type { QuestionIn, QuestionOut } from './question';
+
 /** Lifecycle state of a meeting. */
 export type MeetingStatus = 'live' | 'draft' | 'completed';
 
 /** Subscription plan types. */
 export type MeetingPlan = 'free' | 'pro' | 'team';
 
-/** A single meeting session created by a host. */
-export type Meeting = {
+/** A single meeting session created by a host and received from backend. */
+export type MeetingIn = {
     // IDs
     id: string;
     user_id: string;
@@ -16,13 +18,25 @@ export type Meeting = {
     room_code: string;
     status: MeetingStatus;
     stats: Stat;
+    duration: number;
     // Status
     started_at: string | null;
     ended_at: string | null;
     participant_cap: number;
+    // questions
+    questions: QuestionIn[];
     // Time
     created_at: string;
     updated_at: string;
+};
+
+/** A single meeting session created by a host and sent to the backend */
+export type MeetingOut = {
+    title: string;
+    description: string | null;
+    participant_cap: number;
+    duration: number;
+    questions: QuestionOut[];
 };
 
 /** Statistics related to a corresponding meeting */

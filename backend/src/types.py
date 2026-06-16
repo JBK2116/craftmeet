@@ -56,7 +56,6 @@ class QuestionType(StrEnum):
     LONG_ANSWER = "long_answer"
     RANKED_VOTING = "ranked_voting"
     RATING_SCALE = "rating_scale"
-    IDEA_UPVOTE = "idea_upvote"
     YES_NO = "yes_no"
 
 

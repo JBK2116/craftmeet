@@ -1,11 +1,11 @@
 <script lang="ts">
     import { Button } from '$lib/components/ui/button';
-    import type { Meeting } from '$lib/types/meeting';
+    import type { MeetingIn } from '$lib/types/meeting';
     import { timeAgo } from '$lib/utils/time';
     import { ArrowRight, Users } from '@lucide/svelte';
 
     // current live meeting
-    const { meeting }: { meeting: Meeting } = $props();
+    const { meeting }: { meeting: MeetingIn } = $props();
 </script>
 
 <section

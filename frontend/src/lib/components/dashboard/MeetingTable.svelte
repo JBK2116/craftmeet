@@ -1,16 +1,16 @@
 <script lang="ts">
-    import type { Meeting } from '$lib/types/meeting';
+    import type { MeetingIn } from '$lib/types/meeting';
 
     import EmptyState from './EmptyState.svelte';
     import MeetingTableRow from './MeetingTableRow.svelte';
 
     // user's meetings array
-    const { meetings }: { meetings: Meeting[] } = $props();
+    const { meetings }: { meetings: MeetingIn[] } = $props();
 
     // filter based on meeting status type
     type Tab = 'Upcoming' | 'Drafts' | 'Completed';
     const tabs: Tab[] = ['Upcoming', 'Drafts', 'Completed'];
-    const tabStatus: Record<Tab, Meeting['status']> = {
+    const tabStatus: Record<Tab, MeetingIn['status']> = {
         Upcoming: 'live',
         Drafts: 'draft',
         Completed: 'completed',

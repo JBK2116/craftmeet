@@ -1,79 +1,72 @@
-/** Multiple Choice Question Response */
-export type MultipleChoiceResponse = {
-    // IDs
+/** Multiple Choice Question Response received from backend */
+export type MultipleChoiceResponseIn = {
     id: string;
     question_id: string;
     participant_id: string;
-    // Selected
     selected_options: number[];
-    // Time
-    created_at: string;
-    updated_at: string;
 };
 
-/** Long Answer Question Response */
-export type LongAnswerResponse = {
-    // IDs
+/** Multiple Choice Response sent to backend */
+export type MultipleChoiceResponseOut = {
+    question_id: string;
+    participant_id: string;
+    selected_options: number[];
+};
+
+/** Long Answer Question Response received from backend */
+export type LongAnswerResponseIn = {
     id: string;
     question_id: string;
     participant_id: string;
-    // Content
     content: string;
-    // Time
-    created_at: string;
-    updated_at: string;
 };
 
-/** Ranked Voting Question Response */
-export type RankedVotingResponse = {
-    // IDs
+/** Long Answer Question Response sent to backend */
+export type LongAnswerResponseOut = {
+    question_id: string;
+    participant_id: string;
+    content: string;
+};
+
+/** Ranked Voting Question Response received from backend */
+export type RankedVotingResponseIn = {
     id: string;
     question_id: string;
     participant_id: string;
-    // Ranking
     rank_1: number;
     rank_2: number;
-    rank_3: number;
-    rank_4: number;
-    // Time
-    created_at: string;
-    updated_at: string;
+    rank_3: number | null;
+    rank_4: number | null;
 };
 
-/** Rating Scale Question Response */
-export type RatingScaleResponse = {
-    // IDs
+/** Ranked Voting Question Response sent to backend */
+export type RankedVotingResponseOut = {
+    question_id: string;
+    participant_id: string;
+    rank_1: number;
+    rank_2: number;
+    rank_3: number | null;
+    rank_4: number | null;
+};
+
+/** Rating Scale Question Response received from backend */
+export type RatingScaleResponseIn = {
     id: string;
     question_id: string;
     participant_id: string;
-    // Chosen Value
     value: number;
 };
 
-/** Participant Idea Submission */
-export type IdeaSubmission = {
-    // IDs
+/** Rating Scale Question Response sent to backend */
+export type RatingScaleResponseOut = { question_id: string; participant_id: string; value: number };
+
+/** Yes Or No Question Response received from backend */
+export type YesNoResponseIn = {
     id: string;
     question_id: string;
     participant_id: string;
-    // Idea Content
-    content: string;
-};
-
-/** Participant Idea Vote */
-export type IdeaVote = {
-    // IDs
-    id: string;
-    submission_id: string;
-    participant_id: string;
-};
-
-/** Yes Or No Question Response */
-export type YesNoResponse = {
-    // IDs
-    id: string;
-    question_id: string;
-    participant_id: string;
-    // Answer
     value: boolean;
 };
+
+/** Yes Or No Question Response sent to backend */
+export type YesNoResponseOut = { question_id: string; participant_id: string; value: boolean };
