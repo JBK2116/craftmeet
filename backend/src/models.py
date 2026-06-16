@@ -26,8 +26,8 @@ from src.constants import (
     MAX_DESCRIPTION_LENGTH,
     MAX_EMAIL_LENGTH,
     MAX_GOOGLE_ID_LENGTH,
-    MAX_IDEA_SUBMISSION_LENGTH,
     MAX_LONG_ANSWER_LENGTH,
+    MAX_MEETING_DURATION_MINUTES,
     MAX_OPTION_LENGTH,
     MAX_PARTICIPANT_CAP,
     MAX_PASSWORD_LENGTH,
@@ -137,6 +137,8 @@ class Meeting(BaseClass):
     ended_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # Max meeting duration in minutes
+    duration: Mapped[int] = mapped_column(default=MAX_MEETING_DURATION_MINUTES)
     # URL pointing to the generated PDF export of the meeting (NULL meaning it hasn't been exported yet)
     pdf_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     # Timestamp of the most recent PDF export
@@ -240,18 +242,12 @@ class Question(BaseClass):
         passive_deletes=True,
         uselist=False,
     )
-    # Direct response relationships nullable since only the matching type will have data
-    idea_submissions: Mapped[list["IdeaSubmission"] | None] = relationship(
-        "IdeaSubmission",
+    yes_no: Mapped["YesNoQuestion | None"] = relationship(
+        "YesNoQuestion",
         back_populates="question",
         cascade="all, delete",
         passive_deletes=True,
-    )
-    yesno_responses: Mapped[list["YesNoResponse"] | None] = relationship(
-        "YesNoResponse",
-        back_populates="question",
-        cascade="all, delete",
-        passive_deletes=True,
+        uselist=False,
     )
 
 
@@ -463,52 +459,26 @@ class RatingScaleResponse(BaseClass):
     value: Mapped[int] = mapped_column(Integer)
 
 
-class IdeaSubmission(BaseClass):
-    """Idea Submission Model
+class YesNoQuestion(BaseClass):
+    """
+    Yes No Model
 
-    Participant submitted ideas, linked directly to base Question.
+    Stores a direct reference to the Yes/No question posed by the host
     """
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    # Foreign key reference to the base question
     question_id: Mapped[uuid.UUID] = mapped_column(
-        UUID, ForeignKey("questions.id", ondelete="CASCADE")
+        UUID, ForeignKey("questions.id", ondelete="CASCADE"), unique=True
     )
-    # Relationship to the base Question model
     question: Mapped["Question"] = relationship(
-        "Question", back_populates="idea_submissions", lazy="selectin"
+        "Question", back_populates="yes_no", lazy="selectin"
     )
-    # Participant identifier, scoped to meeting lifetime
-    participant_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
-    # The submitted idea text
-    content: Mapped[str] = mapped_column(String(MAX_IDEA_SUBMISSION_LENGTH))
-    # Votes cast on this idea by other participants
-    votes: Mapped[list["IdeaVote"]] = relationship(
-        "IdeaVote",
-        back_populates="submission",
+    responses: Mapped[list["YesNoResponse"]] = relationship(
+        "YesNoResponse",
+        back_populates="question",
         cascade="all, delete",
         passive_deletes=True,
     )
-
-
-class IdeaVote(BaseClass):
-    """
-    Idea Vote Model
-
-    Tracks which participant voted on which idea submission
-    """
-
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    # Foreign key reference to the idea submission being voted on
-    submission_id: Mapped[uuid.UUID] = mapped_column(
-        UUID, ForeignKey("ideasubmissions.id", ondelete="CASCADE")
-    )
-    # Relationship to the IdeaSubmission model
-    submission: Mapped["IdeaSubmission"] = relationship(
-        "IdeaSubmission", back_populates="votes", lazy="selectin"
-    )
-    # Participant identifier, scoped to meeting lifetime
-    participant_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
 
 
 class YesNoResponse(BaseClass):
@@ -519,15 +489,11 @@ class YesNoResponse(BaseClass):
     """
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    # Foreign key reference to the base question
     question_id: Mapped[uuid.UUID] = mapped_column(
-        UUID, ForeignKey("questions.id", ondelete="CASCADE")
+        UUID, ForeignKey("yesnoquestions.id", ondelete="CASCADE")
     )
-    # Relationship to the base Question model
-    question: Mapped["Question"] = relationship(
-        "Question", back_populates="yesno_responses", lazy="selectin"
+    question: Mapped["YesNoQuestion"] = relationship(
+        "YesNoQuestion", back_populates="responses", lazy="selectin"
     )
-    # Participant identifier, scoped to meeting lifetime
     participant_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
-    # True = Yes, False = No
     value: Mapped[bool] = mapped_column(Boolean)
