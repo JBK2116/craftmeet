@@ -54,7 +54,7 @@
 <header class="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background">
     <nav class="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         <a
-            href="/"
+            href={$user ? '/dashboard' : '/'}
             class="group flex shrink-0 items-center gap-2 text-foreground transition-opacity active:opacity-90"
         >
             <Logo
