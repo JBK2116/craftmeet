@@ -66,6 +66,19 @@
         questions = questions.filter((q) => q.id !== id);
     }
 
+    // moves a question up or down in the array
+    function moveQuestion(index: number, direction: -1 | 1) {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= questions.length) {
+            return;
+        }
+
+        [questions[index], questions[newIndex]] = [questions[newIndex], questions[index]];
+        [questionRefs[index], questionRefs[newIndex]] = [
+            questionRefs[newIndex],
+            questionRefs[index],
+        ];
+    }
     // Close type menu on click-outside & Escape
     $effect(() => {
         if (!showTypeMenu) {
@@ -176,7 +189,10 @@
             bind:this={questionRefs[i]}
             type={q.type}
             position={i + 1}
+            isFirst={i === 0}
+            isLast={i === questions.length - 1}
             onremove={() => removeQuestion(q.id)}
+            onmove={(direction) => moveQuestion(i, direction)}
         />
     {/each}
 

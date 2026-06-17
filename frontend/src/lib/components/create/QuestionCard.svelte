@@ -5,7 +5,7 @@
     import type { RankedVotingQuestionOut } from '$lib/types/question';
     import type { RatingScaleQuestionOut } from '$lib/types/question';
     import { MAX_PROMPT_LENGTH } from '$lib/utils/constants';
-    import { CircleAlert, GripVertical, Trash2 } from '@lucide/svelte';
+    import { ChevronDown, ChevronUp, CircleAlert, Trash2 } from '@lucide/svelte';
     import { AlignStartVertical, ChartBar, ListChecks, Star, ToggleLeft } from '@lucide/svelte';
     import { slide } from 'svelte/transition';
 
@@ -42,10 +42,13 @@
     interface Props {
         type: QuestionTypes;
         position: number;
+        isFirst: boolean;
+        isLast: boolean;
         onremove: () => void;
+        onmove: (direction: -1 | 1) => void;
     }
 
-    let { type, position, onremove }: Props = $props();
+    let { type, position, isFirst, isLast, onremove, onmove }: Props = $props();
 
     // State
     let prompt = $state('');
@@ -73,7 +76,6 @@
         const configValid = configRef?.validate() ?? true;
         return Object.keys(errs).length === 0 && configValid;
     }
-
     export function getData(): QuestionOut {
         return {
             type,
@@ -104,7 +106,26 @@
     class="mb-3 rounded-xl border border-border bg-card shadow-card"
 >
     <div class="flex items-center gap-3 border-b border-border px-4 py-3">
-        <GripVertical class="h-4 w-4 shrink-0 text-muted-foreground/40" />
+        <div class="flex shrink-0 flex-col">
+            <button
+                type="button"
+                onclick={() => onmove(-1)}
+                disabled={isFirst}
+                class="rounded-md p-0.5 text-muted-foreground transition hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+                aria-label="Move question up"
+            >
+                <ChevronUp class="h-3.5 w-3.5" />
+            </button>
+            <button
+                type="button"
+                onclick={() => onmove(1)}
+                disabled={isLast}
+                class="rounded-md p-0.5 text-muted-foreground transition hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+                aria-label="Move question down"
+            >
+                <ChevronDown class="h-3.5 w-3.5" />
+            </button>
+        </div>
         <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10">
             <Icon class="h-3.5 w-3.5 text-primary" />
         </div>
