@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { apiFetch } from '$lib/api/auth';
     import type { MeetingOut } from '$lib/types/meeting';
     import type { QuestionTypes } from '$lib/types/question';
     import type { QuestionOut } from '$lib/types/question';
@@ -109,10 +110,22 @@
                     }) satisfies QuestionOut,
             ),
         };
+        const url = `/api/v1/meeting/create`;
+        const opts: RequestInit = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload),
+        };
         try {
-            // TODO: POST payload to backend
-            console.log(payload);
-            toast.success('Meeting created successfully.');
+            const response = await apiFetch(url, opts);
+            // TODO: handle the response here accordingly later
+            if (!response) {
+                return;
+            }
+            if (response.ok) {
+                toast.success('Meeting created successfully.');
+            }
         } catch (err) {
             backendError = 'An unexpected network error occurred. Please try again.';
             console.error(err);

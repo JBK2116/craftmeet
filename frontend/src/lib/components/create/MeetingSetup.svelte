@@ -8,13 +8,13 @@
     import { CircleAlert, Clock, Users } from '@lucide/svelte';
 
     export function getData() {
-        return { title, description, participant_cap, duration_minutes };
+        return { title, description, participant_cap, duration: duration };
     }
     // State
     let title = $state('');
     let description = $state('');
     let participant_cap = $state(0);
-    let duration_minutes = $state(0);
+    let duration = $state(0);
 
     // Derived
     let titleChars = $derived(title.length);
@@ -40,7 +40,7 @@
             errs['participant_cap'] = `Must be between 1 and ${MAX_PARTICIPANT_CAP}.`;
         }
         // duration validation
-        if (duration_minutes < 1 || duration_minutes > MAX_DURATION_MINS) {
+        if (duration < 1 || duration > MAX_DURATION_MINS) {
             errs['duration'] = `Duration must be between 1 and ${MAX_DURATION_MINS} mins.`;
         }
         return Object.keys(errs).length === 0;
@@ -126,7 +126,7 @@
             <input
                 id="duration"
                 type="number"
-                bind:value={duration_minutes}
+                bind:value={duration}
                 min={1}
                 max={MAX_DURATION_MINS}
                 class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
