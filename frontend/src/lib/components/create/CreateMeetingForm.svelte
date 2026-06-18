@@ -1,6 +1,9 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
     import { apiFetch } from '$lib/api/auth';
-    import type { MeetingOut } from '$lib/types/meeting';
+    import { meetings } from '$lib/stores/stores';
+    import { ErrorTypes } from '$lib/types/errors';
+    import type { MeetingIn, MeetingOut } from '$lib/types/meeting';
     import type { QuestionTypes } from '$lib/types/question';
     import type { QuestionOut } from '$lib/types/question';
     import { ChevronDown, CircleAlert, Plus } from '@lucide/svelte';
@@ -43,7 +46,7 @@
     // state
     let questions = $state<{ id: string; type: QuestionTypes }[]>([]);
     let showTypeMenu = $state(false);
-    let backendError = $state<string | null>(null); // NOTE: use this for displaying general backend errors
+    let backendError = $state<string | null>(null);
     let questionCount = $derived(questions.length);
 
     // refs used for building meeting related components
@@ -132,16 +135,34 @@
         };
         try {
             const response = await apiFetch(url, opts);
-            // TODO: handle the response here accordingly later
+            // the user was unauthenticated when making this request
             if (!response) {
                 return;
             }
-            if (response.ok) {
-                toast.success('Meeting created successfully.');
+            // handle the body from here on out
+            const body = await response.json();
+            if (!response.ok) {
+                if (response.status === 422) {
+                    toast.error(
+                        'The form has validation errors. Check the highlighted fields and fix them before resubmitting.',
+                        { duration: Infinity },
+                    );
+                    return;
+                }
+                if (body.type === ErrorTypes.SERVER) {
+                    throw new Error('Server error occurred');
+                }
             }
+            const newMeeting = body as MeetingIn;
+            meetings.update((current) => [...current, newMeeting]);
+            toast.success('Meeting created successfully! Redirecting to dashboard...', {
+                duration: 5000,
+            });
+            setTimeout(() => {
+                goto('/dashboard');
+            }, 2000);
         } catch (err) {
             backendError = 'An unexpected network error occurred. Please try again.';
-            console.error(err);
         }
     }
 </script>

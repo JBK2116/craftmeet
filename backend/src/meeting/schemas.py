@@ -11,7 +11,7 @@ Including:
 import datetime
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.constants import (
     MAX_DESCRIPTION_LENGTH,
@@ -317,6 +317,24 @@ class QuestionIn(BaseModel):
         | RatingScaleQuestionIn
         | YesNoQuestionIn
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_sub_question(cls, values):
+        question_type = values.get("type")
+        sub = values.get("sub_question", {})
+        map_ = {
+            "multiple_choice": MultipleChoiceQuestionIn,
+            "long_answer": LongAnswerQuestionIn,
+            "ranked_voting": RankedVotingQuestionIn,
+            "rating_scale": RatingScaleQuestionIn,
+            "yes_no": YesNoQuestionIn,
+        }
+        if isinstance(question_type, str) and question_type in map_:
+            values["sub_question"] = map_[question_type](**sub)
+        elif isinstance(question_type, QuestionType):
+            values["sub_question"] = map_[question_type.value](**sub)
+        return values
 
 
 class MeetingIn(BaseModel):
