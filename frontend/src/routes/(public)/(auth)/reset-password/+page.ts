@@ -8,7 +8,7 @@ export const load: PageLoad = () => {
             title: 'Reset Password - Craftmeet',
             description:
                 'Reset your Craftmeet account password and regain access to your meetings.',
-            url: 'https://craftmeet.com/reset-password',
+            url: 'https://craftmeet.live/reset-password',
             ogTitle: 'Craftmeet - Reset Password',
         } satisfies PageMeta,
     };

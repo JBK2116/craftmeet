@@ -101,7 +101,7 @@
                 These Terms and Conditions constitute a legally binding agreement between you and
                 <strong class="text-primary">Craftmeet</strong> governing your access to and use of
                 our services at
-                <a href="https://craftmeet.com">https://craftmeet.com</a> and any related services that
+                <a href="https://craftmeet.live">https://craftmeet.live</a> and any related services that
                 link to these terms.
             </p>
             <p>
@@ -181,7 +181,7 @@
                 password to access the Services. You are responsible for maintaining the
                 confidentiality of your account and for all activity that occurs under it. You agree
                 to notify us immediately at
-                <a href="mailto:support@craftmeet.com">support@craftmeet.com</a> if you suspect any unauthorized
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a> if you suspect any unauthorized
                 access to your account.
             </p>
             <p>
@@ -235,7 +235,7 @@
                 All sales are final. We do not offer refunds for any subscription fees paid,
                 including for unused portions of a billing cycle following cancellation. If you
                 believe a charge was made in error, please contact us at
-                <a href="mailto:support@craftmeet.com">support@craftmeet.com</a> and we will review your
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a> and we will review your
                 case.
             </p>
 
@@ -352,7 +352,7 @@
                 We respect the intellectual property rights of others. If you believe that any
                 content available through the Services infringes a copyright you own or control,
                 please send a written notification to
-                <a href="mailto:support@craftmeet.com">support@craftmeet.com</a> that includes:
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a> that includes:
             </p>
             <ul class="text-muted-foreground">
                 <li>
@@ -379,7 +379,7 @@
             <h3>Counter Notifications</h3>
             <p>
                 If you believe your content was removed by mistake, you may submit a written counter
-                notification to <a href="mailto:support@craftmeet.com">support@craftmeet.com</a>
+                notification to <a href="mailto:support@craftmeet.live">support@craftmeet.live</a>
                 that includes your name, address, contact information, identification of the removed material
                 and its prior location, a statement consenting to jurisdiction of the courts of Ontario,
                 Canada, and your physical or electronic signature.
@@ -418,7 +418,7 @@
             <h2 id="dispute-resolution">18. Dispute Resolution</h2>
             <p>
                 If you have a dispute with us, we ask that you first contact us at
-                <a href="mailto:support@craftmeet.com">support@craftmeet.com</a> and allow us 30 days
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a> and allow us 30 days
                 to resolve it informally before initiating any formal legal proceeding. Most issues can
                 be resolved quickly this way.
             </p>
@@ -522,12 +522,12 @@
             <h2 id="contact">26. Contact Us</h2>
             <p>
                 If you have questions, concerns, or complaints about these Terms, please contact us
-                at <a href="mailto:support@craftmeet.com">support@craftmeet.com</a>. We will respond
+                at <a href="mailto:support@craftmeet.live">support@craftmeet.live</a>. We will respond
                 within 30 days.
             </p>
             <address class="not-italic text-muted-foreground">
                 <strong class="text-primary">Craftmeet</strong><br />
-                Legal inquiries: <a href="mailto:support@craftmeet.com">support@craftmeet.com</a><br
+                Legal inquiries: <a href="mailto:support@craftmeet.live">support@craftmeet.live</a><br
                 />
                 United States (DigitalOcean NYC)
             </address>

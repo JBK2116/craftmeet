@@ -8,7 +8,7 @@ export const load: PageLoad = () => {
             title: 'Craftmeet',
             description:
                 'Host real-time structured meetings with flexible question formats, live collaboration, and AI-generated summaries of every idea your room produces.',
-            url: 'https://craftmeet.com',
+            url: 'https://craftmeet.live',
             ogTitle: 'Craftmeet - Structured, Idea-Driven Meetings',
         } satisfies PageMeta,
     };

@@ -7,7 +7,7 @@ export const load: PageLoad = () => {
         meta: {
             title: 'Verify Email - Craftmeet',
             description: 'Confirming your Craftmeet email address.',
-            url: 'https://craftmeet.com/verify-email',
+            url: 'https://craftmeet.live/verify-email',
             ogTitle: 'Craftmeet - Verify Email',
         } satisfies PageMeta,
     };

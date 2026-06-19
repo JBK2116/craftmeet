@@ -7,7 +7,7 @@ export const load: PageLoad = () => {
         meta: {
             title: 'Privacy Policy - Craftmeet',
             description: "Craftmeet's privacy notice and data processing policies.",
-            url: 'https://craftmeet.com/privacy',
+            url: 'https://craftmeet.live/privacy',
             ogTitle: 'Craftmeet - Privacy Policy',
         } satisfies PageMeta,
     };

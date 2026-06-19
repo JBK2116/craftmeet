@@ -7,7 +7,7 @@ export const load: PageLoad = () => {
         meta: {
             title: 'Forgot Password - Craftmeet',
             description: 'Reset your Craftmeet account password.',
-            url: 'https://craftmeet.com/forgot-password',
+            url: 'https://craftmeet.live/forgot-password',
             ogTitle: 'Craftmeet - Forgot Password',
         } satisfies PageMeta,
     };

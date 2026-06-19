@@ -41,7 +41,7 @@ async def send_verification_email(user: User, token: VerifyEmailToken) -> None:
     Raises:
         EmailDeliveryError: If the email fails to send via SendGrid API.
     """
-    base_url = "http://localhost:5173" if settings.IS_DEV else "https://craftmeet.com"
+    base_url = "http://localhost:5173" if settings.IS_DEV else "https://craftmeet.live"
     email_link = f"{base_url}/verify-email?token={token.token_hash}"
     expiry_hours = VERIFY_EMAIL_TOKEN_MAX_DURATION_MINUTES // 60
 
@@ -152,7 +152,7 @@ async def send_reset_password_email(user: User, token: ResetPasswordToken) -> No
     Raises:
         EmailDeliveryError: If the email fails to send via SendGrid API.
     """
-    base_url = "http://localhost:5173" if settings.IS_DEV else "https://craftmeet.com"
+    base_url = "http://localhost:5173" if settings.IS_DEV else "https://craftmeet.live"
     email_link = f"{base_url}/reset-password?token={token.token_hash}"
     expiry_minutes = RESET_PASSWORD_TOKEN_MAX_DURATION_MINUTES
 

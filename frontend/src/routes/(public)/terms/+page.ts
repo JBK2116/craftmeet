@@ -7,7 +7,7 @@ export const load: PageLoad = () => {
         meta: {
             title: 'Terms and Conditions - Craftmeet',
             description: "Craftmeet's terms and conditions of service.",
-            url: 'https://craftmeet.com/terms',
+            url: 'https://craftmeet.live/terms',
             ogTitle: 'Craftmeet - Terms and Conditions',
         } satisfies PageMeta,
     };

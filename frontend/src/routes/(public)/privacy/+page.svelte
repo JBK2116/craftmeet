@@ -98,7 +98,7 @@
             </p>
             <ul>
                 <li>
-                    Visit our website at <a href="https://craftmeet.com">https://craftmeet.com</a>,
+                    Visit our website at <a href="https://craftmeet.live">https://craftmeet.live</a>,
                     or any website of ours that links to this privacy notice.
                 </li>
                 <li>
@@ -110,7 +110,7 @@
                 privacy rights and choices. If you do not agree with our policies and practices,
                 please do not use our Services. If you still have any questions or concerns, please
                 contact us at
-                <a href="mailto:support@craftmeet.com">support@craftmeet.com</a>.
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a>.
             </p>
 
             <hr />
@@ -234,7 +234,7 @@
                 in the private sector). We use automated AI processing solely to generate meeting
                 summaries, as disclosed in this notice. Our designated Privacy Officer can be
                 reached at
-                <a href="mailto:support@craftmeet.com">support@craftmeet.com</a>.
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a>.
             </p>
             <!-- TODO: Before scaling to paid Quebec users, implement formal breach register,
                  data portability request flow, and de-indexing request handling as required
@@ -250,7 +250,7 @@
                 infrastructure providers to run the Service:
             </p>
             <ul>
-                <!-- TODO: Sign the DPA under the OpenAI organization registered to support@craftmeet.com before launch -->
+                <!-- TODO: Sign the DPA under the OpenAI organization registered to support@craftmeet.live before launch -->
                 <li>
                     <strong>Artificial Intelligence Services:</strong> OpenAI (strictly for processing
                     meeting transcripts into summaries, governed by a signed Data Processing Agreement
@@ -346,7 +346,7 @@
                 If you are located in Canada, the EEA, or the UK, you have certain rights under
                 applicable data protection laws, including the right to request access to,
                 rectification of, or erasure of your personal information. To make such a request,
-                please contact us at <a href="mailto:support@craftmeet.com">support@craftmeet.com</a
+                please contact us at <a href="mailto:support@craftmeet.live">support@craftmeet.live</a
                 >. We will respond to all legitimate requests within 30 days. Occasionally it may
                 take us longer if your request is particularly complex or you have made a number of
                 requests, in which case we will notify you and keep you updated.
@@ -356,12 +356,12 @@
             <p>
                 If you have questions or comments about this notice, or wish to exercise any of your
                 privacy rights, you may contact our Privacy Officer by email at
-                <a href="mailto:support@craftmeet.com">support@craftmeet.com</a>. We will respond to
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a>. We will respond to
                 all requests within 30 days.
             </p>
             <address class="not-italic text-muted-foreground">
                 <strong>Craftmeet</strong><br />
-                Privacy Officer: <a href="mailto:support@craftmeet.com">support@craftmeet.com</a><br
+                Privacy Officer: <a href="mailto:support@craftmeet.live">support@craftmeet.live</a><br
                 />
                 United States (DigitalOcean NYC)
             </address>

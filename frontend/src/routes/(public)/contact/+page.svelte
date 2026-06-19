@@ -22,9 +22,9 @@
                 The only way to reach us is by email. We don't operate a phone line or a physical
                 office, so emailing us directly at
                 <a
-                    href="mailto:support@craftmeet.com"
+                    href="mailto:support@craftmeet.live"
                     class="font-medium text-foreground underline underline-offset-4 hover:text-muted-foreground"
-                    >support@craftmeet.com</a
+                    >support@craftmeet.live</a
                 >
                 is the fastest and only way to get a response. This is the same address referenced throughout
                 our
@@ -56,10 +56,10 @@
                 </Card.Header>
                 <Card.Content class="flex flex-col gap-4">
                     <a
-                        href="mailto:support@craftmeet.com"
+                        href="mailto:support@craftmeet.live"
                         class={buttonVariants({ variant: 'default' }) + ' w-fit'}
                     >
-                        support@craftmeet.com
+                        support@craftmeet.live
                     </a>
                     <p class="text-sm text-muted-foreground">
                         We aim to respond to all legitimate requests within 30 days.
@@ -83,9 +83,9 @@
                     <p class="text-sm text-muted-foreground">
                         In the meantime, please direct all correspondence to
                         <a
-                            href="mailto:support@craftmeet.com"
+                            href="mailto:support@craftmeet.live"
                             class="font-medium text-foreground underline underline-offset-4 hover:text-muted-foreground"
-                            >support@craftmeet.com</a
+                            >support@craftmeet.live</a
                         >.
                     </p>
                 </Card.Content>

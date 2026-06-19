@@ -8,7 +8,7 @@ export const load: PageLoad = () => {
             title: 'Sign In - Craftmeet',
             description:
                 'Sign in to your Craftmeet account and continue hosting real-time structured meetings with AI-generated summaries.',
-            url: 'https://craftmeet.com/login',
+            url: 'https://craftmeet.live/login',
             ogTitle: 'Craftmeet - Sign In',
         } satisfies PageMeta,
     };

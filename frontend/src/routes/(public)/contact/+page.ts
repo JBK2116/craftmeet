@@ -7,8 +7,8 @@ export const load: PageLoad = () => {
         meta: {
             title: 'Contact - Craftmeet',
             description:
-                'Get in touch with the Craftmeet team. Reach us directly by email at support@craftmeet.com.',
-            url: 'https://craftmeet.com/contact',
+                'Get in touch with the Craftmeet team. Reach us directly by email at support@craftmeet.live',
+            url: 'https://craftmeet.live/contact',
             ogTitle: 'Craftmeet - Contact',
         } satisfies PageMeta,
     };
