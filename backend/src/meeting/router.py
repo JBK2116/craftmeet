@@ -14,7 +14,7 @@ from src.middleware.jwt import get_current_user
 from src.types import ErrorTypes
 
 meeting_router = APIRouter(
-    prefix="/meeting",
+    prefix="/meetings",
     tags=["meeting"],
     strict_content_type=True,
     include_in_schema=True,

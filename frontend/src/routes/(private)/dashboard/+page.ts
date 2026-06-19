@@ -10,7 +10,7 @@ import type { PageLoad } from './$types';
 // derived from the route ("dashboard").
 export const load: PageLoad = async ({ fetch }) => {
     // load the starting meetings from the backend
-    const url = `/api/v1/meeting`;
+    const url = `/api/v1/meetings`;
     const opts: RequestInit = { method: 'GET', credentials: 'include' };
     let meetings: MeetingIn[] = [];
     try {

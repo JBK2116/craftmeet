@@ -126,7 +126,7 @@
                     }) satisfies QuestionOut,
             ),
         };
-        const url = `/api/v1/meeting/create`;
+        const url = `/api/v1/meetings/create`;
         const opts: RequestInit = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
