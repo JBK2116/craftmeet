@@ -6,7 +6,6 @@
         CircleCheck,
         LayoutList,
         MessageSquare,
-        ThumbsUp,
         Zap,
     } from '@lucide/svelte';
     import { onMount } from 'svelte';
