@@ -14,3 +14,12 @@ export const ErrorTypes = {
 } as const;
 
 export type ErrorTypes = (typeof ErrorTypes)[keyof typeof ErrorTypes];
+
+/**
+ * Custom error class representing an authentication failure.
+ */
+export class AuthError extends Error {
+    constructor() {
+        super('AUTH_FAILED');
+    }
+}

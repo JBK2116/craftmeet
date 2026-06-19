@@ -2,7 +2,7 @@
     import { goto } from '$app/navigation';
     import { apiFetch } from '$lib/api/auth';
     import { meetings } from '$lib/stores/stores';
-    import { ErrorTypes } from '$lib/types/errors';
+    import { AuthError, ErrorTypes } from '$lib/types/errors';
     import type { MeetingIn, MeetingOut } from '$lib/types/meeting';
     import type { QuestionTypes } from '$lib/types/question';
     import type { QuestionOut } from '$lib/types/question';
@@ -135,11 +135,6 @@
         };
         try {
             const response = await apiFetch(url, opts);
-            // the user was unauthenticated when making this request
-            if (!response) {
-                return;
-            }
-            // handle the body from here on out
             const body = await response.json();
             if (!response.ok) {
                 if (response.status === 422) {
@@ -162,7 +157,12 @@
                 goto('/dashboard');
             }, 2000);
         } catch (err) {
+            if (err instanceof AuthError) {
+                goto('/login');
+                return;
+            }
             backendError = 'An unexpected network error occurred. Please try again.';
+            return;
         }
     }
 </script>
