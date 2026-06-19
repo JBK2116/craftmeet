@@ -56,9 +56,6 @@
         return true;
     }
 
-    // remember me
-    let rememberMe = $state(false);
-
     // wrapper to validate all fields at once
     function validateLogin(): boolean {
         const a = validateEmail();
@@ -226,16 +223,6 @@
                         </p>
                     {/if}
                 </div>
-
-                <label class="flex cursor-pointer items-center gap-2.5 select-none">
-                    <input
-                        type="checkbox"
-                        bind:checked={rememberMe}
-                        disabled={isAttempting}
-                        class="h-4 w-4 rounded border border-border bg-background text-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
-                    />
-                    <span class="text-sm text-muted-foreground">Remember me</span>
-                </label>
 
                 <button
                     onclick={handleLogin}
