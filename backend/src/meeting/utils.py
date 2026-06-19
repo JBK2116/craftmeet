@@ -60,6 +60,14 @@ SubQuestionOut = (
     | YesNoQuestionOut
 )
 
+SUB_QUESTION_ATTR = {
+    QuestionType.MULTIPLE_CHOICE: "multiple_choice",
+    QuestionType.LONG_ANSWER: "long_answer",
+    QuestionType.RANKED_VOTING: "ranked_voting",
+    QuestionType.RATING_SCALE: "rating_scale",
+    QuestionType.YES_NO: "yes_no",
+}
+
 
 logger = logging.getLogger(__name__)
 

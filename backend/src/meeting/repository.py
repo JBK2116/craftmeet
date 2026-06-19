@@ -6,13 +6,25 @@ meeting state persistence.
 """
 
 import logging
+import uuid
 
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.exceptions import DatabaseError
 from src.meeting.utils import SubQuestion
-from src.models import Meeting, Question, Stat
+from src.models import (
+    LongAnswerQuestion,
+    Meeting,
+    MultipleChoiceQuestion,
+    Question,
+    RankedVotingQuestion,
+    RatingScaleQuestion,
+    Stat,
+    YesNoQuestion,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -125,4 +137,59 @@ async def insert_sub_question(db: AsyncSession, question: SubQuestion) -> SubQue
         return question
     except SQLAlchemyError as e:
         logging.exception("failed to insert sub-question: %s", question)
+        raise DatabaseError("database error occurred") from e
+
+
+async def get_meetings(
+    db: AsyncSession, u_id: uuid.UUID, limit: int, offset: int
+) -> list[Meeting]:
+    """Retrieve a list of meetings for a given user with full related data.
+
+    Args:
+        db: The asynchronous SQLAlchemy session.
+        u_id: The UUID of the user whose meetings to fetch.
+        limit: Maximum number of meetings to return.
+        offset: Number of meetings to skip for pagination.
+
+    Returns:
+        A list of Meeting instances with eagerly loaded questions, stats and responses.
+
+    Raises:
+        DatabaseError: If a database error occurs during the query.
+    """
+    logger.debug(
+        "fetching meetings for user %s with limit=%d, offset=%d", u_id, limit, offset
+    )
+    try:
+        stmt = (
+            select(Meeting)
+            .options(
+                selectinload(Meeting.questions)
+                .selectinload(Question.multiple_choice)
+                .selectinload(MultipleChoiceQuestion.responses),
+                selectinload(Meeting.questions)
+                .selectinload(Question.long_answer)
+                .selectinload(LongAnswerQuestion.responses),
+                selectinload(Meeting.questions)
+                .selectinload(Question.ranked_voting)
+                .selectinload(RankedVotingQuestion.responses),
+                selectinload(Meeting.questions)
+                .selectinload(Question.rating_scale)
+                .selectinload(RatingScaleQuestion.responses),
+                selectinload(Meeting.questions)
+                .selectinload(Question.yes_no)
+                .selectinload(YesNoQuestion.responses),
+                selectinload(Meeting.stats),
+            )
+            .where(Meeting.user_id == u_id)
+            .order_by(Meeting.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        result = await db.execute(stmt)
+        meetings = list(result.scalars().all())
+        logger.debug("retrieved %d meetings for user %s", len(meetings), u_id)
+        return meetings
+    except SQLAlchemyError as e:
+        logging.exception("error fetching meetings for user %s: %s", u_id, e)
         raise DatabaseError("database error occurred") from e

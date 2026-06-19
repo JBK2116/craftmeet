@@ -10,6 +10,7 @@ from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.meeting.repository import (
+    get_meetings,
     insert_meeting,
     insert_question,
     insert_stat,
@@ -17,6 +18,8 @@ from src.meeting.repository import (
 )
 from src.meeting.schemas import MeetingIn, MeetingOut, QuestionOut
 from src.meeting.utils import (
+    SUB_QUESTION_ATTR,
+    SubQuestion,
     build_meeting_out,
     build_question_out,
     generate_meeting_model,
@@ -24,7 +27,9 @@ from src.meeting.utils import (
     generate_stat_model,
     generate_sub_question,
 )
-from src.models import User
+from src.models import (
+    User,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -110,3 +115,61 @@ async def handle_create_meeting(
         },
     )
     return meeting_out
+
+
+async def handle_get_meetings(
+    db: AsyncSession, request: Request, limit: int, offset: int
+) -> list[MeetingOut]:
+    """Retrieve paginated meetings for the authenticated user.
+
+    Args:
+        db: The active asynchronous database session.
+        request: The incoming FastAPI request, which carries the
+            authenticated user via ``request.state.user``.
+        limit: Maximum number of meetings to return.
+        offset: Number of meetings to skip for pagination.
+
+    Returns:
+        A list of MeetingOut schemas, each fully populated with
+        their questions, nested sub-questions, and statistics.
+    """
+    user: User = request.state.user
+    logger.info(
+        "Fetching meetings",
+        extra={"user_id": str(user.id), "limit": limit, "offset": offset},
+    )
+    meetings = await get_meetings(db=db, u_id=user.id, limit=limit, offset=offset)
+    logger.debug(
+        "Meetings fetched",
+        extra={"user_id": str(user.id), "count": len(meetings)},
+    )
+    meetings_out: list[MeetingOut] = []
+    for idx, m in enumerate(meetings, start=1):
+        logger.debug(
+            "Processing meeting",
+            extra={
+                "meeting_index": idx,
+                "total_meetings": len(meetings),
+                "meeting_id": str(m.id),
+                "question_count": len(m.questions),
+            },
+        )
+        questions_out: list[QuestionOut] = []
+        for q in m.questions:
+            sub_question: SubQuestion = getattr(q, SUB_QUESTION_ATTR[q.type])
+            assert sub_question is not None  # noqa: S101
+            questions_out.append(
+                build_question_out(question=q, sub_question=sub_question)
+            )
+        m_out = build_meeting_out(meeting=m, questions_out=questions_out, stat=m.stats)
+        meetings_out.append(m_out)
+    logger.info(
+        "Meetings retrieved",
+        extra={
+            "user_id": str(user.id),
+            "limit": limit,
+            "offset": offset,
+            "returned_count": len(meetings_out),
+        },
+    )
+    return meetings_out
