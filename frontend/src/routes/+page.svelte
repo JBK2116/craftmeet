@@ -134,14 +134,14 @@
                     Every format your session needs
                 </h2>
                 <p class="mt-4 text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                    Six question types built for real facilitation.
+                    Five question types built for real facilitation.
                 </p>
             </div>
 
             <div
-                class="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 lg:grid-cols-3 rounded-xl overflow-hidden border border-border"
+                class="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 lg:grid-cols-5 rounded-xl overflow-hidden border border-border"
             >
-                {#each [{ icon: LayoutList, title: 'Multiple Choice', desc: 'Single or multi-select from host-defined options. Results tally in real time.' }, { icon: MessageSquare, title: 'Long Answer', desc: 'Open text responses for qualitative ideas and freeform input.' }, { icon: ChartBarBig, title: 'Ranked Voting', desc: 'Participants drag-rank a priority list. Surface group consensus instantly.' }, { icon: Zap, title: 'Rating Scale', desc: '1–5 or 1–10 numeric rating shown as a live aggregate across the room.' }, { icon: ThumbsUp, title: 'Idea + Upvote', desc: 'Participants submit ideas and the group upvotes anonymously.' }, { icon: CircleCheck, title: 'Yes / No', desc: 'Live pulse check. Instant thumbs up/down read on any question.' }] as feature}
+                {#each [{ icon: LayoutList, title: 'Multiple Choice', desc: 'Single or multi-select from host-defined options. Results tally in real time.' }, { icon: MessageSquare, title: 'Long Answer', desc: 'Open text responses for qualitative ideas and freeform input.' }, { icon: ChartBarBig, title: 'Ranked Voting', desc: 'Participants drag-rank a priority list. Surface group consensus instantly.' }, { icon: Zap, title: 'Rating Scale', desc: '1–5 or 1–10 numeric rating shown as a live aggregate across the room.' }, { icon: CircleCheck, title: 'Yes / No', desc: 'Live pulse check. Instant thumbs up/down read on any question.' }] as feature}
                     <div
                         class="group flex flex-col gap-4 bg-card p-8 transition-colors hover:bg-muted/40"
                     >
