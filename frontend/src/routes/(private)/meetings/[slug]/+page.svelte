@@ -78,7 +78,10 @@
 
     // removes a question from the questions array
     function removeQuestion(id: string) {
-        questions = questions.filter((q) => q.id !== id);
+        const idx = questions.findIndex((q) => q.id === id);
+        if (idx === -1) return;
+        questions.splice(idx, 1);
+        questionRefs.splice(idx, 1);
     }
 
     // moves a question's positioning in the questions array
@@ -143,6 +146,8 @@
             body: JSON.stringify(payload),
         };
         try {
+            console.log(payload);
+            return;
             const response = await apiFetch(url, opts);
             const body = await response.json();
             if (!response.ok) {
