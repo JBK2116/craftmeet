@@ -37,7 +37,7 @@ MEETING_ID = Annotated[uuid.UUID, Path(title="The id of the meeting to fetch")]
 
 
 @meeting_router.post(
-    "/create",
+    "",
     response_model=MeetingOut,
     tags=["meeting"],
     status_code=status.HTTP_201_CREATED,
