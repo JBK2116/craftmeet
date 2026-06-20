@@ -1,13 +1,26 @@
 <script lang="ts">
-    import type { RankedVotingQuestionOut } from '$lib/types/question';
+    import type { RankedVotingQuestionIn, RankedVotingQuestionOut } from '$lib/types/question';
     import { MAX_OPTION_LENGTH } from '$lib/utils/constants';
     import { CircleAlert, Plus, Trash2 } from '@lucide/svelte';
+    import { untrack } from 'svelte';
 
     // data sent up to the parent component
-    let { data = $bindable() }: { data: RankedVotingQuestionOut } = $props();
+    let {
+        data = $bindable(),
+        initial,
+    }: { data: RankedVotingQuestionOut; initial?: RankedVotingQuestionIn } = $props();
 
     // state variables
-    let items = $state<string[]>(['', '']);
+    let items = $state<string[]>(
+        untrack(() => {
+            if (initial) {
+                return [initial.item_1, initial.item_2, initial.item_3, initial.item_4].filter(
+                    (i): i is string => i !== null,
+                );
+            }
+            return ['', ''];
+        }),
+    );
     let errors = $state<Record<string, string>>({});
     let itemCount = $derived(items.length);
 
@@ -31,7 +44,7 @@
     // remove an item from the items array with mutation
     function removeItem(idx: number) {
         if (items.length > 2) {
-            items = items.splice(idx, 1);
+            items.splice(idx, 1);
         }
     }
 

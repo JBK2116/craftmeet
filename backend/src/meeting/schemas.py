@@ -349,3 +349,58 @@ class MeetingIn(BaseModel):
     )
     duration: int = Field(ge=1, le=MAX_MEETING_DURATION_MINUTES)
     questions: list[QuestionIn]
+
+
+# DATA SENT FROM FRONTEND TO UPDATE MEETINGS
+# Includes
+# - Questions
+# - Responses
+# - Meetings
+
+
+class QuestionInUpdate(BaseModel):
+    """Model representing an updated question sent by the frontend"""
+
+    id: uuid.UUID | None = Field(default=None)
+    type: QuestionType
+    prompt: str = Field(min_length=1, max_length=MAX_PROMPT_LENGTH)
+    position: int = Field(ge=1)
+    sub_question: (
+        MultipleChoiceQuestionIn
+        | LongAnswerQuestionIn
+        | RankedVotingQuestionIn
+        | RatingScaleQuestionIn
+        | YesNoQuestionIn
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_sub_question(cls, values):
+        question_type = values.get("type")
+        sub = values.get("sub_question", {})
+        map_ = {
+            "multiple_choice": MultipleChoiceQuestionIn,
+            "long_answer": LongAnswerQuestionIn,
+            "ranked_voting": RankedVotingQuestionIn,
+            "rating_scale": RatingScaleQuestionIn,
+            "yes_no": YesNoQuestionIn,
+        }
+        if isinstance(question_type, str) and question_type in map_:
+            values["sub_question"] = map_[question_type](**sub)
+        elif isinstance(question_type, QuestionType):
+            values["sub_question"] = map_[question_type.value](**sub)
+        return values
+
+
+class MeetingUpdate(BaseModel):
+    """Model representing a meeting sent by the frontend"""
+
+    title: str = Field(min_length=1, max_length=MAX_TITLE_LENGTH)
+    description: str | None = Field(
+        default=None, min_length=1, max_length=MAX_DESCRIPTION_LENGTH
+    )
+    participant_cap: int = Field(
+        default=MAX_PARTICIPANT_CAP, le=MAX_PARTICIPANT_CAP, ge=1
+    )
+    duration: int = Field(ge=1, le=MAX_MEETING_DURATION_MINUTES)
+    questions: list[QuestionInUpdate]

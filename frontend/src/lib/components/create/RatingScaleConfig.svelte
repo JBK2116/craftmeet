@@ -1,14 +1,18 @@
 <script lang="ts">
-    import type { RatingScaleQuestionOut } from '$lib/types/question';
+    import type { RatingScaleQuestionIn, RatingScaleQuestionOut } from '$lib/types/question';
     import { MAX_RATING_SCALE_VALUE, MIN_RATING_SCALE_VALUE } from '$lib/utils/constants';
     import { CircleAlert } from '@lucide/svelte';
+    import { untrack } from 'svelte';
 
     // data sent up to the parent
-    let { data = $bindable() }: { data: RatingScaleQuestionOut } = $props();
+    let {
+        data = $bindable(),
+        initial,
+    }: { data: RatingScaleQuestionOut; initial?: RatingScaleQuestionIn } = $props();
 
     // state variables
-    let min = $state(0);
-    let max = $state(5);
+    let min = $state(untrack(() => initial?.min ?? 0));
+    let max = $state(untrack(() => initial?.max ?? 5));
     let errors = $state<Record<string, string>>({});
 
     // data object always reflects max, min pair

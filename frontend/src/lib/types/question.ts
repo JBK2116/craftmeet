@@ -89,6 +89,20 @@ export type YesNoQuestionIn = {
     question_id: string;
     responses: YesNoResponseIn[];
 };
+
+/** Updated question sent to backend */
+export type QuestionUpdate = {
+    id: string | null;
+    type: QuestionTypes;
+    prompt: string;
+    position: number;
+    sub_question:
+        | YesNoQuestionOut
+        | RatingScaleQuestionOut
+        | RankedVotingQuestionOut
+        | LongAnswerQuestionOut
+        | MultipleChoiceQuestionOut;
+};
 /** Question sent to backend */
 export type QuestionOut = {
     type: QuestionTypes;

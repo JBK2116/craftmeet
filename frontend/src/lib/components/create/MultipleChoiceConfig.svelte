@@ -1,16 +1,31 @@
 <script lang="ts">
-    import type { MultipleChoiceQuestionOut } from '$lib/types/question';
+    import type { MultipleChoiceQuestionIn, MultipleChoiceQuestionOut } from '$lib/types/question';
     import { MAX_OPTION_LENGTH } from '$lib/utils/constants';
     import { CircleAlert, Plus, Trash2 } from '@lucide/svelte';
+    import { untrack } from 'svelte';
+
+    let {
+        data = $bindable(),
+        initial,
+    }: { data: MultipleChoiceQuestionOut; initial?: MultipleChoiceQuestionIn } = $props();
 
     // state variables
-    let options = $state<string[]>(['', '']);
-    let allow_multiple = $state(false);
+    let options = $state<string[]>(
+        untrack(() => {
+            if (initial) {
+                return [
+                    initial.option_1,
+                    initial.option_2,
+                    initial.option_3,
+                    initial.option_4,
+                ].filter((o): o is string => o !== null);
+            }
+            return ['', ''];
+        }),
+    );
+    let allow_multiple = $state(untrack(() => initial?.allow_multiple ?? false));
     let errors = $state<Record<string, string>>({});
     let optionCount = $derived(options.length);
-
-    // data sent up to the parent component
-    let { data = $bindable() }: { data: MultipleChoiceQuestionOut } = $props();
 
     $effect(() => {
         data = {

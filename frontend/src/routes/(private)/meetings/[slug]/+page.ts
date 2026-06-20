@@ -34,11 +34,10 @@ export const load: PageLoad = async ({ fetch, params }) => {
     // return the page load data
     return {
         meta: {
-            title: 'Dashboard - Craftmeet',
-            description:
-                'Manage your meetings, monitor live sessions, and review AI-generated summaries from your Craftmeet dashboard.',
-            url: 'https://craftmeet.live/dashboard',
-            ogTitle: 'Craftmeet - Dashboard',
+            title: `${meeting.title} - Craftmeet`,
+            description: `Edit and manage ${meeting.title}, review questions, and control your meeting settings.`,
+            url: `https://craftmeet.live/meetings/${slug}`,
+            ogTitle: `${meeting.title} - Craftmeet`,
         } satisfies PageMeta,
         meeting: meeting,
     };

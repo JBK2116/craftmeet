@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { MeetingIn } from '$lib/types/meeting';
     import {
         MAX_DESCRIPTION_LENGTH,
         MAX_DURATION_MINS,
@@ -6,15 +7,18 @@
         MAX_TITLE_LENGTH,
     } from '$lib/utils/constants';
     import { CircleAlert, Clock, Users } from '@lucide/svelte';
+    import { untrack } from 'svelte';
+
+    let { initial }: { initial?: MeetingIn } = $props();
 
     export function getData() {
         return { title, description, participant_cap, duration: duration };
     }
     // State
-    let title = $state('');
-    let description = $state('');
-    let participant_cap = $state(0);
-    let duration = $state(0);
+    let title = $state(untrack(() => initial?.title ?? ''));
+    let description = $state(untrack(() => initial?.description ?? ''));
+    let participant_cap = $state(untrack(() => initial?.participant_cap ?? 0));
+    let duration = $state(untrack(() => initial?.duration ?? 0));
 
     // Derived
     let titleChars = $derived(title.length);

@@ -1,12 +1,16 @@
 <script lang="ts">
-    import type { LongAnswerQuestionOut } from '$lib/types/question';
+    import type { LongAnswerQuestionIn, LongAnswerQuestionOut } from '$lib/types/question';
     import { MAX_LONG_ANSWER_LENGTH } from '$lib/utils/constants';
-    
+    import { untrack } from 'svelte';
+
     // data sent up to the parent
-    let { data = $bindable() }: { data: LongAnswerQuestionOut } = $props();
+    let {
+        data = $bindable(),
+        initial,
+    }: { data: LongAnswerQuestionOut; initial?: LongAnswerQuestionIn } = $props();
 
     // state
-    let max_length = $state(MAX_LONG_ANSWER_LENGTH);
+    let max_length = $state(untrack(() => initial?.max_length ?? MAX_LONG_ANSWER_LENGTH));
 
     $effect(() => {
         data = { max_length };

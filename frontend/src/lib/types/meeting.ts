@@ -30,6 +30,15 @@ export type MeetingIn = {
     updated_at: string;
 };
 
+/** A single meeting session that is being updated after client side changes */
+export type MeetingUpdate = {
+    title: string;
+    description: string | null;
+    participant_cap: number;
+    duration: number;
+    questions: QuestionOut[];
+};
+
 /** A single meeting session created by a host and sent to the backend */
 export type MeetingOut = {
     title: string;

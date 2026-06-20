@@ -1,12 +1,13 @@
 <script lang="ts">
-    import type { QuestionOut, QuestionTypes } from '$lib/types/question';
-    import type { MultipleChoiceQuestionOut } from '$lib/types/question';
-    import type { LongAnswerQuestionOut } from '$lib/types/question';
-    import type { RankedVotingQuestionOut } from '$lib/types/question';
-    import type { RatingScaleQuestionOut } from '$lib/types/question';
+    import type { QuestionIn, QuestionOut, QuestionTypes } from '$lib/types/question';
+    import type { MultipleChoiceQuestionIn, MultipleChoiceQuestionOut } from '$lib/types/question';
+    import type { LongAnswerQuestionIn, LongAnswerQuestionOut } from '$lib/types/question';
+    import type { RankedVotingQuestionIn, RankedVotingQuestionOut } from '$lib/types/question';
+    import type { RatingScaleQuestionIn, RatingScaleQuestionOut } from '$lib/types/question';
     import { MAX_PROMPT_LENGTH } from '$lib/utils/constants';
     import { ChevronDown, ChevronUp, CircleAlert, Trash2 } from '@lucide/svelte';
     import { AlignStartVertical, ChartBar, ListChecks, Star, ToggleLeft } from '@lucide/svelte';
+    import { untrack } from 'svelte';
     import { slide } from 'svelte/transition';
 
     import LongAnswerConfig from './LongAnswerConfig.svelte';
@@ -46,12 +47,13 @@
         isLast: boolean;
         onremove: () => void;
         onmove: (direction: -1 | 1) => void;
+        initial?: QuestionIn;
     }
 
-    let { type, position, isFirst, isLast, onremove, onmove }: Props = $props();
+    let { type, position, isFirst, isLast, onremove, onmove, initial }: Props = $props();
 
     // State
-    let prompt = $state('');
+    let prompt = $state(untrack(() => initial?.prompt ?? ''));
     let errors = $state<Record<string, string>>({});
 
     // Config component refs
@@ -168,13 +170,29 @@
         </div>
 
         {#if type === 'multiple_choice'}
-            <MultipleChoiceConfig bind:this={configRef} bind:data={mcData!} />
+            <MultipleChoiceConfig
+                bind:this={configRef}
+                bind:data={mcData!}
+                initial={initial?.sub_question as MultipleChoiceQuestionIn}
+            />
         {:else if type === 'long_answer'}
-            <LongAnswerConfig bind:this={configRef} bind:data={laData!} />
+            <LongAnswerConfig
+                bind:this={configRef}
+                bind:data={laData!}
+                initial={initial?.sub_question as LongAnswerQuestionIn}
+            />
         {:else if type === 'ranked_voting'}
-            <RankedVotingConfig bind:this={configRef} bind:data={rankedData!} />
+            <RankedVotingConfig
+                bind:this={configRef}
+                bind:data={rankedData!}
+                initial={initial?.sub_question as RankedVotingQuestionIn}
+            />
         {:else if type === 'rating_scale'}
-            <RatingScaleConfig bind:this={configRef} bind:data={ratingData!} />
+            <RatingScaleConfig
+                bind:this={configRef}
+                bind:data={ratingData!}
+                initial={initial?.sub_question as RatingScaleQuestionIn}
+            />
         {:else if type === 'yes_no'}
             <YesNoConfig bind:this={configRef} />
         {/if}
