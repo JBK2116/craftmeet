@@ -193,3 +193,50 @@ async def get_meetings(
     except SQLAlchemyError as e:
         logging.exception("error fetching meetings for user %s: %s", u_id, e)
         raise DatabaseError("database error occurred") from e
+
+
+async def get_meeting(db: AsyncSession, m_id: uuid.UUID) -> Meeting | None:
+    """Retrieve a single meeting by its ID with full related data.
+
+    Args:
+        db: The asynchronous SQLAlchemy session.
+        m_id: The UUID of the meeting to fetch.
+
+    Returns:
+        The Meeting instance with eagerly loaded questions, stats and responses,
+        or None if no meeting with the given ID exists.
+
+    Raises:
+        DatabaseError: If a database error occurs during the query.
+    """
+    logger.debug("fetching meeting %s", m_id)
+    try:
+        stmt = (
+            select(Meeting)
+            .options(
+                selectinload(Meeting.questions)
+                .selectinload(Question.multiple_choice)
+                .selectinload(MultipleChoiceQuestion.responses),
+                selectinload(Meeting.questions)
+                .selectinload(Question.long_answer)
+                .selectinload(LongAnswerQuestion.responses),
+                selectinload(Meeting.questions)
+                .selectinload(Question.ranked_voting)
+                .selectinload(RankedVotingQuestion.responses),
+                selectinload(Meeting.questions)
+                .selectinload(Question.rating_scale)
+                .selectinload(RatingScaleQuestion.responses),
+                selectinload(Meeting.questions)
+                .selectinload(Question.yes_no)
+                .selectinload(YesNoQuestion.responses),
+                selectinload(Meeting.stats),
+            )
+            .where(Meeting.id == m_id)
+        )
+        result = await db.execute(stmt)
+        meeting = result.scalar_one_or_none()
+        logger.debug("retrieved meeting %s: %s", m_id, meeting)
+        return meeting
+    except SQLAlchemyError as e:
+        logger.exception("error fetching meeting %s: %s", m_id, e)
+        raise DatabaseError("database error occurred") from e

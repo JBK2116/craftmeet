@@ -5,11 +5,14 @@ including meeting creation, initialization and live logic.
 """
 
 import logging
+import uuid
 
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.meeting.exceptions import MeetingNotFoundError
 from src.meeting.repository import (
+    get_meeting,
     get_meetings,
     insert_meeting,
     insert_question,
@@ -173,3 +176,62 @@ async def handle_get_meetings(
         },
     )
     return meetings_out
+
+
+async def handle_get_meeting(db: AsyncSession, m_id: uuid.UUID) -> MeetingOut:
+    """Retrieve a single meeting by its ID, including questions and statistics.
+
+    Args:
+        db: The active asynchronous database session.
+        m_id: The UUID of the meeting to retrieve.
+
+    Raises:
+        MeetingNotFoundError: If no meeting with the given ID exists.
+
+    Returns:
+        A fully populated MeetingOut schema containing the meeting’s
+        questions, nested sub-questions, and associated statistics.
+    """
+    logger.info(
+        "Fetching meeting",
+        extra={"meeting_id": str(m_id)},
+    )
+    meeting = await get_meeting(db=db, m_id=m_id)
+    if meeting is None:
+        logger.warning(
+            "Meeting not found",
+            extra={"meeting_id": str(m_id)},
+        )
+        raise MeetingNotFoundError
+    logger.debug(
+        "Meeting fetched",
+        extra={"meeting_id": str(m_id), "question_count": len(meeting.questions)},
+    )
+    questions_out: list[QuestionOut] = []
+    for q in meeting.questions:
+        logger.debug(
+            "Processing question",
+            extra={
+                "meeting_id": str(m_id),
+                "question_id": str(q.id),
+                "question_type": q.type.value,
+            },
+        )
+        sub_question: SubQuestion = getattr(q, SUB_QUESTION_ATTR[q.type])
+        assert sub_question is not None  # noqa: S101
+        questions_out.append(build_question_out(question=q, sub_question=sub_question))
+    m_out = build_meeting_out(
+        meeting=meeting, questions_out=questions_out, stat=meeting.stats
+    )
+    logger.debug(
+        "Meeting built",
+        extra={
+            "meeting_id": str(m_id),
+            "question_count": len(questions_out),
+        },
+    )
+    logger.info(
+        "Meeting retrieved",
+        extra={"meeting_id": str(m_id), "question_count": len(questions_out)},
+    )
+    return m_out
