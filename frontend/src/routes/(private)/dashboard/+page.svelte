@@ -31,7 +31,7 @@
             tick().then(() => {
                 toast.info(
                     'Your username is not set yet. Update it in your settings to personalize your meeting experience.',
-                    { duration: Infinity },
+                    { duration: Infinity, id: 'missing-username' },
                 );
             });
         }
