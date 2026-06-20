@@ -141,10 +141,8 @@
             const body = await response.json();
             if (!response.ok) {
                 if (response.status === 422) {
-                    toast.error(
-                        'The form has validation errors. Check the highlighted fields and fix them before resubmitting.',
-                        { duration: Infinity },
-                    );
+                    backendError =
+                        'The form has validation errors. Check the highlighted fields and fix them before resubmitting.';
                     return;
                 }
                 if (body.type === ErrorTypes.SERVER) {
@@ -153,8 +151,8 @@
             }
             const newMeeting = body as MeetingIn;
             meetings.update((current) => [...current, newMeeting]);
-            toast.success('Meeting created successfully! Redirecting to dashboard...', {
-                duration: 5000,
+            toast.success('Meeting successfully created! Redirecting to dashboard...', {
+                duration: 2000,
             });
             setTimeout(() => {
                 goto('/dashboard');
