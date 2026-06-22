@@ -21,6 +21,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "aiosqlite>=0.22.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "ruff>=0.15.13",
     "ty>=0.0.38",
 ]
@@ -72,6 +75,15 @@ allowed-unresolved-imports = [
     "pydantic.**",
     "uvicorn.**",
 ]
+
+[tool.pytest.ini_options]
+# pytest-asyncio must use async_mode = strict to avoid auto-enabling
+# deprecated magic for fixtures and tests
+asyncio_mode = "auto"
+
+testpaths = ["tests"]
+
+pythonpath = ["."]
 
 [tool.ty.terminal]
 error-on-warning = false  # do not exit with a non-zero code when only warnings are emitted
