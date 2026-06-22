@@ -7,8 +7,9 @@ meeting state persistence.
 
 import logging
 import uuid
+from typing import cast
 
-from sqlalchemy import select
+from sqlalchemy import CursorResult, delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -240,3 +241,37 @@ async def get_meeting(db: AsyncSession, m_id: uuid.UUID) -> Meeting | None:
     except SQLAlchemyError as e:
         logger.exception("error fetching meeting %s: %s", m_id, e)
         raise DatabaseError("database error occurred") from e
+
+
+async def delete_meeting(db: AsyncSession, m_id: uuid.UUID, u_id: uuid.UUID) -> bool:
+    """Delete a meeting by its ID, scoped to the owning user.
+
+    Args:
+        db: The asynchronous SQLAlchemy session.
+        m_id: The UUID of the meeting to delete.
+        u_id: The UUID of the meeting owner.
+
+    Returns:
+        True if a meeting was deleted, False if no matching meeting existed.
+
+    Raises:
+        DatabaseError: If a SQLAlchemy error occurs during the operation.
+    """
+    try:
+        logger.debug("deleting meeting %s for user %s", m_id, u_id)
+        stmt = delete(Meeting).where(Meeting.id == m_id and Meeting.user_id == u_id)
+        # this cast is harmless, it correctly assigns the result to a CursorResult
+        # following the official documentation
+        # this fixes the type mismatch from the installed sqlalchemy stubs
+        result = cast(CursorResult, await db.execute(stmt))
+        await db.commit()
+        logger.debug(
+            "meeting %s deleted for user %s (affected rows: %d)",
+            m_id,
+            u_id,
+            result.rowcount,
+        )
+        return result.rowcount > 0
+    except SQLAlchemyError as e:
+        logger.exception("error deleting meeting %s for user %s: %s", m_id, u_id, e)
+        raise DatabaseError from e

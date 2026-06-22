@@ -13,6 +13,7 @@ from src.meeting.exceptions import MeetingNotFoundError
 from src.meeting.schemas import MeetingIn, MeetingOut, MeetingUpdate
 from src.meeting.service import (
     handle_create_meeting,
+    handle_delete_meeting,
     handle_get_meeting,
     handle_get_meetings,
     handle_update_meeting,
@@ -129,6 +130,28 @@ async def update_meeting(
             db=db, meeting_update=payload, m_id=meeting_id
         )
         return meeting_out
+    except MeetingNotFoundError:
+        return JSONResponse(
+            content="Resource not found", status_code=status.HTTP_404_NOT_FOUND
+        )
+    except DatabaseError:
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.SERVER.type,
+                "message": ErrorTypes.SERVER.message,
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@meeting_router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_meeting(request: Request, db: DB, meeting_id: MEETING_ID):
+    logger.debug("received delete meeting request", extra={"id": meeting_id})
+    logger.debug(
+        "current user found in request", extra={"user_id": request.state.user.email}
+    )
+    try:
+        await handle_delete_meeting(db=db, request=request, m_id=meeting_id)
     except MeetingNotFoundError:
         return JSONResponse(
             content="Resource not found", status_code=status.HTTP_404_NOT_FOUND

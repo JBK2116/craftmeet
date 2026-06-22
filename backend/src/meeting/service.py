@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.meeting.exceptions import MeetingNotFoundError
 from src.meeting.repository import (
+    delete_meeting,
     get_meeting,
     get_meetings,
     insert_meeting,
@@ -323,3 +324,39 @@ async def handle_update_meeting(
         },
     )
     return m_out
+
+
+async def handle_delete_meeting(
+    db: AsyncSession, request: Request, m_id: uuid.UUID
+) -> None:
+    """Delete a meeting by its ID, scoped to the authenticated user.
+
+    Args:
+        db: The active asynchronous database session.
+        request: The incoming FastAPI request, which carries the
+            authenticated user via ``request.state.user``.
+        m_id: The UUID of the meeting to delete.
+
+    Raises:
+        MeetingNotFoundError: If no meeting with the given ID exists
+            or the meeting does not belong to the user.
+    """
+    user: User = request.state.user
+    logger.debug(
+        "deleting meeting %s for user %s",
+        m_id,
+        user.id,
+    )
+    result = await delete_meeting(db=db, m_id=m_id, u_id=user.id)
+    if result is False:
+        logger.debug(
+            "meeting %s not found for user %s — nothing to delete",
+            m_id,
+            user.id,
+        )
+        raise MeetingNotFoundError
+    logger.debug(
+        "meeting %s deleted for user %s",
+        m_id,
+        user.id,
+    )

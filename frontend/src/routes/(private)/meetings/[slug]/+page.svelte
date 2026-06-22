@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
     import { apiFetch } from '$lib/api/auth';
     import MeetingSetup from '$lib/components/create/MeetingSetup.svelte';
     import QuestionCard from '$lib/components/create/QuestionCard.svelte';
@@ -175,6 +176,29 @@
             backendError = 'An unexpected network error occurred. Please try again.';
         }
     }
+
+    async function handleDeleteMeeting() {
+        const url = `/api/v1/meetings/${meeting.id}`;
+        const opts: RequestInit = { method: 'DELETE', credentials: 'include' };
+        try {
+            const res = await apiFetch(url, opts);
+            if (!res.ok) {
+                if (res.status === 404) {
+                    toast.info('Meeting not found, it may have already been deleted');
+                    return;
+                }
+                throw new Error('Failed to delete meeting. Please try again.');
+            }
+            toast.success('Meeting deleted successfully');
+            goto('/dashboard');
+            return;
+        } catch (err: any) {
+            if (err instanceof AuthError) {
+                goto('/login');
+                return;
+            }
+        }
+    }
 </script>
 
 {#if meeting.status === 'draft'}
@@ -269,7 +293,14 @@
             {/if}
         </div>
 
-        <div class="flex justify-end pt-4 border-t border-border">
+        <div class="flex justify-between pt-4 border-t border-border">
+            <button
+                type="button"
+                onclick={handleDeleteMeeting}
+                class="inline-flex items-center justify-center rounded-xl border border-destructive/30 bg-destructive/10 px-6 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+                Delete Meeting
+            </button>
             <button
                 type="submit"
                 class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
