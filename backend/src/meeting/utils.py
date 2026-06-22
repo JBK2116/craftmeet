@@ -16,6 +16,7 @@ from src.meeting.schemas import (
     MultipleChoiceQuestionIn,
     MultipleChoiceQuestionOut,
     QuestionIn,
+    QuestionInUpdate,
     QuestionOut,
     RankedVotingQuestionIn,
     RankedVotingQuestionOut,
@@ -201,7 +202,9 @@ def generate_stat_model(meeting_id: uuid.UUID) -> Stat:
     return Stat(meeting_id=meeting_id)
 
 
-def generate_question_model(meeting_id: uuid.UUID, question: QuestionIn) -> Question:
+def generate_question_model(
+    meeting_id: uuid.UUID, question: QuestionIn | QuestionInUpdate
+) -> Question:
     """Create a Question model instance for a meeting.
 
     Args:
@@ -279,6 +282,42 @@ def generate_sub_question(
         case QuestionType.YES_NO.value:
             assert isinstance(question, YesNoQuestionIn)  # noqa: S101
             return YesNoQuestion(question_id=question_id)
+
+
+async def _update_sub_question(q_db: Question, sub_q: SubQuestionIn) -> SubQuestion:
+    match q_db.type.value:
+        case QuestionType.MULTIPLE_CHOICE.value:
+            assert q_db.multiple_choice is not None  # noqa: S101
+            assert isinstance(sub_q, MultipleChoiceQuestionIn)  # noqa: S101
+            q_db.multiple_choice.option_1 = sub_q.option_1
+            q_db.multiple_choice.option_2 = sub_q.option_2
+            q_db.multiple_choice.option_3 = sub_q.option_3
+            q_db.multiple_choice.option_4 = sub_q.option_4
+            q_db.multiple_choice.allow_multiple = sub_q.allow_multiple
+            return q_db.multiple_choice
+        case QuestionType.LONG_ANSWER.value:
+            assert q_db.long_answer is not None  # noqa: S101
+            assert isinstance(sub_q, LongAnswerQuestionIn)  # noqa: S101
+            q_db.long_answer.max_length = sub_q.max_length
+            return q_db.long_answer
+        case QuestionType.RANKED_VOTING.value:
+            assert q_db.ranked_voting is not None  # noqa: S101
+            assert isinstance(sub_q, RankedVotingQuestionIn)  # noqa: S101
+            q_db.ranked_voting.item_1 = sub_q.item_1
+            q_db.ranked_voting.item_2 = sub_q.item_2
+            q_db.ranked_voting.item_3 = sub_q.item_3
+            q_db.ranked_voting.item_4 = sub_q.item_4
+            return q_db.ranked_voting
+        case QuestionType.RATING_SCALE.value:
+            assert q_db.rating_scale is not None  # noqa: S101
+            assert isinstance(sub_q, RatingScaleQuestionIn)  # noqa: S101
+            q_db.rating_scale.min = sub_q.min
+            q_db.rating_scale.max = sub_q.max
+            return q_db.rating_scale
+        case QuestionType.YES_NO.value:
+            assert q_db.yes_no is not None  # noqa: S101
+            assert isinstance(sub_q, YesNoQuestionIn)  # noqa: S101
+            return q_db.yes_no
 
 
 def _generate_room_code() -> str:

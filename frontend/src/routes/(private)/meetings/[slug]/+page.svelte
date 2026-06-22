@@ -4,7 +4,7 @@
     import QuestionCard from '$lib/components/create/QuestionCard.svelte';
     import { AuthError, ErrorTypes } from '$lib/types/errors';
     import type { MeetingIn, MeetingUpdate } from '$lib/types/meeting';
-    import type { QuestionOut, QuestionTypes, QuestionUpdate } from '$lib/types/question';
+    import type { QuestionTypes, QuestionUpdate } from '$lib/types/question';
     import {
         AlignStartVertical,
         ChartBar,
@@ -138,7 +138,7 @@
                 sub_question: ref.getData().sub_question,
             })) as QuestionUpdate[],
         } as MeetingUpdate;
-        const url = `/api/v1/meetings/${meeting.id}/update`;
+        const url = `/api/v1/meetings/${meeting.id}`;
         const opts: RequestInit = {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -146,16 +146,12 @@
             body: JSON.stringify(payload),
         };
         try {
-            console.log(payload);
-            return;
             const response = await apiFetch(url, opts);
             const body = await response.json();
             if (!response.ok) {
                 if (response.status === 422) {
-                    toast.error(
-                        'The form has validation errors. Check the highlighted fields and fix them before resubmitting.',
-                        { duration: Infinity },
-                    );
+                    backendError =
+                        'The form has validation errors. Check the highlighted fields and fix them before resubmitting.';
                     return;
                 }
                 if (body.type === ErrorTypes.SERVER) {
@@ -163,7 +159,13 @@
                 }
             }
             meeting = body as MeetingIn;
-            toast.success('Meeting updated successfully!', { duration: 5000 });
+            questions = meeting.questions.map((q) => ({
+                id: uid(),
+                backendId: q.id,
+                type: q.type,
+            }));
+            questionRefs = [];
+            toast.success('Meeting updated successfully!', { duration: 2000 });
         } catch (err) {
             if (err instanceof AuthError) {
                 return;

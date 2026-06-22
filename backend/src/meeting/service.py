@@ -19,10 +19,16 @@ from src.meeting.repository import (
     insert_stat,
     insert_sub_question,
 )
-from src.meeting.schemas import MeetingIn, MeetingOut, QuestionOut
+from src.meeting.schemas import (
+    MeetingIn,
+    MeetingOut,
+    MeetingUpdate,
+    QuestionOut,
+)
 from src.meeting.utils import (
     SUB_QUESTION_ATTR,
     SubQuestion,
+    _update_sub_question,
     build_meeting_out,
     build_question_out,
     generate_meeting_model,
@@ -233,5 +239,87 @@ async def handle_get_meeting(db: AsyncSession, m_id: uuid.UUID) -> MeetingOut:
     logger.info(
         "Meeting retrieved",
         extra={"meeting_id": str(m_id), "question_count": len(questions_out)},
+    )
+    return m_out
+
+
+async def handle_update_meeting(
+    db: AsyncSession, meeting_update: MeetingUpdate, m_id: uuid.UUID
+) -> MeetingOut:
+    """Update an existing meeting — title, description, duration, and questions.
+
+    Uses a diff-and-merge pattern: existing questions with matching IDs are
+    updated, new questions from the payload are inserted, and questions
+    removed from the payload are deleted from the database.
+
+    Args:
+        db: The active asynchronous database session.
+        meeting_update: The validated update payload containing the new
+            title, description, duration, participant cap, and question list.
+        m_id: The UUID of the meeting to update.
+
+    Raises:
+        MeetingNotFoundError: If no meeting with the given ID exists.
+
+    Returns:
+        A fully populated MeetingOut schema representing the updated
+        meeting, including its questions, nested sub-questions, and
+        associated statistics.
+    """
+    m_db = await get_meeting(db=db, m_id=m_id)
+    if m_db is None:
+        raise MeetingNotFoundError
+    ## start with updating the meetings basic attributes
+    ## values such as status, pdf_url, etc... are updated in endpoints
+    ## that handle live meeting sessions
+    m_db.title = meeting_update.title
+    m_db.description = meeting_update.description
+    m_db.total_questions = len(meeting_update.questions)
+    m_db.duration = meeting_update.duration
+    # update the questions following the diff & merge pattern scheme
+    db_ids = {q.id: q for q in m_db.questions}
+    visited_ids = set()
+    q_out: list[QuestionOut] = []
+    for q_up in meeting_update.questions:
+        if q_up.id in db_ids:
+            # update the existing question
+            q_db = db_ids[q_up.id]
+            q_db.prompt = q_up.prompt
+            q_db.position = q_up.position
+            sub_loaded = await _update_sub_question(q_db=q_db, sub_q=q_up.sub_question)
+            visited_ids.add(q_up.id)
+            q_out.append(build_question_out(question=q_db, sub_question=sub_loaded))
+        else:
+            # new question — insert it
+            q_loaded = generate_question_model(meeting_id=m_id, question=q_up)
+            q_loaded = await insert_question(db=db, question=q_loaded)
+            sub_loaded = generate_sub_question(
+                question_id=q_loaded.id,
+                type=q_up.type,
+                question=q_up.sub_question,
+            )
+            sub_loaded = await insert_sub_question(db=db, question=sub_loaded)
+            sub_loaded.__dict__["responses"] = []
+            visited_ids.add(q_loaded.id)
+            q_out.append(build_question_out(question=q_loaded, sub_question=sub_loaded))
+    # delete questions that were removed from the update payload
+    for q_db in m_db.questions:
+        if q_db.id not in visited_ids:
+            logger.debug(
+                "Deleting removed question",
+                extra={"question_id": str(q_db.id)},
+            )
+            await db.delete(q_db)
+    await db.refresh(m_db)
+    # build the final meeting output
+    m_out = build_meeting_out(meeting=m_db, questions_out=q_out, stat=m_db.stats)
+    await db.commit()
+    logger.info(
+        "Meeting updated successfully",
+        extra={
+            "meeting_id": str(m_db.id),
+            "room_code": m_db.room_code,
+            "question_count": len(q_out),
+        },
     )
     return m_out

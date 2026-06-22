@@ -10,11 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_db
 from src.exceptions import DatabaseError
 from src.meeting.exceptions import MeetingNotFoundError
-from src.meeting.schemas import MeetingIn, MeetingOut
+from src.meeting.schemas import MeetingIn, MeetingOut, MeetingUpdate
 from src.meeting.service import (
     handle_create_meeting,
     handle_get_meeting,
     handle_get_meetings,
+    handle_update_meeting,
 )
 from src.middleware.jwt import get_current_user
 from src.types import ErrorTypes
@@ -96,6 +97,38 @@ async def get_meeting(request: Request, db: DB, meeting_id: MEETING_ID):
     try:
         meeting = await handle_get_meeting(db=db, m_id=meeting_id)
         return meeting
+    except MeetingNotFoundError:
+        return JSONResponse(
+            content="Resource not found", status_code=status.HTTP_404_NOT_FOUND
+        )
+    except DatabaseError:
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.SERVER.type,
+                "message": ErrorTypes.SERVER.message,
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@meeting_router.patch(
+    path="/{meeting_id}", response_model=MeetingOut, status_code=status.HTTP_200_OK
+)
+async def update_meeting(
+    request: Request, db: DB, meeting_id: MEETING_ID, payload: MeetingUpdate
+):
+    logger.debug(
+        "received update meeting payload",
+        extra={"meeting_id": str(meeting_id), "payload": payload},
+    )
+    logger.debug(
+        "current user found in request", extra={"user_email": request.state.user.email}
+    )
+    try:
+        meeting_out = await handle_update_meeting(
+            db=db, meeting_update=payload, m_id=meeting_id
+        )
+        return meeting_out
     except MeetingNotFoundError:
         return JSONResponse(
             content="Resource not found", status_code=status.HTTP_404_NOT_FOUND
