@@ -55,7 +55,11 @@
     // state
     let meeting: MeetingIn = $state(untrack(() => data.meeting as MeetingIn));
     let questions = $state<{ id: string; backendId: string | null; type: QuestionTypes }[]>(
-        untrack(() => meeting.questions.map((q) => ({ id: uid(), backendId: q.id, type: q.type }))),
+        untrack(() =>
+            [...meeting.questions]
+                .sort((a, b) => a.position - b.position)
+                .map((q) => ({ id: uid(), backendId: q.id, type: q.type })),
+        ),
     );
     let showTypeMenu = $state(false);
     let backendError = $state<string | null>(null);
@@ -159,11 +163,9 @@
                 }
             }
             meeting = body as MeetingIn;
-            questions = meeting.questions.map((q) => ({
-                id: uid(),
-                backendId: q.id,
-                type: q.type,
-            }));
+            questions = [...meeting.questions]
+                .sort((a, b) => a.position - b.position)
+                .map((q) => ({ id: uid(), backendId: q.id, type: q.type }));
             questionRefs = [];
             toast.success('Meeting updated successfully!', { duration: 2000 });
         } catch (err) {

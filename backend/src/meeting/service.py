@@ -310,10 +310,10 @@ async def handle_update_meeting(
                 extra={"question_id": str(q_db.id)},
             )
             await db.delete(q_db)
+    await db.commit()
     await db.refresh(m_db)
     # build the final meeting output
     m_out = build_meeting_out(meeting=m_db, questions_out=q_out, stat=m_db.stats)
-    await db.commit()
     logger.info(
         "Meeting updated successfully",
         extra={

@@ -161,6 +161,7 @@ class Meeting(BaseClass):
         back_populates="meeting",
         cascade="all, delete",
         passive_deletes=True,
+        order_by="Question.position",
     )
 
 
