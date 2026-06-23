@@ -8,6 +8,7 @@ the test database injected.
 import asyncio
 from collections.abc import AsyncGenerator, Generator
 from typing import Any
+from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
@@ -122,3 +123,10 @@ async def client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     # Only remove our own override — clear() would also wipe overrides
     # set by other fixtures/tests.
     app.dependency_overrides.pop(get_db, None)
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def _mock_email_sending(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Prevent real email sending with sendgrid during tests."""
+    monkeypatch.setattr("src.auth.service.send_verification_email", AsyncMock())
+    monkeypatch.setattr("src.auth.service.send_reset_password_email", AsyncMock())
