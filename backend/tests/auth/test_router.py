@@ -14,7 +14,7 @@ from httpx import AsyncClient
 from src.models import User
 
 
-class TestSignupService:
+class TestSignup:
     """Handles all test cases for the signup endpoint"""
 
     SIGNUP_URL = "/auth/signup"
