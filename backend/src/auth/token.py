@@ -68,6 +68,8 @@ def check_verify_email_token_cooldown(created_at: datetime.datetime) -> bool:
     Returns:
         bool: True if the cooldown period has elapsed, False otherwise.
     """
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=datetime.UTC)
     return datetime.datetime.now(datetime.UTC) - created_at > datetime.timedelta(
         minutes=VERIFY_EMAIL_TOKEN_COOLDOWN_DURATION_MINUTES
     )
@@ -126,6 +128,8 @@ def check_reset_password_cooldown(created_at: datetime.datetime) -> bool:
     Returns:
         bool: True if the cooldown period has elapsed, False otherwise.
     """
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=datetime.UTC)
     return datetime.datetime.now(datetime.UTC) - created_at > datetime.timedelta(
         minutes=RESET_PASSWORD_COOLDOWN_DURATION_MINUTES
     )
