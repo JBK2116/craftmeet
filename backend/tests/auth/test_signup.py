@@ -1,12 +1,3 @@
-"""
-This module handles all router level test-cases for the authentication package.
-Including endpoint such as
-    - Signup
-    - Login
-    - Forgot Password
-and more
-"""
-
 import datetime
 
 from httpx import AsyncClient

@@ -1,15 +1,17 @@
-"""Auth-specific fixtures for signup and related tests.
+"""Auth-specific fixtures for signup and login tests.
 
-Provides pre-created user records and signup payloads covering the three
-signup scenarios:
+Provides pre-created user records and payloads covering the various
+signup and login scenarios:
 - Fresh user (not in DB)
 - Unverified existing user (with and without an existing verify token)
 - Verified existing user
+- OAuth user (password=None)
 """
 
 import datetime
 import secrets
 
+import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +22,10 @@ from src.auth.constants import (
 from src.auth.crypto import hash_password
 from src.auth.models import VerifyEmailToken
 from src.models import User
+
+# Plaintext password shared by the user fixtures that have a password set.
+# Used by login tests to send the correct (or deliberately wrong) credential.
+VALID_PASSWORD = "ExistingP@ss1"  # noqa: S105
 
 
 @pytest_asyncio.fixture
@@ -101,6 +107,65 @@ async def unverified_user_with_token(session: AsyncSession) -> User:
         + datetime.timedelta(minutes=VERIFY_EMAIL_TOKEN_MAX_DURATION_MINUTES),
     )
     session.add(token)
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+# Login-payload fixtures
+
+
+@pytest.fixture
+async def nonexistent_login_payload() -> dict[str, str]:
+    """Login payload for an email that is not in the database.
+
+    No matching user exists -> UserNotFoundError -> 401 INVALID_CREDENTIALS.
+    """
+    return {"email": "noone@example.com", "password": "DoesntM@tter1"}
+
+
+@pytest.fixture
+async def valid_login_payload() -> dict[str, str]:
+    """Login payload that matches ``verified_user`` credentials.
+
+    Correct password + verified user -> successful login -> 200.
+    """
+    return {"email": "verified@example.com", "password": VALID_PASSWORD}
+
+
+@pytest.fixture
+async def invalid_login_payload() -> dict[str, str]:
+    """Login payload with the correct email but a wrong password for ``verified_user``.
+
+    Wrong password -> UserInvalidPasswordError -> 401 INVALID_CREDENTIALS.
+    """
+    return {"email": "verified@example.com", "password": "WrongP@ssword1"}
+
+
+@pytest.fixture
+async def oauth_login_payload() -> dict[str, str]:
+    """Login payload for the OAuth user (``oauth_user``, password is None).
+
+    Password field is None -> UserInvalidPasswordError -> 401 INVALID_CREDENTIALS.
+    """
+    return {"email": "oauth@example.com", "password": "AnyP@ssword1"}
+
+
+@pytest_asyncio.fixture
+async def oauth_user(session: AsyncSession) -> User:
+    """A user who signed up via Google OAuth (password is None, google_id set).
+
+    Attempting to log in with a password should raise UserInvalidPasswordError.
+    """
+    user = User(
+        email="oauth@example.com",
+        username="oauthuser",
+        google_id="google-sub-12345",
+        password=None,
+        verified=True,
+        verified_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(user)
     await session.commit()
     await session.refresh(user)
     return user
