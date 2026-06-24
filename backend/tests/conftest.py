@@ -61,6 +61,17 @@ async def engine() -> AsyncGenerator[AsyncEngine, None]:
         poolclass=StaticPool,
         connect_args={"check_same_thread": False},
     )
+
+    @event.listens_for(async_engine.sync_engine, "connect")
+    def do_connect(dbapi_connection, connection_record):
+        """Disable aiosqlite's emitting of the BEGIN statement entirely."""
+        dbapi_connection.isolation_level = None
+
+    @event.listens_for(async_engine.sync_engine, "begin")
+    def do_begin(conn):
+        """Emit our own BEGIN."""
+        conn.exec_driver_sql("BEGIN")
+
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield async_engine
@@ -98,11 +109,12 @@ async def session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
         if transaction.nested and parent is not None and not parent.nested:
             sync_session.begin_nested()
 
-    yield test_session
-
-    await test_session.close()
-    await transaction.rollback()
-    await connection.close()
+    try:
+        yield test_session
+    finally:
+        await test_session.close()
+        await transaction.rollback()
+        await connection.close()
 
 
 @pytest_asyncio.fixture
