@@ -400,6 +400,16 @@ async def handle_forgot_password(
             "user not found, silently returning", extra={"email": payload.email}
         )
         return
+
+    if not user.verified:
+        # unverified users must not receive a password reset email
+        # silently return to prevent email enumeration
+        logger.debug(
+            "user is not verified, silently returning",
+            extra={"email": user.email},
+        )
+        return
+
     logger.debug(
         "retrieving existing reset password token", extra={"email": user.email}
     )

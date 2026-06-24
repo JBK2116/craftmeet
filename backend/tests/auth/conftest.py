@@ -16,11 +16,13 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.constants import (
+    RESET_PASSWORD_TOKEN_BYTES,
+    RESET_PASSWORD_TOKEN_MAX_DURATION_MINUTES,
     VERIFY_EMAIL_TOKEN_BYTES,
     VERIFY_EMAIL_TOKEN_MAX_DURATION_MINUTES,
 )
 from src.auth.crypto import hash_password
-from src.auth.models import VerifyEmailToken
+from src.auth.models import ResetPasswordToken, VerifyEmailToken
 from src.models import User
 
 # Plaintext password shared by the user fixtures that have a password set.
@@ -63,6 +65,103 @@ async def unverified_user(session: AsyncSession) -> User:
         verified=False,
     )
     session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+# Forgot-password fixtures
+
+
+@pytest.fixture
+async def forgot_password_payload() -> dict[str, str]:
+    """A valid forgot-password payload whose email matches ``forgot_password_user``."""
+    return {"email": "forgotpwd@example.com"}
+
+
+@pytest.fixture
+async def nonexistent_forgot_password_payload() -> dict[str, str]:
+    """Forgot-password payload with an email not in the database.
+
+    The endpoint always returns 200 regardless (security best practice).
+    """
+    return {"email": "nobody@example.com"}
+
+
+@pytest_asyncio.fixture
+async def forgot_password_user(session: AsyncSession) -> User:
+    """A verified user with no existing ``ResetPasswordToken``.
+
+    Sends forgot-password → token created, email sent.
+    """
+    user = User(
+        email="forgotpwd@example.com",
+        username="forgotpwduser",
+        password=hash_password("ExistingP@ss1"),
+        verified=True,
+        verified_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture
+async def forgot_password_user_with_token(session: AsyncSession) -> User:
+    """A user that already has a ``ResetPasswordToken`` whose cooldown has *not* elapsed.
+
+    The token was created moments ago (cooldown is 1 min), so a new
+    forgot-password request should NOT rotate the token or send an email.
+    """
+    user = User(
+        email="forgotpwd-token@example.com",
+        username="forgotpwdtoken",
+        password=hash_password("ExistingP@ss1"),
+        verified=True,
+        verified_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(user)
+    await session.flush()
+
+    token = ResetPasswordToken(
+        user_id=user.id,
+        token_hash=secrets.token_urlsafe(RESET_PASSWORD_TOKEN_BYTES),
+        expires_at=datetime.datetime.now(tz=datetime.UTC)
+        + datetime.timedelta(minutes=RESET_PASSWORD_TOKEN_MAX_DURATION_MINUTES),
+    )
+    session.add(token)
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture
+async def forgot_password_user_expired_cooldown(session: AsyncSession) -> User:
+    """A user whose ``ResetPasswordToken`` cooldown *has* elapsed.
+
+    The token was created 2 minutes ago (cooldown is 1 min), so a new
+    forgot-password request should rotate the token and re-send the email.
+    """
+    user = User(
+        email="forgotpwd-cooldown@example.com",
+        username="forgotpwdcooldown",
+        password=hash_password("ExistingP@ss1"),
+        verified=True,
+        verified_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(user)
+    await session.flush()
+
+    token = ResetPasswordToken(
+        user_id=user.id,
+        token_hash=secrets.token_urlsafe(RESET_PASSWORD_TOKEN_BYTES),
+        expires_at=datetime.datetime.now(tz=datetime.UTC)
+        + datetime.timedelta(hours=24),
+        created_at=datetime.datetime.now(tz=datetime.UTC)
+        - datetime.timedelta(minutes=2),
+    )
+    session.add(token)
     await session.commit()
     await session.refresh(user)
     return user
