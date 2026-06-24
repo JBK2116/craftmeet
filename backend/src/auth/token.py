@@ -172,9 +172,9 @@ def generate_access_token(u_id: uuid.UUID) -> str:
         "exp": expire,
         "iat": now,
         "type": "access",
+        "iss": settings.DOMAIN,
+        "jti": str(uuid.uuid4()),
     }
-    if not settings.IS_DEV:
-        payload.update({"iss": settings.DOMAIN, "jti": str(uuid.uuid4())})
     return jwt.encode(
         payload=payload, key=settings.JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
     )
@@ -231,9 +231,9 @@ def generate_refresh_token(u_id: uuid.UUID) -> RefreshToken:
         "exp": expire,
         "iat": now,
         "type": "refresh",
+        "iss": settings.DOMAIN,
+        "jti": str(uuid.uuid4()),
     }
-    if not settings.IS_DEV:
-        payload.update({"iss": settings.DOMAIN, "jti": str(uuid.uuid4())})
     token_hash = jwt.encode(
         payload=payload, key=settings.JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
     )

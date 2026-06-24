@@ -189,3 +189,78 @@ async def test_login_verified_user(
     # Refresh token persisted in the database
     refresh = await get_refresh_token(db=session, u_id=verified_login_user.id)
     assert refresh is not None
+
+
+@pytest_asyncio.fixture
+async def multiple_login_user(session: AsyncSession) -> User:
+    """A verified user for the multiple-login test.
+
+    Uses a distinct email so it doesn't collide with
+    ``verified_login_user`` when both are used in the same module.
+    """
+    user = User(
+        email="multiple-login@example.com",
+        username="multiplelogin",
+        password=hash_password("ExistingP@ss1"),
+        verified=True,
+        verified_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+async def test_login_multiple_users(
+    client: AsyncClient, session: AsyncSession, multiple_login_user: User
+) -> None:
+    response = await client.post(
+        LOGIN_URL,
+        json={
+            "email": multiple_login_user.email,
+            "password": "ExistingP@ss1",
+        },
+    )
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["email"] == multiple_login_user.email
+    assert body["username"] == multiple_login_user.username
+    assert body["id"] == str(multiple_login_user.id)
+    assert body["verified"] is True
+
+    # JWT cookies set in the response
+    assert "access_token" in response.cookies
+    assert "refresh_token" in response.cookies
+
+    # Refresh token persisted in the database
+    refresh = await get_refresh_token(db=session, u_id=multiple_login_user.id)
+    assert refresh is not None
+    old_refresh_id = refresh.id
+    old_refresh_hash = refresh.token_hash
+
+    response_second = await client.post(
+        LOGIN_URL,
+        json={
+            "email": multiple_login_user.email,
+            "password": "ExistingP@ss1",
+        },
+    )
+    assert response_second.status_code == 200
+
+    body = response_second.json()
+    assert body["email"] == multiple_login_user.email
+    assert body["username"] == multiple_login_user.username
+    assert body["id"] == str(multiple_login_user.id)
+    assert body["verified"] is True
+
+    # JWT cookies set in the response
+    assert "access_token" in response.cookies
+    assert "refresh_token" in response.cookies
+
+    new_refresh = await get_refresh_token(db=session, u_id=multiple_login_user.id)
+    assert new_refresh is not None
+    assert new_refresh.id != old_refresh_id
+
+    old_refresh_token = await get_refresh_token(db=session, token_hash=old_refresh_hash)
+    assert old_refresh_token is None
