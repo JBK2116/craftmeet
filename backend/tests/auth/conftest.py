@@ -13,7 +13,10 @@ import secrets
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.constants import VERIFY_EMAIL_TOKEN_BYTES
+from src.auth.constants import (
+    VERIFY_EMAIL_TOKEN_BYTES,
+    VERIFY_EMAIL_TOKEN_MAX_DURATION_MINUTES,
+)
 from src.auth.crypto import hash_password
 from src.auth.models import VerifyEmailToken
 from src.models import User
@@ -95,7 +98,7 @@ async def unverified_user_with_token(session: AsyncSession) -> User:
         user_id=user.id,
         token_hash=secrets.token_urlsafe(VERIFY_EMAIL_TOKEN_BYTES),
         expires_at=datetime.datetime.now(tz=datetime.UTC)
-        + datetime.timedelta(hours=24),
+        + datetime.timedelta(minutes=VERIFY_EMAIL_TOKEN_MAX_DURATION_MINUTES),
     )
     session.add(token)
     await session.commit()
