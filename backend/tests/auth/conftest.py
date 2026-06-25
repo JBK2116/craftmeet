@@ -24,6 +24,7 @@ from src.auth.constants import (
 )
 from src.auth.crypto import hash_password
 from src.auth.models import ResetPasswordToken, VerifyEmailToken
+from src.auth.token import generate_access_token
 from src.models import User
 
 # Plaintext password shared by the user fixtures that have a password set.
@@ -332,6 +333,16 @@ async def unverified_user_with_token(session: AsyncSession) -> User:
     await session.commit()
     await session.refresh(user)
     return user
+
+
+@pytest_asyncio.fixture
+async def access_token_jwt(verified_user: User) -> str:
+    """A valid access token JWT for ``verified_user``.
+
+    Useful when a test needs to send an access token where a refresh
+    token is expected (e.g. logout with wrong token type).
+    """
+    return generate_access_token(u_id=verified_user.id)
 
 
 # Login-payload fixtures
