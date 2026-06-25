@@ -10,6 +10,7 @@ signup and login scenarios:
 
 import datetime
 import secrets
+import uuid
 
 import pytest
 import pytest_asyncio
@@ -165,6 +166,128 @@ async def forgot_password_user_expired_cooldown(session: AsyncSession) -> User:
     await session.commit()
     await session.refresh(user)
     return user
+
+
+# Reset-password fixtures
+
+
+@pytest_asyncio.fixture
+async def reset_password_user_with_token(
+    session: AsyncSession,
+) -> tuple[User, str]:
+    """A verified user with a valid (not expired, not used) reset password token.
+
+    Returns ``(user, raw_token)`` so tests can send the raw token in the
+    request body and verify side-effects on the user/token records.
+    """
+    raw_token = secrets.token_urlsafe(RESET_PASSWORD_TOKEN_BYTES)
+    user = User(
+        email="resetpwd-valid@example.com",
+        username="resetpwdvalid",
+        password=hash_password("ExistingP@ss1"),
+        verified=True,
+        verified_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(user)
+    await session.flush()
+
+    token = ResetPasswordToken(
+        user_id=user.id,
+        token_hash=raw_token,
+        expires_at=datetime.datetime.now(tz=datetime.UTC)
+        + datetime.timedelta(minutes=RESET_PASSWORD_TOKEN_MAX_DURATION_MINUTES),
+    )
+    session.add(token)
+    await session.commit()
+    await session.refresh(user)
+    return user, raw_token
+
+
+@pytest_asyncio.fixture
+async def reset_password_user_expired_token(
+    session: AsyncSession,
+) -> tuple[User, str]:
+    """A verified user whose reset password token has *expired*.
+
+    The token's ``expires_at`` is set in the past, so the handler should
+    raise ``InvalidTokenError`` → 400.
+    Returns ``(user, raw_token)``.
+    """
+    raw_token = secrets.token_urlsafe(RESET_PASSWORD_TOKEN_BYTES)
+    user = User(
+        email="resetpwd-expired@example.com",
+        username="resetpwdexpired",
+        password=hash_password("ExistingP@ss1"),
+        verified=True,
+        verified_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(user)
+    await session.flush()
+
+    token = ResetPasswordToken(
+        user_id=user.id,
+        token_hash=raw_token,
+        expires_at=datetime.datetime.now(tz=datetime.UTC)
+        - datetime.timedelta(minutes=1),
+    )
+    session.add(token)
+    await session.commit()
+    await session.refresh(user)
+    return user, raw_token
+
+
+@pytest_asyncio.fixture
+async def reset_password_user_used_token(
+    session: AsyncSession,
+) -> tuple[User, str]:
+    """A verified user whose reset password token has *already been used*.
+
+    The token has a ``used_at`` timestamp set, so the handler should
+    raise ``InvalidTokenError`` → 400.
+    Returns ``(user, raw_token)``.
+    """
+    raw_token = secrets.token_urlsafe(RESET_PASSWORD_TOKEN_BYTES)
+    user = User(
+        email="resetpwd-used@example.com",
+        username="resetpwdused",
+        password=hash_password("ExistingP@ss1"),
+        verified=True,
+        verified_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(user)
+    await session.flush()
+
+    token = ResetPasswordToken(
+        user_id=user.id,
+        token_hash=raw_token,
+        expires_at=datetime.datetime.now(tz=datetime.UTC)
+        + datetime.timedelta(minutes=RESET_PASSWORD_TOKEN_MAX_DURATION_MINUTES),
+        used_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(token)
+    await session.commit()
+    await session.refresh(user)
+    return user, raw_token
+
+
+@pytest_asyncio.fixture
+async def reset_password_orphan_token(session: AsyncSession) -> str:
+    """A reset password token whose ``user_id`` does **not** match any user.
+
+    The handler fetches the user after validating the token and should
+    raise ``InvalidTokenError`` → 400 when the user is ``None``.
+    Returns the raw token string.
+    """
+    raw_token = secrets.token_urlsafe(RESET_PASSWORD_TOKEN_BYTES)
+    token = ResetPasswordToken(
+        user_id=uuid.uuid4(),  # non-existent user
+        token_hash=raw_token,
+        expires_at=datetime.datetime.now(tz=datetime.UTC)
+        + datetime.timedelta(minutes=RESET_PASSWORD_TOKEN_MAX_DURATION_MINUTES),
+    )
+    session.add(token)
+    await session.commit()
+    return raw_token
 
 
 @pytest_asyncio.fixture

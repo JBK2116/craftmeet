@@ -89,6 +89,8 @@ def check_verify_email_token_expiry(expires_at: datetime.datetime) -> bool:
     Returns:
         bool: True if the token has expired, False otherwise.
     """
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=datetime.UTC)
     return expires_at > datetime.datetime.now(tz=datetime.UTC)
 
 
@@ -149,6 +151,8 @@ def check_reset_password_token_expiry(expires_at: datetime.datetime) -> bool:
     Returns:
         bool: True if the token has not expired, False otherwise.
     """
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=datetime.UTC)
     return expires_at > datetime.datetime.now(datetime.UTC)
 
 
