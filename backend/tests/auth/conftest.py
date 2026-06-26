@@ -11,6 +11,7 @@ signup and login scenarios:
 import datetime
 import secrets
 import uuid
+from unittest.mock import AsyncMock
 
 import jwt as pyjwt
 import pytest
@@ -607,6 +608,94 @@ async def unverified_user_expired_cooldown(session: AsyncSession) -> User:
         - datetime.timedelta(minutes=2),
     )
     session.add(token)
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+# Google OAuth fixtures
+
+
+@pytest.fixture
+async def google_user_info() -> dict[str, str]:
+    """Default Google user info for a user not yet in the database.
+
+    Override this fixture in test files to match a specific user record.
+    """
+    return {"email": "google-new-user@example.com", "sub": "google-sub-new-12345"}
+
+
+@pytest_asyncio.fixture
+async def mock_google_auth(
+    monkeypatch: pytest.MonkeyPatch, google_user_info: dict[str, str]
+) -> dict[str, str]:
+    """Mock ``oauth.google.authorize_access_token`` to return ``google_user_info``.
+
+    The returned dict is what the router extracts ``userinfo`` from.
+    """
+    monkeypatch.setattr(
+        "src.auth.router.oauth.google.authorize_access_token",
+        AsyncMock(return_value={"userinfo": google_user_info}),
+    )
+    return google_user_info
+
+
+@pytest_asyncio.fixture
+async def google_unlinked_user(session: AsyncSession) -> User:
+    """A verified email/password user who hasn't linked a Google account.
+
+    ``google_id`` is ``None``, so Google OAuth login should link the
+    account and leave verification intact.
+    """
+    user = User(
+        email="google-unlinked@example.com",
+        username="googleunlinked",
+        password=hash_password("ExistingP@ss1"),
+        verified=True,
+        verified_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture
+async def google_unverified_unlinked_user(session: AsyncSession) -> User:
+    """An unverified email/password user who hasn't linked a Google account.
+
+    ``google_id`` is ``None`` and ``verified`` is ``False``.
+    Google OAuth login should link the account **and** verify the user.
+    """
+    user = User(
+        email="google-unverified@example.com",
+        username="googleunverified",
+        password=hash_password("ExistingP@ss1"),
+        verified=False,
+    )
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture
+async def google_linked_user(session: AsyncSession) -> User:
+    """A user who already has a Google account linked.
+
+    ``google_id`` is set and ``password`` is ``None`` (pure OAuth user).
+    Google OAuth login should recognise the existing link and proceed
+    without modifying the user record.
+    """
+    user = User(
+        email="google-linked@example.com",
+        username="googlelinked",
+        google_id="google-sub-linked-22222",
+        password=None,
+        verified=True,
+        verified_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(user)
     await session.commit()
     await session.refresh(user)
     return user
