@@ -632,6 +632,11 @@ async def handle_refresh(
             extra={"token_user_id": token.user_id, "claims_user_id": user_id},
         )
         raise InvalidTokenError
+    user = await get_user(db=db, u_id=user_id)
+    if user is None:
+        raise InvalidTokenError
+    if user.verified is False:
+        raise InvalidTokenError
     # at this point the provided refresh token is valid
     # the refresh token must be rotated in the database to follow security best practices
     # and a new pair of access and refresh tokens must be resent to the frontend
