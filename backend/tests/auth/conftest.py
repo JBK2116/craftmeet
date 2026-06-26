@@ -12,6 +12,7 @@ import datetime
 import secrets
 import uuid
 
+import jwt as pyjwt
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +25,8 @@ from src.auth.constants import (
 )
 from src.auth.crypto import hash_password
 from src.auth.models import ResetPasswordToken, VerifyEmailToken
-from src.auth.token import generate_access_token
+from src.auth.token import JWT_ALGORITHM, generate_access_token, generate_refresh_token
+from src.config import get_settings
 from src.models import User
 
 # Plaintext password shared by the user fixtures that have a password set.
@@ -428,6 +430,50 @@ async def access_token_jwt(verified_user: User) -> str:
     token is expected (e.g. logout with wrong token type).
     """
     return generate_access_token(u_id=verified_user.id)
+
+
+@pytest_asyncio.fixture
+async def expired_access_token_jwt(verified_user: User) -> str:
+    """An access token JWT for ``verified_user`` whose ``exp`` is in the past.
+
+    ``decode_access_token`` will raise ``InvalidTokenError`` because the
+    signature-verification step detects the expired ``exp`` claim.
+    """
+    settings = get_settings()
+    now = datetime.datetime.now(datetime.UTC)
+    payload = {
+        "user_id": str(verified_user.id),
+        "exp": now - datetime.timedelta(minutes=1),
+        "iat": now - datetime.timedelta(hours=1),
+        "type": "access",
+    }
+    return pyjwt.encode(
+        payload=payload, key=settings.JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
+    )
+
+
+@pytest_asyncio.fixture
+async def refresh_token_jwt(verified_user: User) -> str:
+    """A valid refresh token JWT for ``verified_user``.
+
+    The ``type`` claim is ``"refresh"``, so endpoints that expect an
+    access token (e.g. ``/auth/me``) will reject it with
+    ``InvalidTokenError``.
+    """
+    rt = generate_refresh_token(u_id=verified_user.id)
+    return rt.token_hash
+
+
+@pytest_asyncio.fixture
+async def orphan_access_token_jwt() -> str:
+    """A structurally valid access token whose ``user_id`` does **not**
+    belong to any user in the database.
+
+    ``decode_access_token`` succeeds, but the subsequent user lookup
+    returns ``None``, which triggers ``InvalidTokenError`` in handlers
+    like ``handle_me``.
+    """
+    return generate_access_token(u_id=uuid.uuid4())
 
 
 # Login-payload fixtures
