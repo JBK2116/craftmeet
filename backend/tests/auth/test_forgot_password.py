@@ -59,10 +59,7 @@ async def test_forgot_password_token_cooldown_not_elapsed(
         db=session, u_id=forgot_password_user_with_token.id
     )
     assert curr_token is not None
-    assert (
-        curr_token.id == prev_token_id
-    )  # a new reset password token has not been made
-    auth_service.send_reset_password_email.not_awaited_once()  # ty:ignore[unresolved-attribute]
+    assert curr_token.id == prev_token_id
 
 
 async def test_forgot_password_token_cooldown_elapsed(

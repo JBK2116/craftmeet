@@ -30,9 +30,9 @@ async def test_logout_valid_refresh_token(
     assert refresh_token is not None
     refresh_hash = refresh_token.token_hash
 
-    logout_response = await client.post(
-        url=LOGOUT_URL, cookies={"refresh_token": refresh_token.token_hash}
-    )
+    client.cookies.set("refresh_token", refresh_token.token_hash)
+
+    logout_response = await client.post(url=LOGOUT_URL)
     # tokens are cleared
     assert "access_token" not in logout_response.cookies
     assert "refresh_token" not in logout_response.cookies
@@ -62,9 +62,9 @@ async def test_logout_orphan_refresh_token(
         u_id=uuid.uuid4()
     ).token_hash  # token does not belong to any user
 
-    logout_response = await client.post(
-        url=LOGOUT_URL, cookies={"refresh_token": invalid_hash}
-    )
+    client.cookies.set("refresh_token", invalid_hash)
+
+    logout_response = await client.post(url=LOGOUT_URL)
     # tokens are cleared
     assert "access_token" not in logout_response.cookies
     assert "refresh_token" not in logout_response.cookies
@@ -91,7 +91,9 @@ async def test_logout_missing_refresh_token(
     refresh_token = await get_refresh_token(db=session, u_id=verified_user.id)
     assert refresh_token is not None
 
-    logout_response = await client.post(url=LOGOUT_URL, cookies={"refresh_token": ""})
+    client.cookies.set("refresh_token", "")
+
+    logout_response = await client.post(url=LOGOUT_URL)
     assert logout_response.status_code == 204
     # tokens are cleared
     assert "access_token" not in logout_response.cookies
@@ -119,9 +121,9 @@ async def test_logout_invalid_refresh_token(
 
     invalid_token_hash = secrets.token_urlsafe(TOKEN_HASH_LENGTH_REFRESH_TOKEN)
 
-    logout_response = await client.post(
-        url=LOGOUT_URL, cookies={"refresh_token": invalid_token_hash}
-    )
+    client.cookies.set("refresh_token", invalid_token_hash)
+
+    logout_response = await client.post(url=LOGOUT_URL)
     assert logout_response.status_code == 204
     # tokens are cleared
     assert "access_token" not in logout_response.cookies
@@ -149,9 +151,9 @@ async def test_logout_invalid_token_type(
     refresh_token = await get_refresh_token(db=session, u_id=verified_user.id)
     assert refresh_token is not None
 
-    logout_response = await client.post(
-        url=LOGOUT_URL, cookies={"refresh_token": access_token_jwt}
-    )
+    client.cookies.set("refresh_token", access_token_jwt)
+
+    logout_response = await client.post(url=LOGOUT_URL)
     assert logout_response.status_code == 204
     # tokens are cleared
     assert "access_token" not in logout_response.cookies
