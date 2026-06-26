@@ -24,7 +24,8 @@ from src.auth.constants import (
     VERIFY_EMAIL_TOKEN_MAX_DURATION_MINUTES,
 )
 from src.auth.crypto import hash_password
-from src.auth.models import ResetPasswordToken, VerifyEmailToken
+from src.auth.models import RefreshToken, ResetPasswordToken, VerifyEmailToken
+from src.auth.repository import insert_refresh_token
 from src.auth.token import JWT_ALGORITHM, generate_access_token, generate_refresh_token
 from src.config import get_settings
 from src.models import User
@@ -474,6 +475,52 @@ async def orphan_access_token_jwt() -> str:
     like ``handle_me``.
     """
     return generate_access_token(u_id=uuid.uuid4())
+
+
+@pytest_asyncio.fixture
+async def stored_orphan_refresh_token_jwt(session: AsyncSession) -> str:
+    """A refresh token persisted in the database for ``orphan user``."""
+    token = generate_refresh_token(u_id=uuid.uuid4())
+    token = await insert_refresh_token(db=session, token=token)
+    await session.refresh(token)
+    return token.token_hash
+
+
+@pytest_asyncio.fixture
+async def stored_refresh_token(
+    session: AsyncSession, verified_user: User
+) -> RefreshToken:
+    """A refresh token persisted in the database for ``verified_user``.
+
+    ``handle_refresh`` calls ``get_refresh_token(db, token_hash=...)``,
+    so the token must exist in the DB for the success path.
+    """
+    rt = generate_refresh_token(u_id=verified_user.id)
+    rt = await insert_refresh_token(db=session, token=rt)
+    await session.commit()
+    await session.refresh(rt)
+    return rt
+
+
+@pytest_asyncio.fixture
+async def expired_refresh_token_jwt(verified_user: User) -> str:
+    """A refresh token JWT for ``verified_user`` whose ``exp`` is in the past.
+
+    ``decode_refresh_token(return_anyway=False)`` will raise
+    ``InvalidTokenError`` because the signature-verification step detects
+    the expired ``exp`` claim.
+    """
+    settings = get_settings()
+    now = datetime.datetime.now(datetime.UTC)
+    payload = {
+        "user_id": str(verified_user.id),
+        "exp": now - datetime.timedelta(minutes=1),
+        "iat": now - datetime.timedelta(hours=1),
+        "type": "refresh",
+    }
+    return pyjwt.encode(
+        payload=payload, key=settings.JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
+    )
 
 
 # Login-payload fixtures
