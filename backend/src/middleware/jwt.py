@@ -17,6 +17,7 @@ from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.repository import get_user
+from src.auth.exceptions import InvalidTokenError as AuthInvalidTokenError
 from src.auth.token import decode_access_token
 from src.database import get_db
 from src.exceptions import DatabaseError
@@ -53,7 +54,7 @@ async def get_current_user(request: Request, db: DB) -> None:
         if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         request.state.user = user
-    except (jwt.InvalidTokenError, ValueError) as e:
+    except (AuthInvalidTokenError, jwt.InvalidTokenError, ValueError) as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED) from e
     except DatabaseError as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
