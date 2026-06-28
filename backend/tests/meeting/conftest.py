@@ -16,7 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.crypto import hash_password
 from src.auth.token import JWT_ALGORITHM, generate_access_token
 from src.config import get_settings
-from src.models import User
+from src.models import Meeting, Question, Stat, User, YesNoQuestion
+from src.types import QuestionType
 
 VALID_PASSWORD = "ExistingP@ss1"  # noqa: S105
 
@@ -107,6 +108,125 @@ async def create_meeting_payload() -> dict[str, Any]:
                 "prompt": "Did you complete your tasks?",
                 "position": 1,
                 "sub_question": {},
+            }
+        ],
+    }
+
+
+@pytest_asyncio.fixture
+async def another_meeting_user(session: AsyncSession) -> User:
+    """A second verified user distinct from ``verified_meeting_user`` for ownership tests."""
+    user = User(
+        email="another-meeting@example.com",
+        username="anothermeeting",
+        password=hash_password(VALID_PASSWORD),
+        verified=True,
+        verified_at=datetime.datetime.now(tz=datetime.UTC),
+    )
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture
+async def verified_user_meeting(
+    session: AsyncSession, verified_meeting_user: User
+) -> Meeting:
+    """A meeting persisted in the DB owned by ``verified_meeting_user`` with one yes/no question."""
+    meeting = Meeting(
+        user_id=verified_meeting_user.id,
+        title="Test Meeting",
+        description="A meeting for testing",
+        room_code="12345678",
+        duration=15,
+        participant_cap=20,
+        total_questions=1,
+    )
+    session.add(meeting)
+    await session.flush()
+    await session.refresh(meeting)
+
+    question = Question(
+        meeting_id=meeting.id,
+        type=QuestionType.YES_NO,
+        prompt="Did you complete your tasks?",
+        position=1,
+    )
+    session.add(question)
+    await session.flush()
+    await session.refresh(question)
+
+    sub_question = YesNoQuestion(question_id=question.id)
+    session.add(sub_question)
+    await session.flush()
+
+    stat = Stat(meeting_id=meeting.id)
+    session.add(stat)
+    await session.commit()
+    await session.refresh(meeting)
+    return meeting
+
+
+@pytest_asyncio.fixture
+async def another_user_meeting(
+    session: AsyncSession, another_meeting_user: User
+) -> Meeting:
+    """A meeting owned by ``another_meeting_user`` for cross-ownership tests."""
+    meeting = Meeting(
+        user_id=another_meeting_user.id,
+        title="Another User's Meeting",
+        description="This meeting belongs to someone else",
+        room_code="98765432",
+        duration=30,
+        participant_cap=10,
+        total_questions=1,
+    )
+    session.add(meeting)
+    await session.flush()
+    await session.refresh(meeting)
+
+    question = Question(
+        meeting_id=meeting.id,
+        type=QuestionType.YES_NO,
+        prompt="Are you done?",
+        position=1,
+    )
+    session.add(question)
+    await session.flush()
+    await session.refresh(question)
+
+    sub_question = YesNoQuestion(question_id=question.id)
+    session.add(sub_question)
+    await session.flush()
+
+    stat = Stat(meeting_id=meeting.id)
+    session.add(stat)
+    await session.commit()
+    await session.refresh(meeting)
+    return meeting
+
+
+@pytest_asyncio.fixture
+async def non_existent_meeting_id() -> uuid.UUID:
+    """A UUID that does not correspond to any meeting in the database."""
+    return uuid.uuid4()
+
+
+@pytest_asyncio.fixture
+async def update_meeting_payload() -> dict[str, Any]:
+    """A valid update-meeting payload with updated fields and one question (to be inserted as new)."""
+    return {
+        "title": "Updated Meeting",
+        "description": "Updated description",
+        "participant_cap": 25,
+        "duration": 20,
+        "questions": [
+            {
+                "type": "rating_scale",
+                "prompt": "Rate the meeting",
+                "position": 1,
+                "sub_question": {"min": 1, "max": 5},
             }
         ],
     }
