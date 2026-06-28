@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.exceptions import InvalidTokenError
 from src.database import get_db
 from src.exceptions import DatabaseError
 from src.meeting.exceptions import MeetingNotFoundError
@@ -127,12 +128,17 @@ async def update_meeting(
     )
     try:
         meeting_out = await handle_update_meeting(
-            db=db, meeting_update=payload, m_id=meeting_id
+            db=db, request=request, meeting_update=payload, m_id=meeting_id
         )
         return meeting_out
     except MeetingNotFoundError:
         return JSONResponse(
             content="Resource not found", status_code=status.HTTP_404_NOT_FOUND
+        )
+    except InvalidTokenError:
+        return JSONResponse(
+            content="Invalid token provided",
+            status_code=status.HTTP_401_UNAUTHORIZED,
         )
     except DatabaseError:
         return JSONResponse(

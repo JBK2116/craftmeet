@@ -10,6 +10,7 @@ import uuid
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.exceptions import InvalidTokenError
 from src.meeting.exceptions import MeetingNotFoundError
 from src.meeting.repository import (
     delete_meeting,
@@ -245,7 +246,7 @@ async def handle_get_meeting(db: AsyncSession, m_id: uuid.UUID) -> MeetingOut:
 
 
 async def handle_update_meeting(
-    db: AsyncSession, meeting_update: MeetingUpdate, m_id: uuid.UUID
+    db: AsyncSession, request: Request, meeting_update: MeetingUpdate, m_id: uuid.UUID
 ) -> MeetingOut:
     """Update an existing meeting — title, description, duration, and questions.
 
@@ -267,9 +268,12 @@ async def handle_update_meeting(
         meeting, including its questions, nested sub-questions, and
         associated statistics.
     """
+    user: User = request.state.user
     m_db = await get_meeting(db=db, m_id=m_id)
     if m_db is None:
         raise MeetingNotFoundError
+    if m_db.user_id != user.id:
+        raise InvalidTokenError
     ## start with updating the meetings basic attributes
     ## values such as status, pdf_url, etc... are updated in endpoints
     ## that handle live meeting sessions
@@ -311,10 +315,12 @@ async def handle_update_meeting(
                 extra={"question_id": str(q_db.id)},
             )
             await db.delete(q_db)
+    # save reference before refresh — refresh expires relationships, triggering lazy-load errors
+    stat = m_db.stats
     await db.commit()
     await db.refresh(m_db)
     # build the final meeting output
-    m_out = build_meeting_out(meeting=m_db, questions_out=q_out, stat=m_db.stats)
+    m_out = build_meeting_out(meeting=m_db, questions_out=q_out, stat=stat)
     logger.info(
         "Meeting updated successfully",
         extra={
