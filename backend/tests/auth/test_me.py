@@ -57,4 +57,3 @@ async def test_me_valid_access_token(
     user = await get_user(db=session, u_id=response_body.id)
     assert user is not None
     assert user.id == response_body.id
-

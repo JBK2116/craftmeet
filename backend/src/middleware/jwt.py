@@ -16,8 +16,8 @@ import jwt
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.repository import get_user
 from src.auth.exceptions import InvalidTokenError as AuthInvalidTokenError
+from src.auth.repository import get_user
 from src.auth.token import decode_access_token
 from src.database import get_db
 from src.exceptions import DatabaseError
