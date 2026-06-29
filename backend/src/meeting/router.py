@@ -97,11 +97,15 @@ async def get_meeting(request: Request, db: DB, meeting_id: MEETING_ID):
         "current user found in request", extra={"user_email": request.state.user.email}
     )
     try:
-        meeting = await handle_get_meeting(db=db, m_id=meeting_id)
+        meeting = await handle_get_meeting(db=db, request=request, m_id=meeting_id)
         return meeting
     except MeetingNotFoundError:
         return JSONResponse(
             content="Resource not found", status_code=status.HTTP_404_NOT_FOUND
+        )
+    except InvalidTokenError:
+        return JSONResponse(
+            content="Invalid token provided", status_code=status.HTTP_401_UNAUTHORIZED
         )
     except DatabaseError:
         return JSONResponse(

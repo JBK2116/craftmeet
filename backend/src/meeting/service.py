@@ -186,7 +186,9 @@ async def handle_get_meetings(
     return meetings_out
 
 
-async def handle_get_meeting(db: AsyncSession, m_id: uuid.UUID) -> MeetingOut:
+async def handle_get_meeting(
+    db: AsyncSession, request: Request, m_id: uuid.UUID
+) -> MeetingOut:
     """Retrieve a single meeting by its ID, including questions and statistics.
 
     Args:
@@ -204,6 +206,7 @@ async def handle_get_meeting(db: AsyncSession, m_id: uuid.UUID) -> MeetingOut:
         "Fetching meeting",
         extra={"meeting_id": str(m_id)},
     )
+    user: User = request.state.user
     meeting = await get_meeting(db=db, m_id=m_id)
     if meeting is None:
         logger.warning(
@@ -215,6 +218,12 @@ async def handle_get_meeting(db: AsyncSession, m_id: uuid.UUID) -> MeetingOut:
         "Meeting fetched",
         extra={"meeting_id": str(m_id), "question_count": len(meeting.questions)},
     )
+    if meeting.user_id != user.id:
+        logger.debug(
+            "Meeting does not belong to user",
+            extra={"meeting_user_id": str(meeting.user_id), "user_id": str(user.id)},
+        )
+        raise InvalidTokenError
     questions_out: list[QuestionOut] = []
     for q in meeting.questions:
         logger.debug(
