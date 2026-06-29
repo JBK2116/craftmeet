@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.crypto import hash_password
 from src.auth.token import JWT_ALGORITHM, generate_access_token
 from src.config import get_settings
-from src.models import Meeting, Question, Stat, User, YesNoQuestion
+from src.models import Meeting, Question, RatingScaleQuestion, Stat, User, YesNoQuestion
 from src.types import QuestionType
 
 VALID_PASSWORD = "ExistingP@ss1"  # noqa: S105
@@ -197,6 +197,50 @@ async def another_user_meeting(
     await session.refresh(question)
 
     sub_question = YesNoQuestion(question_id=question.id)
+    session.add(sub_question)
+    await session.flush()
+
+    stat = Stat(meeting_id=meeting.id)
+    session.add(stat)
+    await session.commit()
+    await session.refresh(meeting)
+    return meeting
+
+
+@pytest_asyncio.fixture
+async def second_verified_user_meeting(
+    session: AsyncSession, verified_meeting_user: User
+) -> Meeting:
+    """A second meeting owned by ``verified_meeting_user`` with a rating-scale question.
+
+    Complements ``verified_user_meeting`` (yes/no) so the list endpoint can
+    return multiple items and response serialisation can be verified for a
+    different question type.
+    """
+    meeting = Meeting(
+        user_id=verified_meeting_user.id,
+        title="Second Test Meeting",
+        description="A second meeting for testing",
+        room_code="87654321",
+        duration=30,
+        participant_cap=50,
+        total_questions=1,
+    )
+    session.add(meeting)
+    await session.flush()
+    await session.refresh(meeting)
+
+    question = Question(
+        meeting_id=meeting.id,
+        type=QuestionType.RATING_SCALE,
+        prompt="Rate the session",
+        position=1,
+    )
+    session.add(question)
+    await session.flush()
+    await session.refresh(question)
+
+    sub_question = RatingScaleQuestion(question_id=question.id, min=1, max=5)
     session.add(sub_question)
     await session.flush()
 
