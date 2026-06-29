@@ -360,7 +360,7 @@ async def handle_delete_meeting(
             m_id,
             user.id,
         )
-        raise MeetingNotFoundError
+        raise MeetingNotFoundError(str(m_id))
     logger.debug(
         "meeting %s deleted for user %s",
         m_id,

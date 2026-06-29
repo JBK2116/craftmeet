@@ -259,7 +259,7 @@ async def delete_meeting(db: AsyncSession, m_id: uuid.UUID, u_id: uuid.UUID) -> 
     """
     try:
         logger.debug("deleting meeting %s for user %s", m_id, u_id)
-        stmt = delete(Meeting).where(Meeting.id == m_id and Meeting.user_id == u_id)
+        stmt = delete(Meeting).where((Meeting.id == m_id) & (Meeting.user_id == u_id))
         # this cast is harmless, it correctly assigns the result to a CursorResult
         # following the official documentation
         # this fixes the type mismatch from the installed sqlalchemy stubs
