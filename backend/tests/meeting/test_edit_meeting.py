@@ -4,6 +4,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.meeting.repository import get_meeting
+from src.meeting.schemas import MeetingOut
 from src.models import Meeting
 
 EDIT_URL = "/meetings/"  # append the id to this
@@ -15,6 +16,7 @@ async def test_edit_meeting_missing_access_token(
     verified_user_meeting: Meeting,
     update_meeting_payload: dict[str, Any],
 ) -> None:
+    """No access token cookie sent -> 401, meeting not updated."""
     url = EDIT_URL + str(verified_user_meeting.id)
     m_id = verified_user_meeting.id
     updated_at = verified_user_meeting.updated_at
@@ -34,6 +36,7 @@ async def test_edit_meeting_expired_access_token(
     verified_user_meeting: Meeting,
     update_meeting_payload: dict[str, Any],
 ) -> None:
+    """Expired access token -> 401, meeting not updated."""
     url = EDIT_URL + str(verified_user_meeting.id)
     m_id = verified_user_meeting.id
     updated_at = verified_user_meeting.updated_at
@@ -54,6 +57,7 @@ async def test_edit_meeting_invalid_access_token(
     verified_user_meeting: Meeting,
     update_meeting_payload: dict[str, Any],
 ) -> None:
+    """Malformed access token -> 401, meeting not updated."""
     url = EDIT_URL + str(verified_user_meeting.id)
     m_id = verified_user_meeting.id
     updated_at = verified_user_meeting.updated_at
@@ -75,6 +79,7 @@ async def test_edit_meeting_orphan_access_token(
     update_meeting_payload: dict[str, Any],
     orphan_access_token_jwt: str,
 ) -> None:
+    """Valid JWT for a non-existent user -> 401, meeting not updated."""
     url = EDIT_URL + str(verified_user_meeting.id)
     m_id = verified_user_meeting.id
     updated_at = verified_user_meeting.updated_at
@@ -94,7 +99,38 @@ async def test_edit_meeting_cross_ownership(
     another_user_meeting: Meeting,
     update_meeting_payload: dict[str, Any],
 ) -> None:
+    """Authenticated user tries to edit another user's meeting -> 401."""
     url = EDIT_URL + str(another_user_meeting.id)
     # authenticated_client here logs in with verified_user
     response = await authenticated_client.patch(url, json=update_meeting_payload)
     assert response.status_code == 401
+
+
+async def test_edit_meeting_valid_access_token(
+    authenticated_client: AsyncClient,
+    session: AsyncSession,
+    verified_user_meeting: Meeting,
+    update_meeting_payload: dict[str, Any],
+) -> None:
+    """Valid access token, meeting owned by user -> 200, meeting updated with new fields and question."""
+    url = EDIT_URL + str(verified_user_meeting.id)
+
+    response = await authenticated_client.patch(url=url, json=update_meeting_payload)
+    assert response.status_code == 200
+
+    body = response.json()
+    meeting_out = MeetingOut.model_validate(body)
+
+    assert meeting_out.title == update_meeting_payload["title"]
+    assert meeting_out.description == update_meeting_payload["description"]
+    assert meeting_out.participant_cap == update_meeting_payload["participant_cap"]
+    assert meeting_out.duration == update_meeting_payload["duration"]
+    assert meeting_out.total_questions == 1
+    assert len(meeting_out.questions) == 1
+    assert meeting_out.questions[0].type == "rating_scale"
+    assert meeting_out.questions[0].prompt == "Rate the meeting"
+
+    meeting_db = await get_meeting(db=session, m_id=verified_user_meeting.id)
+    assert meeting_db is not None
+    assert meeting_db.title == update_meeting_payload["title"]
+    assert meeting_db.duration == update_meeting_payload["duration"]
