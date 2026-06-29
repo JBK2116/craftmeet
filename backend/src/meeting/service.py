@@ -281,6 +281,7 @@ async def handle_update_meeting(
     m_db.description = meeting_update.description
     m_db.total_questions = len(meeting_update.questions)
     m_db.duration = meeting_update.duration
+    m_db.participant_cap = meeting_update.participant_cap
     # update the questions following the diff & merge pattern scheme
     db_ids = {q.id: q for q in m_db.questions}
     visited_ids = set()
@@ -319,6 +320,7 @@ async def handle_update_meeting(
     stat = m_db.stats
     await db.commit()
     await db.refresh(m_db)
+    await db.refresh(stat)
     # build the final meeting output
     m_out = build_meeting_out(meeting=m_db, questions_out=q_out, stat=stat)
     logger.info(
