@@ -5,7 +5,7 @@
     import { Button } from '$lib/components/ui/button';
     import { Sheet, SheetContent, SheetTrigger } from '$lib/components/ui/sheet';
     import { user } from '$lib/stores/stores';
-    import { Menu, Moon, Sun } from '@lucide/svelte';
+    import { CircleUserRound, Menu, Moon, Sun } from '@lucide/svelte';
 
     import Logo from './Logo.svelte';
 
@@ -290,10 +290,11 @@
                     {/if}
                 </Button>
                 <button
-                    class="flex h-8 w-8 items-center justify-center rounded-full border border-input bg-muted text-xs font-medium text-muted-foreground transition hover:bg-muted/80"
+                    onclick={() => goto('/account')}
+                    class="flex h-8 w-8 items-center justify-center rounded-full border border-input bg-muted text-muted-foreground transition hover:bg-muted/80 hover:cursor-pointer"
                     aria-label="Account menu"
                 >
-                    U
+                    <CircleUserRound class="h-5 w-5" />
                 </button>
                 <Button
                     variant="ghost"
@@ -320,10 +321,11 @@
                     {/if}
                 </Button>
                 <button
-                    class="flex h-8 w-8 items-center justify-center rounded-full border border-input bg-muted text-xs font-medium text-muted-foreground transition hover:bg-muted/80"
+                    onclick={() => goto('/account')}
+                    class="flex h-8 w-8 items-center justify-center rounded-full border border-input bg-muted text-muted-foreground transition hover:bg-muted/80 hover:cursor-pointer"
                     aria-label="Account menu"
                 >
-                    U
+                    <CircleUserRound class="h-5 w-5" />
                 </button>
                 <Button
                     variant="ghost"
