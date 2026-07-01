@@ -143,3 +143,9 @@ class VerifyEmailRequest(BaseModel):
     token: str = Field(
         min_length=VERIFY_EMAIL_TOKEN_LENGTH, max_length=VERIFY_EMAIL_TOKEN_LENGTH
     )
+
+
+class MeRequest(BaseModel):
+    """Pydantic model representing user update request body"""
+
+    username: Annotated[str, AfterValidator(validate_username)]

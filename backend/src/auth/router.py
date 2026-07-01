@@ -18,6 +18,7 @@ from src.auth.exceptions import (
 from src.auth.schemas import (
     ForgotPasswordRequest,
     LoginRequest,
+    MeRequest,
     ResetPasswordRequest,
     SignupRequest,
     UserOut,
@@ -33,10 +34,12 @@ from src.auth.service import (
     handle_reset_password,
     handle_signup,
     handle_verify_email,
+    handle_update_me,
 )
 from src.config import get_settings
 from src.database import get_db
 from src.exceptions import DatabaseError
+from src.middleware.jwt import get_current_user
 from src.types import ErrorTypes
 
 settings = get_settings()
@@ -249,6 +252,21 @@ async def me(db: DB, access_token: Access_Token = None):
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except InvalidTokenError:
         return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+
+
+@auth_router.patch(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    response_model=UserOut,
+    dependencies=[Depends(get_current_user)],
+)
+async def update_me(db: DB, request: Request, payload: MeRequest):
+    logger.debug("Received update user payload", extra={"payload": payload})
+    logger.debug(
+        "User found in request", extra={"user_email": request.state.user.email}
+    )
+    user = await handle_update_me(db=db, request=request, payload=payload)
+    return user
 
 
 @auth_router.post("/refresh", status_code=status.HTTP_200_OK)

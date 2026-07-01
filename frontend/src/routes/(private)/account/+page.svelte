@@ -1,5 +1,8 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
+    import { apiFetch } from '$lib/api/auth';
     import { user } from '$lib/stores/stores';
+    import { AuthError, ErrorTypes } from '$lib/types/errors';
     import type { User } from '$lib/types/user';
     import {
         BadgeCheck,
@@ -63,17 +66,62 @@
         usernameInput = pageUser.username ?? '';
     }
 
-    function saveUsername() {
+    async function saveUsername() {
         const trimmed = usernameInput.trim();
         if (trimmed && trimmed !== pageUser.username) {
+            // snapshot for rollback
+            const prevUser = pageUser;
+            const prevStore = $user;
             // update local store optimistically
             $user = $user ? { ...$user, username: trimmed } : null;
             pageUser = { ...pageUser, username: trimmed };
-            toast.success('Username updated', {
-                description: 'Changes are applied to your current session.',
-                duration: 3000,
-            });
-            // TODO: persist to backend once PATCH /auth/me endpoint exists
+            try {
+                const url = `/api/v1/auth/me`;
+                const payload = { username: trimmed };
+                const opts: RequestInit = {
+                    method: 'PATCH',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                };
+                const response = await apiFetch(url, opts);
+                const body = await response.json();
+                if (!response.ok) {
+                    // roll back optimistic update on error
+                    $user = prevStore;
+                    pageUser = prevUser;
+                    switch (body.type) {
+                        case ErrorTypes.USERNAME:
+                            toast.error(body.message);
+                            return;
+                        case ErrorTypes.SERVER:
+                            toast.error(
+                                'We could not update your username, There was a temporary problem with our service. Please try again soon',
+                            );
+                            return;
+                        default:
+                            toast.error(
+                                'We could not update your username. Please try again later.',
+                            );
+                            return;
+                    }
+                }
+                const updated_user = body as User;
+                user.set(updated_user);
+                pageUser = updated_user;
+                editingUsername = false;
+                toast.success('Your username has been updated successfully.');
+                return;
+            } catch (err: any) {
+                // roll back optimistic update on error
+                $user = prevStore;
+                pageUser = prevUser;
+                if (err instanceof AuthError) {
+                    goto('/login');
+                    return;
+                }
+                throw err;
+            }
         }
         editingUsername = false;
     }
@@ -97,12 +145,24 @@
     let showDeleteConfirm = $state(false);
 
     async function handleDeleteAllMeetings() {
-        // TODO: wire up to DELETE /api/v1/meetings when backend endpoint is ready
-        toast.success('All meetings cleared', {
-            description: 'This is a placeholder — no backend action was taken.',
-            duration: 3000,
-        });
-        showDeleteConfirm = false;
+        const url = `/api/v1/meetings`;
+        const opts: RequestInit = { method: 'DELETE', credentials: 'include' };
+        try {
+            const response = await apiFetch(url, opts);
+            if (!response.ok) {
+                toast.error('Failed to delete all meetings. Please try again.');
+                showDeleteConfirm = false;
+                return;
+            }
+            toast.success('All meetings cleared');
+            showDeleteConfirm = false;
+        } catch (err: any) {
+            if (err instanceof AuthError) {
+                goto('/login');
+                return;
+            }
+            throw err;
+        }
     }
 </script>
 

@@ -275,3 +275,29 @@ async def delete_meeting(db: AsyncSession, m_id: uuid.UUID, u_id: uuid.UUID) -> 
     except SQLAlchemyError as e:
         logger.exception("error deleting meeting %s for user %s: %s", m_id, u_id, e)
         raise DatabaseError from e
+
+
+async def delete_meetings(db: AsyncSession, u_id: uuid.UUID) -> None:
+    """Delete all meetings belonging to a user.
+
+    Args:
+        db: The asynchronous SQLAlchemy session.
+        u_id: The UUID of the user whose meetings to delete.
+
+    Raises:
+        DatabaseError: If a SQLAlchemy error occurs during the operation.
+    """
+    logger.debug("deleting all meetings for user %s", u_id)
+    try:
+        stmt = delete(Meeting).where(Meeting.user_id == u_id)
+        result = cast(CursorResult, await db.execute(stmt))
+        await db.commit()
+        logger.debug(
+            "all meetings deleted for user %s (affected rows: %d)",
+            u_id,
+            result.rowcount,
+        )
+        return
+    except SQLAlchemyError as e:
+        logger.exception("error deleting meetings for user %s: %s", u_id, e)
+        raise DatabaseError from e

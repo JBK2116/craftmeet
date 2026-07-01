@@ -9,7 +9,7 @@ import logging
 import uuid
 from typing import Any
 
-from fastapi import Response
+from fastapi import Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.crypto import check_password, hash_password
@@ -40,8 +40,10 @@ from src.auth.repository import (
 from src.auth.schemas import (
     ForgotPasswordRequest,
     LoginRequest,
+    MeRequest,
     ResetPasswordRequest,
     SignupRequest,
+    UserOut,
     VerifyEmailRequest,
 )
 from src.auth.token import (
@@ -589,6 +591,33 @@ async def handle_me(db: AsyncSession, access_token: str) -> User:
         raise InvalidTokenError
     logger.debug("user retrieved successfully", extra={"email": user.email})
     return user
+
+
+async def handle_update_me(
+    db: AsyncSession, request: Request, payload: MeRequest
+) -> UserOut:
+    """
+    Handle updating the current authenticated user's profile.
+
+    Retrieves the user from the request state (set by the auth dependency),
+    updates their profile with the provided payload, and returns the updated
+    user data.
+
+    Args:
+        db: Async database session
+        request: FastAPI Request object containing the authenticated user in state
+        payload: Updated user profile data
+
+    Returns:
+        UserOut: The updated user object
+    """
+    user: User = request.state.user
+    logger.debug(
+        "updating user profile", extra={"user_id": user.id, "email": user.email}
+    )
+    user = await update_user(db=db, u_id=user.id, username=payload.username)
+    logger.debug("user profile updated successfully", extra={"user_id": user.id})
+    return UserOut.model_validate(user)
 
 
 async def handle_refresh(

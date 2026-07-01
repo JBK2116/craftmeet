@@ -14,6 +14,7 @@ from src.auth.exceptions import InvalidTokenError
 from src.meeting.exceptions import MeetingNotFoundError
 from src.meeting.repository import (
     delete_meeting,
+    delete_meetings,
     get_meeting,
     get_meetings,
     insert_meeting,
@@ -375,5 +376,25 @@ async def handle_delete_meeting(
     logger.debug(
         "meeting %s deleted for user %s",
         m_id,
+        user.id,
+    )
+
+
+async def handle_delete_meetings(db: AsyncSession, request: Request) -> None:
+    """Delete all meetings belonging to the authenticated user.
+
+    Args:
+        db: The active asynchronous database session.
+        request: The incoming FastAPI request, which carries the
+            authenticated user via ``request.state.user``.
+    """
+    user: User = request.state.user
+    logger.debug(
+        "deleting all meetings for user %s",
+        user.id,
+    )
+    await delete_meetings(db=db, u_id=user.id)
+    logger.debug(
+        "all meetings deleted for user %s",
         user.id,
     )
