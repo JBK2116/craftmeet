@@ -323,11 +323,14 @@ async def update_user(db: AsyncSession, u_id: uuid.UUID, **kwargs) -> User:
         logger.debug(f"updating user ID: {u_id} with fields: {list(kwargs.keys())}")
         stmt = update(User).where(User.id == u_id).values(**kwargs).returning(User)
         result = await db.execute(stmt)
+        await db.commit()
         user = result.scalar_one()
         if user:
-            logger.debug(f"successfully updated user ID: {u_id}")
+            logger.debug(
+                f"successfully updated user ID: {u_id}",
+                extra={"username": user.username},
+            )
         return user
-
     except SQLAlchemyError as e:
         logger.exception(f"failed to update user ID: {u_id}")
         raise DatabaseError("database error occurred") from e

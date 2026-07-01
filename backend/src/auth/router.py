@@ -33,8 +33,8 @@ from src.auth.service import (
     handle_refresh,
     handle_reset_password,
     handle_signup,
-    handle_verify_email,
     handle_update_me,
+    handle_verify_email,
 )
 from src.config import get_settings
 from src.database import get_db
