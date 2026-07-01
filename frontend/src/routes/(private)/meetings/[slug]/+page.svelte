@@ -6,6 +6,7 @@
     import { AuthError, ErrorTypes } from '$lib/types/errors';
     import type { MeetingIn, MeetingUpdate } from '$lib/types/meeting';
     import type { QuestionTypes, QuestionUpdate } from '$lib/types/question';
+    import { MAX_QUESTION_CAP } from '$lib/utils/constants';
     import {
         AlignStartVertical,
         ChartBar,
@@ -62,6 +63,7 @@
                 .map((q) => ({ id: uid(), backendId: q.id, type: q.type })),
         ),
     );
+    let totalQuestions = $derived(questions.length);
     let showTypeMenu = $state(false);
     let backendError = $state<string | null>(null);
     let questionCount = $derived(questions.length);
@@ -77,6 +79,10 @@
 
     // adds a question to the questions array
     function addQuestion(type: QuestionTypes) {
+        if (totalQuestions >= MAX_QUESTION_CAP) {
+            toast.info(`Meetings cannot contain more than ${MAX_QUESTION_CAP} questions.`);
+            return;
+        }
         questions.push({ id: uid(), backendId: null, type });
         showTypeMenu = false;
     }

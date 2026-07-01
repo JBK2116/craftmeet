@@ -20,6 +20,7 @@ from src.constants import (
     MAX_OPTION_LENGTH,
     MAX_PARTICIPANT_CAP,
     MAX_PROMPT_LENGTH,
+    MAX_QUESTION_CAP,
     MAX_RATING_SCALE_VALUE,
     MAX_TITLE_LENGTH,
     MIN_RATING_SCALE_VALUE,
@@ -348,7 +349,7 @@ class MeetingIn(BaseModel):
         default=MAX_PARTICIPANT_CAP, le=MAX_PARTICIPANT_CAP, ge=1
     )
     duration: int = Field(ge=1, le=MAX_MEETING_DURATION_MINUTES)
-    questions: list[QuestionIn]
+    questions: list[QuestionIn] = Field(max_length=MAX_QUESTION_CAP, min_length=1)
 
 
 # DATA SENT FROM FRONTEND TO UPDATE MEETINGS

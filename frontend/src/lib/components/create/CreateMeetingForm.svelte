@@ -6,6 +6,7 @@
     import type { MeetingIn, MeetingOut } from '$lib/types/meeting';
     import type { QuestionTypes } from '$lib/types/question';
     import type { QuestionOut } from '$lib/types/question';
+    import { MAX_QUESTION_CAP } from '$lib/utils/constants';
     import { ChevronDown, CircleAlert, Plus } from '@lucide/svelte';
     import { AlignStartVertical, ChartBar, ListChecks, Star, ToggleLeft } from '@lucide/svelte';
     import { toast } from 'svelte-sonner';
@@ -45,6 +46,7 @@
 
     // state
     let questions = $state<{ id: string; type: QuestionTypes }[]>([]);
+    let totalQuestions = $derived(questions.length);
     let showTypeMenu = $state(false);
     let backendError = $state<string | null>(null);
     let questionCount = $derived(questions.length);
@@ -60,6 +62,10 @@
 
     // adds a new question based on the type to the questions array
     function addQuestion(type: QuestionTypes) {
+        if (totalQuestions >= MAX_QUESTION_CAP) {
+            toast.info(`Meetings cannot contain more than ${MAX_QUESTION_CAP} questions.`);
+            return;
+        }
         questions.push({ id: uid(), type });
         showTypeMenu = false;
     }

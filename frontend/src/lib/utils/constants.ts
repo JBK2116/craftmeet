@@ -13,3 +13,4 @@ export const MAX_LONG_ANSWER_LENGTH = 500;
 export const MIN_RATING_SCALE_VALUE = 0;
 export const MAX_RATING_SCALE_VALUE = 10;
 export const MAX_DURATION_MINS = 60 * 24;
+export const MAX_QUESTION_CAP = 50;
