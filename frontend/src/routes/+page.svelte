@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
     import { Button } from '$lib/components/ui/button';
     import {
         ChartBarBig,
@@ -44,17 +45,33 @@
 
     // join meeting functionality
     let code = $state('');
+    let name = $state('');
     $effect(() => {
         code = code.replace(/\D/g, '').slice(0, 8);
     });
 
     async function handleJoin(): Promise<void> {
+        if (!code || !name.trim()) {
+            toast.error('Please enter a room code and your name.', { position: 'bottom-right' });
+            return;
+        }
         try {
-            modalText = 'Joining meeting';
+            modalText = 'Joining meeting…';
             showModal = true;
+            // TODO: POST to backend to validate room code and register participant
+            // Example:
+            // const res = await apiFetch('/api/v1/meetings/join', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ room_code: code, name: name.trim() }),
+            // });
+            // if (!res.ok) throw new Error('Invalid code');
+            // const body = await res.json();
+            // goto(`/meetings/${body.meeting_id}/live`);
             await new Promise((resolve) => setTimeout(resolve, 1000));
+            modalText = '';
+            showModal = false;
         } catch (err: any) {
-        } finally {
             modalText = '';
             showModal = false;
             toast.error('Unable to join meeting', { position: 'bottom-right' });
@@ -206,18 +223,27 @@
             <p class="mt-4 text-sm leading-relaxed text-muted-foreground">
                 Jump straight into an active session. No account needed.
             </p>
-            <div class="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                <input
-                    type="text"
-                    placeholder="Enter room code"
-                    maxlength="8"
-                    bind:value={code}
-                    class="h-10 w-full rounded-full border border-border bg-card px-5 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20 sm:w-56"
-                />
+            <div class="mt-8 flex flex-col items-center gap-3">
+                <div class="flex w-full max-w-xs flex-col gap-3 sm:max-w-md sm:flex-row">
+                    <input
+                        type="text"
+                        placeholder="Room code"
+                        maxlength="8"
+                        bind:value={code}
+                        class="h-10 w-full rounded-full border border-border bg-card px-5 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Your name"
+                        maxlength="50"
+                        bind:value={name}
+                        class="h-10 w-full rounded-full border border-border bg-card px-5 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+                    />
+                </div>
                 <Button
                     id="join-meeting"
                     href="#join-meeting"
-                    class="h-10 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto transition-colors"
+                    class="h-10 w-full max-w-xs rounded-full bg-primary text-primary-foreground hover:bg-primary/90 sm:max-w-md transition-colors"
                     onclick={handleJoin}
                 >
                     Join now
