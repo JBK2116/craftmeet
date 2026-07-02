@@ -13,6 +13,7 @@
         ChevronDown,
         CircleAlert,
         ListChecks,
+        Play,
         Plus,
         Star,
         ToggleLeft,
@@ -205,6 +206,10 @@
             }
         }
     }
+
+    async function handleLaunchMeeting() {
+        // TODO: implement launch logic — PATCH meeting status to 'live', then navigate to room
+    }
 </script>
 
 {#if meeting.status === 'draft'}
@@ -215,11 +220,23 @@
         }}
         class="mx-auto max-w-2xl px-4 py-10"
     >
-        <div class="mb-8">
-            <h1 class="text-[var(--text-heading)] font-bold leading-tight tracking-tight">
-                Edit Meeting
-            </h1>
-            <p class="text-meta mt-1">Edit your questions, then save when finished.</p>
+        <div class="mb-8 flex items-start justify-between gap-4 flex-wrap">
+            <div>
+                <h1
+                    class="text-[var(--text-heading)] font-bold leading-tight tracking-tight break-words"
+                >
+                    {meeting.title}
+                </h1>
+                <p class="text-meta mt-1">Edit your questions, then save or launch when finished.</p>
+            </div>
+            <button
+                type="button"
+                onclick={handleLaunchMeeting}
+                class="shrink-0 inline-flex items-center justify-center rounded-xl border border-primary p-2.5 text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label="Launch meeting"
+            >
+                <Play class="h-5 w-5" />
+            </button>
         </div>
 
         {#if backendError}
