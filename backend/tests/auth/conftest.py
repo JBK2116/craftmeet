@@ -16,6 +16,7 @@ from unittest.mock import AsyncMock
 import jwt as pyjwt
 import pytest
 import pytest_asyncio
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.constants import (
@@ -699,3 +700,21 @@ async def google_linked_user(session: AsyncSession) -> User:
     await session.commit()
     await session.refresh(user)
     return user
+
+
+@pytest_asyncio.fixture
+async def authenticated_client(client: AsyncClient, verified_user: User) -> AsyncClient:
+    """Return an HTTP client with valid ``access_token`` cookie for
+    ``verified_user``.
+
+    Logs in the user via the login endpoint and copies the resulting
+    cookies (``access_token``, ``refresh_token``) onto the client so
+    subsequent requests pass the ``get_current_user`` dependency.
+    """
+    response = await client.post(
+        "/auth/login",
+        json={"email": verified_user.email, "password": VALID_PASSWORD},
+    )
+    for key, value in response.cookies.items():
+        client.cookies.set(key, value)
+    return client
