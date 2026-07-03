@@ -208,7 +208,7 @@
     }
 
     async function handleLaunchMeeting() {
-        // TODO: implement launch logic — PATCH meeting status to 'live', then navigate to room
+        goto(`/meetings/${meeting.id}/host`);
     }
 </script>
 
@@ -227,7 +227,9 @@
                 >
                     {meeting.title}
                 </h1>
-                <p class="text-meta mt-1">Edit your questions, then save or launch when finished.</p>
+                <p class="text-meta mt-1">
+                    Edit your questions, then save or launch when finished.
+                </p>
             </div>
             <button
                 type="button"

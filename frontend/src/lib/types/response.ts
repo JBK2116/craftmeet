@@ -1,3 +1,11 @@
+/** Response types sent to backend */
+export type ResponseOut =
+    | MultipleChoiceResponseOut
+    | LongAnswerResponseOut
+    | RankedVotingResponseOut
+    | RatingScaleResponseOut
+    | YesNoResponseOut;
+
 /** Multiple Choice Question Response received from backend */
 export type MultipleChoiceResponseIn = {
     id: string;

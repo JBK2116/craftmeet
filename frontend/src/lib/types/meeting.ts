@@ -3,6 +3,9 @@ import type { QuestionIn, QuestionOut } from './question';
 /** Lifecycle state of a meeting. */
 export type MeetingStatus = 'live' | 'draft' | 'completed';
 
+/** Lifecycle state of a meeting from a live/presenter perspective. */
+export type LiveMeetingStatus = 'lobby' | 'question' | 'ended';
+
 /** Subscription plan types. */
 export type MeetingPlan = 'free' | 'pro' | 'team';
 
