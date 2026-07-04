@@ -224,6 +224,7 @@ dependencies = [
     { name = "python-json-logger" },
     { name = "sendgrid" },
     { name = "sqlalchemy" },
+    { name = "websockets" },
 ]
 
 [package.dev-dependencies]
@@ -250,6 +251,7 @@ requires-dist = [
     { name = "python-json-logger", specifier = ">=4.1.0" },
     { name = "sendgrid", specifier = ">=6.12.5" },
     { name = "sqlalchemy", specifier = ">=2.0.50" },
+    { name = "websockets", specifier = ">=16.0" },
 ]
 
 [package.metadata.requires-dev]

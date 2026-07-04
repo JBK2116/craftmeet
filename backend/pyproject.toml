@@ -17,6 +17,7 @@ dependencies = [
     "python-json-logger>=4.1.0",
     "sendgrid>=6.12.5",
     "sqlalchemy>=2.0.50",
+    "websockets>=16.0",
 ]
 
 [dependency-groups]
