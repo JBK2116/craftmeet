@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.exceptions import InvalidTokenError as AuthInvalidTokenError
 from src.auth.repository import get_user
 from src.auth.token import decode_access_token
-from src.database import get_db
+from src.database import AsyncSessionLocal, get_db
 from src.exceptions import DatabaseError
 from src.models import User
 
@@ -71,16 +71,18 @@ async def get_current_user(request: Request, db: DB) -> None:
         ) from e
 
 
-async def get_current_user_websocket(websocket: WebSocket, db: DB) -> None:
+async def get_current_user_websocket(websocket: WebSocket) -> None:
     """Verify JWT from WebSocket cookies and attach the authenticated user to websocket.state.
 
     Extracts the access token from the WebSocket cookies, decodes it, and
     validates the user ID. If a valid user is found, attaches it to
     `websocket.state.user`. Otherwise, raises a WebSocketException.
 
+    Opens a short-lived DB session for the token lookup so no connection
+    is held open for the lifetime of the WebSocket.
+
     Args:
         websocket: The incoming WebSocket connection containing the access token cookie.
-        db: The database session dependency.
 
     Returns:
         None. The authenticated user is attached to `websocket.state.user`.
@@ -96,13 +98,13 @@ async def get_current_user_websocket(websocket: WebSocket, db: DB) -> None:
             code=status.WS_1008_POLICY_VIOLATION, reason="access token missing"
         )
     try:
-        user = await _decode_access_token(token=token, db=db)
-        if not user:
-            raise WebSocketException(
-                code=status.WS_1008_POLICY_VIOLATION, reason="access token missing"
-            )
-        websocket.state.user = user
-        return
+        async with AsyncSessionLocal() as session:
+            user = await _decode_access_token(token=token, db=session)
+            if not user:
+                raise WebSocketException(
+                    code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
+                )
+            websocket.state.user = user
     except DatabaseError as e:
         raise WebSocketException(
             code=status.WS_1013_TRY_AGAIN_LATER, reason="database error occurred"
