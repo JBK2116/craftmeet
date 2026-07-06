@@ -305,6 +305,18 @@ class MultipleChoiceResponseIn(BaseModel):
     selected_options: list[int]
 
 
+class ResponseIn(BaseModel):
+    """Model representing a response sent by the frontend"""
+
+    response: (
+        MultipleChoiceResponseIn
+        | LongAnswerResponseIn
+        | RankedVotingResponseIn
+        | RankedVotingResponseIn
+        | YesNoResponseIn
+    )
+
+
 class QuestionIn(BaseModel):
     """Model representing a question sent by the frontend"""
 

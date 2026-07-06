@@ -9,7 +9,7 @@ import logging
 import uuid
 from typing import cast
 
-from sqlalchemy import CursorResult, delete, select
+from sqlalchemy import CursorResult, delete, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -300,4 +300,46 @@ async def delete_meetings(db: AsyncSession, u_id: uuid.UUID) -> None:
         return
     except SQLAlchemyError as e:
         logger.exception("error deleting meetings for user %s: %s", u_id, e)
+        raise DatabaseError from e
+
+
+async def update_meeting(
+    db, m_id, returning=False, **kwargs
+):
+    """
+    Update a meeting record in the database.
+
+    This function updates a meeting identified by its UUID with the provided
+    keyword arguments. It optionally returns the updated meeting object or
+    handles database errors by raising a custom DatabaseError.
+
+    Args:
+        db: The asynchronous database session.
+        m_id: The UUID of the meeting to update.
+        returning: If True, return the updated meeting object.
+            Defaults to False.
+        **kwargs: Additional fields to update on the meeting (e.g., title, date).
+
+    Returns:
+        Meeting | None: The updated meeting object if `returning` is True,
+            otherwise None.
+
+    Raises:
+        DatabaseError: If a database error occurs during the update.
+    """
+    try:
+        if returning:
+            stmt = (
+                update(Meeting)
+                .where(Meeting.id == m_id)
+                .values(**kwargs)
+                .returning(Meeting)
+            )
+            result = await db.execute(stmt)
+            return result.scalar_one_or_none()
+        else:
+            stmt = update(Meeting).where(Meeting.id == m_id).values(**kwargs)
+            await db.execute(stmt)
+            return
+    except SQLAlchemyError as e:
         raise DatabaseError from e
