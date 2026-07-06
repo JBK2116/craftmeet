@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import FastAPI, Request, status
+from fastapi.concurrency import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.responses import JSONResponse
@@ -10,6 +11,7 @@ from src.auth.router import (  # noqa: F401 - ensures oauth is registered at app
     auth_router,
     oauth,
 )
+from src.cache import close_redis, setup_redis
 from src.config import get_settings
 from src.logging_config import get_logger, setup_logging
 from src.meeting.router import meeting_router
@@ -22,6 +24,14 @@ settings = get_settings()
 setup_logging()
 logging.getLogger("python_http_client").setLevel(logging.WARNING)
 logger = get_logger(__name__)
+
+
+# initialise redis
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await setup_redis()  # NOTE: ensure that redis server is started locally
+    yield
+    await close_redis()
 
 
 app = FastAPI(
@@ -42,6 +52,7 @@ app = FastAPI(
     redirect_slashes=True,
     root_path="/api/v1",
     strict_content_type=True,
+    lifespan=lifespan,
 )
 
 # initialise middleware
