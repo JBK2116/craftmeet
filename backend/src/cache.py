@@ -49,14 +49,14 @@ async def get_cache(key: str) -> Any:
     return await redis.get(key)
 
 
-async def del_redis(key: str) -> int | None:
+async def del_cache(key: str) -> int | None:
     """Delete *key*. Returns the number of keys removed (0 or 1)."""
     if redis is None:
         raise RuntimeError("redis server is not running")
     return await redis.delete(key)
 
 
-async def set_redis(key: str, value: str, ttl: int) -> Any:
+async def set_cache(key: str, value: str, ttl: int) -> Any:
     """Set *key* to *value* with the given *ttl* in seconds."""
     if redis is None:
         raise RuntimeError("redis server is not running")
