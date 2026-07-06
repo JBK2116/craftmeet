@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int
     DB_NAME: str
+    REDIS_MAX_CONNECTIONS: int
+    REDIS_URL: str
+
     # Email
     SENDGRID_API_KEY: str
     SENDGRID_EMAIL_FROM: str
