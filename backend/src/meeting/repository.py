@@ -304,7 +304,7 @@ async def delete_meetings(db: AsyncSession, u_id: uuid.UUID) -> None:
 
 
 async def update_meeting(
-    db, m_id, returning=False, **kwargs
+    db: AsyncSession, m_id: uuid.UUID, returning: bool = False, **kwargs
 ):
     """
     Update a meeting record in the database.
