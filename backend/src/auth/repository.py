@@ -323,7 +323,6 @@ async def update_user(db: AsyncSession, u_id: uuid.UUID, **kwargs) -> User:
         logger.debug(f"updating user ID: {u_id} with fields: {list(kwargs.keys())}")
         stmt = update(User).where(User.id == u_id).values(**kwargs).returning(User)
         result = await db.execute(stmt)
-        await db.commit()
         user = result.scalar_one()
         if user:
             logger.debug(
