@@ -16,6 +16,7 @@ export type MultipleChoiceResponseIn = {
 
 /** Multiple Choice Response sent to backend */
 export type MultipleChoiceResponseOut = {
+    type: 'multiple_choice';
     question_id: string;
     participant_id: string;
     selected_options: number[];
@@ -31,6 +32,7 @@ export type LongAnswerResponseIn = {
 
 /** Long Answer Question Response sent to backend */
 export type LongAnswerResponseOut = {
+    type: 'long_answer';
     question_id: string;
     participant_id: string;
     content: string;
@@ -49,6 +51,7 @@ export type RankedVotingResponseIn = {
 
 /** Ranked Voting Question Response sent to backend */
 export type RankedVotingResponseOut = {
+    type: 'ranked_voting';
     question_id: string;
     participant_id: string;
     rank_1: number;
@@ -66,7 +69,12 @@ export type RatingScaleResponseIn = {
 };
 
 /** Rating Scale Question Response sent to backend */
-export type RatingScaleResponseOut = { question_id: string; participant_id: string; value: number };
+export type RatingScaleResponseOut = {
+    type: 'rating_scale';
+    question_id: string;
+    participant_id: string;
+    value: number;
+};
 
 /** Yes Or No Question Response received from backend */
 export type YesNoResponseIn = {
@@ -77,4 +85,9 @@ export type YesNoResponseIn = {
 };
 
 /** Yes Or No Question Response sent to backend */
-export type YesNoResponseOut = { question_id: string; participant_id: string; value: boolean };
+export type YesNoResponseOut = {
+    type: 'yes_no';
+    question_id: string;
+    participant_id: string;
+    value: boolean;
+};

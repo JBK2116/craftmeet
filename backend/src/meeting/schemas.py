@@ -4,7 +4,7 @@ This file contains the meeting related schemas exchanged between the frontend an
 
 import datetime
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
@@ -243,6 +243,7 @@ class YesNoQuestionIn(BaseModel):
 class YesNoResponseIn(BaseModel):
     """Model representing a yes no response sent by the frontend"""
 
+    type: Literal[QuestionType.YES_NO] = QuestionType.YES_NO
     question_id: uuid.UUID
     participant_id: uuid.UUID
     value: bool
@@ -258,6 +259,7 @@ class RatingScaleQuestionIn(BaseModel):
 class RatingScaleResponseIn(BaseModel):
     """Model representing a rating scale response sent by the frontend"""
 
+    type: Literal[QuestionType.RATING_SCALE] = QuestionType.RATING_SCALE
     question_id: uuid.UUID
     participant_id: uuid.UUID
     value: int = Field(ge=MIN_RATING_SCALE_VALUE, le=MAX_RATING_SCALE_VALUE)
@@ -275,6 +277,7 @@ class RankedVotingQuestionIn(BaseModel):
 class RankedVotingResponseIn(BaseModel):
     """Model representing a ranked voting response sent by the frontend"""
 
+    type: Literal[QuestionType.RANKED_VOTING] = QuestionType.RANKED_VOTING
     question_id: uuid.UUID
     participant_id: uuid.UUID
     rank_1: int = Field(ge=1, le=4)
@@ -294,6 +297,7 @@ class LongAnswerQuestionIn(BaseModel):
 class LongAnswerResponseIn(BaseModel):
     """Model representing a long answer response sent by the frontend"""
 
+    type: Literal[QuestionType.LONG_ANSWER] = QuestionType.LONG_ANSWER
     question_id: uuid.UUID
     participant_id: uuid.UUID
     content: str = Field(min_length=1, max_length=MAX_LONG_ANSWER_LENGTH)
@@ -316,21 +320,20 @@ class MultipleChoiceQuestionIn(BaseModel):
 class MultipleChoiceResponseIn(BaseModel):
     """Model representing a multiple choice response sent by the frontend"""
 
+    type: Literal[QuestionType.MULTIPLE_CHOICE] = QuestionType.MULTIPLE_CHOICE
     question_id: uuid.UUID
     participant_id: uuid.UUID
     selected_options: list[int]
 
 
-class ResponseIn(BaseModel):
-    """Model representing a response sent by the frontend"""
-
-    response: (
-        MultipleChoiceResponseIn
-        | LongAnswerResponseIn
-        | RankedVotingResponseIn
-        | RankedVotingResponseIn
-        | YesNoResponseIn
-    )
+ResponseIn = Annotated[
+    MultipleChoiceResponseIn
+    | LongAnswerResponseIn
+    | RankedVotingResponseIn
+    | RatingScaleResponseIn
+    | YesNoResponseIn,
+    Field(discriminator="type"),
+]
 
 
 class QuestionIn(BaseModel):
