@@ -164,6 +164,42 @@ def build_question_out(question: Question, sub_question: SubQuestion) -> Questio
     )
 
 
+async def _update_sub_question(q_db: Question, sub_q: SubQuestionIn) -> SubQuestion:
+    match q_db.type.value:
+        case QuestionType.MULTIPLE_CHOICE.value:
+            assert q_db.multiple_choice is not None  # noqa: S101
+            assert isinstance(sub_q, MultipleChoiceQuestionIn)  # noqa: S101
+            q_db.multiple_choice.option_1 = sub_q.option_1
+            q_db.multiple_choice.option_2 = sub_q.option_2
+            q_db.multiple_choice.option_3 = sub_q.option_3
+            q_db.multiple_choice.option_4 = sub_q.option_4
+            q_db.multiple_choice.allow_multiple = sub_q.allow_multiple
+            return q_db.multiple_choice
+        case QuestionType.LONG_ANSWER.value:
+            assert q_db.long_answer is not None  # noqa: S101
+            assert isinstance(sub_q, LongAnswerQuestionIn)  # noqa: S101
+            q_db.long_answer.max_length = sub_q.max_length
+            return q_db.long_answer
+        case QuestionType.RANKED_VOTING.value:
+            assert q_db.ranked_voting is not None  # noqa: S101
+            assert isinstance(sub_q, RankedVotingQuestionIn)  # noqa: S101
+            q_db.ranked_voting.item_1 = sub_q.item_1
+            q_db.ranked_voting.item_2 = sub_q.item_2
+            q_db.ranked_voting.item_3 = sub_q.item_3
+            q_db.ranked_voting.item_4 = sub_q.item_4
+            return q_db.ranked_voting
+        case QuestionType.RATING_SCALE.value:
+            assert q_db.rating_scale is not None  # noqa: S101
+            assert isinstance(sub_q, RatingScaleQuestionIn)  # noqa: S101
+            q_db.rating_scale.min = sub_q.min
+            q_db.rating_scale.max = sub_q.max
+            return q_db.rating_scale
+        case QuestionType.YES_NO.value:
+            assert q_db.yes_no is not None  # noqa: S101
+            assert isinstance(sub_q, YesNoQuestionIn)  # noqa: S101
+            return q_db.yes_no
+
+
 def generate_meeting_model(u_id: uuid.UUID, meeting: MeetingIn) -> Meeting:
     """Create a Meeting instance from a user and payload.
 
@@ -284,40 +320,17 @@ def generate_sub_question(
             return YesNoQuestion(question_id=question_id)
 
 
-async def _update_sub_question(q_db: Question, sub_q: SubQuestionIn) -> SubQuestion:
-    match q_db.type.value:
-        case QuestionType.MULTIPLE_CHOICE.value:
-            assert q_db.multiple_choice is not None  # noqa: S101
-            assert isinstance(sub_q, MultipleChoiceQuestionIn)  # noqa: S101
-            q_db.multiple_choice.option_1 = sub_q.option_1
-            q_db.multiple_choice.option_2 = sub_q.option_2
-            q_db.multiple_choice.option_3 = sub_q.option_3
-            q_db.multiple_choice.option_4 = sub_q.option_4
-            q_db.multiple_choice.allow_multiple = sub_q.allow_multiple
-            return q_db.multiple_choice
-        case QuestionType.LONG_ANSWER.value:
-            assert q_db.long_answer is not None  # noqa: S101
-            assert isinstance(sub_q, LongAnswerQuestionIn)  # noqa: S101
-            q_db.long_answer.max_length = sub_q.max_length
-            return q_db.long_answer
-        case QuestionType.RANKED_VOTING.value:
-            assert q_db.ranked_voting is not None  # noqa: S101
-            assert isinstance(sub_q, RankedVotingQuestionIn)  # noqa: S101
-            q_db.ranked_voting.item_1 = sub_q.item_1
-            q_db.ranked_voting.item_2 = sub_q.item_2
-            q_db.ranked_voting.item_3 = sub_q.item_3
-            q_db.ranked_voting.item_4 = sub_q.item_4
-            return q_db.ranked_voting
-        case QuestionType.RATING_SCALE.value:
-            assert q_db.rating_scale is not None  # noqa: S101
-            assert isinstance(sub_q, RatingScaleQuestionIn)  # noqa: S101
-            q_db.rating_scale.min = sub_q.min
-            q_db.rating_scale.max = sub_q.max
-            return q_db.rating_scale
-        case QuestionType.YES_NO.value:
-            assert q_db.yes_no is not None  # noqa: S101
-            assert isinstance(sub_q, YesNoQuestionIn)  # noqa: S101
-            return q_db.yes_no
+def generate_participants_meeting_access_token_key(m_id: str) -> str:
+    """
+    Generate a key string to identify a participant's access token for a specific meeting.
+
+    Args:
+        m_id (str): The meeting's unique identifier.
+
+    Returns:
+        str: A formatted key string prefixed with "participants_meeting_access_token_".
+    """
+    return f"participants_meeting_access_token_{m_id}"
 
 
 def _generate_room_code() -> str:

@@ -1,17 +1,12 @@
 """
 This file contains the meeting related schemas exchanged between the frontend and backend.
-
-Including:
-    - Responses
-    - Questions
-    - Meetings
-
 """
 
 import datetime
 import uuid
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
 from src.constants import (
     MAX_DESCRIPTION_LENGTH,
@@ -23,9 +18,30 @@ from src.constants import (
     MAX_QUESTION_CAP,
     MAX_RATING_SCALE_VALUE,
     MAX_TITLE_LENGTH,
+    MAX_USERNAME_LENGTH,
+    MEETING_CODE_LENGTH,
     MIN_RATING_SCALE_VALUE,
+    MIN_USERNAME_LENGTH,
 )
 from src.types import MeetingStatus, QuestionStatus, QuestionType
+
+
+def validate_username(value: str) -> str:
+    if len(value) < MIN_USERNAME_LENGTH:
+        raise ValueError(
+            f"Username must be at least {MIN_USERNAME_LENGTH} characters long"
+        )
+    if len(value) > MAX_USERNAME_LENGTH:
+        raise ValueError(f"Username must not exceed {MAX_USERNAME_LENGTH} characters")
+    return value
+
+
+class JoinMeetingPayload(BaseModel):
+    """Model representing a join meeting request payload"""
+
+    username: Annotated[str, AfterValidator(validate_username)]
+    code: str = Field(min_length=MEETING_CODE_LENGTH, max_length=MEETING_CODE_LENGTH)
+
 
 # DATA TO FRONTEND
 # Includes

@@ -7,15 +7,21 @@ including meeting creation, initialization and live logic.
 import logging
 import uuid
 
-from fastapi import Request
+from fastapi import Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.exceptions import InvalidTokenError
-from src.meeting.exceptions import MeetingNotFoundError
+from src.auth.token import (
+    decode_participants_meeting_access_token,
+    generate_participants_meeting_access_token,
+)
+from src.config import get_settings
+from src.meeting.exceptions import MeetingNotFoundError, MeetingNotLiveError
 from src.meeting.repository import (
     delete_meeting,
     delete_meetings,
     get_meeting,
+    get_meeting_lazy,
     get_meetings,
     insert_meeting,
     insert_question,
@@ -23,6 +29,7 @@ from src.meeting.repository import (
     insert_sub_question,
 )
 from src.meeting.schemas import (
+    JoinMeetingPayload,
     MeetingIn,
     MeetingOut,
     MeetingUpdate,
@@ -35,6 +42,7 @@ from src.meeting.utils import (
     build_meeting_out,
     build_question_out,
     generate_meeting_model,
+    generate_participants_meeting_access_token_key,
     generate_question_model,
     generate_stat_model,
     generate_sub_question,
@@ -42,8 +50,86 @@ from src.meeting.utils import (
 from src.models import (
     User,
 )
+from src.types import MeetingStatus
 
 logger = logging.getLogger(__name__)
+
+settings = get_settings()
+
+
+async def handle_join_meeting(
+    db: AsyncSession, request: Request, response: Response, payload: JoinMeetingPayload
+) -> None:
+    """Handle a participant joining a meeting.
+
+    Args:
+        db: Database session for async queries.
+        request: The incoming HTTP request object.
+        response: The outgoing HTTP response object.
+        payload: The validated join meeting payload containing the meeting code.
+
+    Raises:
+        MeetingNotFoundError: If the meeting with the given code does not exist.
+        MeetingNotLiveError: If the meeting is not currently live.
+
+    Returns:
+        None. The function sets a cookie on the response for participant access.
+    """
+    meeting = await get_meeting_lazy(db=db, code=payload.code)
+    if meeting is None:
+        raise MeetingNotFoundError
+    if meeting.status != MeetingStatus.LIVE:
+        raise MeetingNotLiveError
+    key = generate_participants_meeting_access_token_key(m_id=str(meeting.id))
+    existing = request.cookies.get(key, None)
+    p_id: uuid.UUID | None = None
+    if existing:
+        # try to reuse the existing participant id for that meeting
+        try:
+            claims = decode_participants_meeting_access_token(token=existing)
+            p_id = uuid.UUID(claims["participant_id"])
+        except InvalidTokenError:
+            pass  # token is invalid/corrupted, fall through to new id
+    token = generate_participants_meeting_access_token(
+        duration=meeting.duration, m_id=meeting.id, p_id=p_id
+    )
+    # set the jwt for the new participant
+    response.set_cookie(
+        key=key,
+        value=token,
+        httponly=True,
+        secure=False if settings.IS_DEV else True,
+        samesite="strict",
+        max_age=meeting.duration,
+        path="/api/v1/meetings",
+    )
+    return
+
+
+async def handle_leave_meeting(response: Response, m_id: uuid.UUID) -> None:
+    """Clear a participant's meeting access cookie.
+
+    Sets the participant cookie with max_age=0 to expire it immediately,
+    effectively logging the participant out of the meeting.
+
+    Args:
+        response: The outgoing HTTP response object.
+        m_id: The UUID of the meeting to leave.
+
+    Returns:
+        None.
+    """
+    key = generate_participants_meeting_access_token_key(m_id=str(m_id))
+    response.set_cookie(
+        key=key,
+        value="",
+        httponly=True,
+        secure=False if settings.IS_DEV else True,
+        samesite="strict",
+        max_age=0,
+        path="/api/v1/meetings",
+    )
+    return
 
 
 async def handle_create_meeting(

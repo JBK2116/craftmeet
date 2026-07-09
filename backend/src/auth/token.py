@@ -287,3 +287,75 @@ def decode_refresh_token(token: str, return_anyway: bool = False) -> dict[str, A
         raise InvalidTokenError from e
     except Exception as e:
         raise InvalidTokenError from e
+
+
+def generate_participants_meeting_access_token(
+    duration: int, m_id: uuid.UUID, p_id: uuid.UUID | None = None
+) -> str:
+    """
+    Generate a JWT access token for a meeting participant.
+
+    The token encodes the meeting and participant IDs, issues and expiry times,
+    token type, issuer, and a unique JWT ID. The token is signed with the
+    application's secret key using the configured JWT algorithm.
+
+    Args:
+        duration: Token lifetime in seconds.
+        m_id: UUID of the meeting the participant will join.
+        p_id: Optional existing UUID of the participant. If not provided, a new UUID is generated.
+
+    Returns:
+        A signed JWT string ready to be used as an access token.
+    """
+    now = datetime.datetime.now(tz=datetime.UTC)
+    expire = now + datetime.timedelta(seconds=duration)
+    if p_id:
+        u_id = p_id
+    else:
+        u_id = uuid.uuid4()
+    payload = {
+        "meeting_id": str(m_id),
+        "participant_id": str(u_id),
+        "exp": expire,
+        "iat": now,
+        "type": "access",
+        "iss": settings.DOMAIN,
+        "jti": u_id,
+    }
+    token_hash = jwt.encode(
+        payload=payload, key=settings.JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
+    )
+    return token_hash
+
+
+def decode_participants_meeting_access_token(token: str) -> dict[str, Any]:
+    """Decode and validate a participants access token.
+
+    This function decodes a JWT access token for a meeting participant,
+    verifies its signature using the configured secret key, and checks
+    that the token type is "access". It also validates that the meeting_id
+    and participant_id are valid UUIDs.
+
+    Args:
+        token: The JWT access token string to decode.
+
+    Returns:
+        A dictionary containing the token claims.
+
+    Raises:
+        InvalidTokenError: If the token is invalid, expired, not an access
+            token, or contains invalid UUIDs.
+    """
+    try:
+        claims = jwt.decode(
+            jwt=token, key=settings.JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM]
+        )
+        if claims["type"] != "access":
+            raise InvalidTokenError
+        _ = uuid.UUID(claims["meeting_id"])
+        _ = uuid.UUID(claims["participant_id"])
+        return claims
+    except jwt.PyJWTError as e:
+        raise InvalidTokenError from e
+    except Exception as e:
+        raise InvalidTokenError from e

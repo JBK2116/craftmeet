@@ -243,6 +243,54 @@ async def get_meeting(db: AsyncSession, m_id: uuid.UUID) -> Meeting | None:
         raise DatabaseError("database error occurred") from e
 
 
+async def get_meeting_lazy(
+    db: AsyncSession, m_id: uuid.UUID | None = None, code: str | None = None
+) -> Meeting | None:
+    """
+    Retrieve a single meeting lazily by either its id or its room code.
+
+    Args:
+        db: The asynchronous SQLAlchemy session.
+        m_id: The UUID of the meeting to fetch.
+        code: The unique room code of the meeting.
+
+    Returns:
+        The Meeting instance if found, otherwise None.
+
+    Raises:
+        DatabaseError: If a database error occurs during the query.
+    """
+    try:
+        if m_id:
+            stmt = select(Meeting).where(Meeting.id == m_id)
+            logger.info("fetching meeting by id", extra={"meeting_id": str(m_id)})
+        elif code:
+            stmt = select(Meeting).where(Meeting.room_code == code)
+            logger.info("fetching meeting by code", extra={"room_code": code})
+        else:
+            logger.warning(
+                "no select argument provided to get_meeting_lazy",
+                extra={"m_id": m_id, "code": code},
+            )
+            return
+        result = await db.execute(stmt)
+        meeting = result.scalar_one_or_none()
+        if meeting is not None:
+            logger.info("meeting found", extra={"meeting_id": str(meeting.id)})
+        else:
+            logger.info(
+                "meeting not found",
+                extra={"m_id": str(m_id) if m_id else None, "code": code},
+            )
+        return meeting
+    except SQLAlchemyError as e:
+        logger.exception(
+            "database error while fetching meeting",
+            extra={"m_id": str(m_id) if m_id else None, "code": code},
+        )
+        raise DatabaseError("database error occurred") from e
+
+
 async def get_meeting_duration(db: AsyncSession, m_id: uuid.UUID) -> int:
     """
     Retrieve the duration of a meeting by its unique identifier.
