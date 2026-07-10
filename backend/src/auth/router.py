@@ -37,7 +37,7 @@ from src.auth.service import (
 from src.config import get_settings
 from src.exceptions import DatabaseError
 from src.middleware.jwt import get_current_user
-from src.types import DB, Access_Token, ErrorTypes, Refresh_Token
+from src.types import DB, ACCESS_TOKEN, ErrorTypes, REFRESH_TOKEN
 
 settings = get_settings()
 
@@ -164,7 +164,7 @@ async def login(db: DB, response: Response, payload: LoginRequest):
 
 
 @auth_router.post("/logout", status_code=status.HTTP_200_OK)
-async def logout(db: DB, response: Response, refresh_token: Refresh_Token):
+async def logout(db: DB, response: Response, refresh_token: REFRESH_TOKEN):
     logger.debug(
         "received logout refresh token", extra={"refresh_token": refresh_token}
     )
@@ -235,7 +235,7 @@ async def reset_password(db: DB, payload: ResetPasswordRequest):
 
 
 @auth_router.get("/me", status_code=status.HTTP_200_OK, response_model=UserOut)
-async def me(db: DB, access_token: Access_Token = None):
+async def me(db: DB, access_token: ACCESS_TOKEN = None):
     logger.debug("Received access token", extra={"token": access_token})
     if access_token is None:
         return Response(status_code=status.HTTP_401_UNAUTHORIZED)
@@ -264,7 +264,7 @@ async def update_me(db: DB, request: Request, payload: MeRequest):
 
 
 @auth_router.post("/refresh", status_code=status.HTTP_200_OK)
-async def refresh(db: DB, response: Response, refresh_token: Refresh_Token = None):
+async def refresh(db: DB, response: Response, refresh_token: REFRESH_TOKEN = None):
     logger.debug("Received refresh token", extra={"token": refresh_token})
     if refresh_token is None:
         return Response(status_code=status.HTTP_401_UNAUTHORIZED)
