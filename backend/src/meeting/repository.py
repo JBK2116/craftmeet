@@ -315,6 +315,36 @@ async def get_meeting_duration(db: AsyncSession, m_id: uuid.UUID) -> int:
         raise DatabaseError("database error occurred") from e
 
 
+async def get_meeting_participant_cap(db: AsyncSession, m_id: uuid.UUID) -> int | None:
+    """
+    Retrieve the participant cap for a given meeting.
+
+    Args:
+        db: The async database session.
+        m_id: The UUID of the meeting.
+
+    Returns:
+        The participant cap as an integer, or None if not found.
+
+    Raises:
+        DatabaseError: If a database error occurs.
+    """
+    try:
+        logger.debug(f"fetching participant cap for meeting_id: {m_id}")
+        stmt = select(Meeting.participant_cap).where(Meeting.id == m_id)
+        result = await db.execute(stmt)
+        participant_cap = result.scalar_one_or_none()
+        logger.info(
+            f"retrieved participant cap: {participant_cap} for meeting_id: {m_id}"
+        )
+        return participant_cap
+    except SQLAlchemyError as e:
+        logger.error(
+            f"database error while fetching participant cap for meeting_id: {m_id}: {e}"
+        )
+        raise DatabaseError("database error occurred") from e
+
+
 async def delete_meeting(db: AsyncSession, m_id: uuid.UUID, u_id: uuid.UUID) -> bool:
     """Delete a meeting by its ID, scoped to the owning user.
 
