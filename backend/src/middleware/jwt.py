@@ -11,11 +11,9 @@ Usage:
 
 import logging
 import uuid
-from typing import Annotated
 
 import jwt
 from fastapi import (
-    Depends,
     HTTPException,
     Path,
     Request,
@@ -29,15 +27,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.exceptions import InvalidTokenError as AuthInvalidTokenError
 from src.auth.repository import get_user
 from src.auth.token import decode_access_token, decode_participants_meeting_access_token
-from src.database import AsyncSessionLocal, get_db
+from src.database import AsyncSessionLocal
 from src.exceptions import DatabaseError
 from src.models import Meeting, User
-from src.types import MeetingStatus
+from src.types import DB, MeetingStatus
 from src.utils import generate_participants_meeting_access_token_key
 
 logger = logging.getLogger(__name__)
-
-DB = Annotated[AsyncSession, Depends(get_db)]
 
 
 async def get_current_user(request: Request, db: DB) -> None:
@@ -61,17 +57,24 @@ async def get_current_user(request: Request, db: DB) -> None:
     """
     token = request.cookies.get("access_token")
     if token is None:
+        logger.warning("access token missing from cookies")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="access token missing"
         )
     try:
         user = await _decode_access_token(token=token, db=db)
         if user is None:
+            logger.warning("invalid access token", extra={"token_present": True})
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid access token"
             )
         request.state.user = user
+        logger.debug(
+            "user authenticated via jwt",
+            extra={"user_id": str(user.id), "email": user.email},
+        )
     except DatabaseError as e:
+        logger.exception("database error during jwt authentication")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="database error occurred",
@@ -101,6 +104,7 @@ async def get_current_user_websocket(websocket: WebSocket) -> None:
     """
     token = websocket.cookies.get("access_token", None)
     if token is None:
+        logger.warning("access token missing from websocket cookies")
         raise WebSocketException(
             code=status.WS_1008_POLICY_VIOLATION, reason="access token missing"
         )
@@ -108,11 +112,20 @@ async def get_current_user_websocket(websocket: WebSocket) -> None:
         async with AsyncSessionLocal() as session:
             user = await _decode_access_token(token=token, db=session)
             if not user:
+                logger.warning(
+                    "invalid access token on websocket",
+                    extra={"token_present": True},
+                )
                 raise WebSocketException(
                     code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
                 )
             websocket.state.user = user
+            logger.debug(
+                "websocket user authenticated via jwt",
+                extra={"user_id": str(user.id), "email": user.email},
+            )
     except DatabaseError as e:
+        logger.exception("database error during websocket jwt authentication")
         raise WebSocketException(
             code=status.WS_1013_TRY_AGAIN_LATER, reason="database error occurred"
         ) from e
@@ -141,6 +154,10 @@ async def get_current_participant_id_websocket(
     key = generate_participants_meeting_access_token_key(m_id=str(meeting_id))
     token = websocket.cookies.get(key, None)
     if token is None:
+        logger.warning(
+            "participant access token missing from websocket cookies",
+            extra={"meeting_id": str(meeting_id)},
+        )
         raise WebSocketException(
             code=status.WS_1008_POLICY_VIOLATION, reason="access token missing"
         )
@@ -155,20 +172,46 @@ async def get_current_participant_id_websocket(
             result = await session.execute(stmt)
             db_id = result.scalar_one_or_none()
         if db_id is None:
+            logger.warning(
+                "invalid participant access token: meeting not live or not found",
+                extra={"meeting_id": str(m_id)},
+            )
             raise WebSocketException(
                 code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
             )
         if m_id != meeting_id:
+            logger.warning(
+                "participant access token meeting_id mismatch",
+                extra={
+                    "token_meeting_id": str(m_id),
+                    "path_meeting_id": str(meeting_id),
+                },
+            )
             raise WebSocketException(
                 code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
             )
         websocket.state.participant_id = p_id
         websocket.state.meeting_id = m_id
+        logger.debug(
+            "websocket participant authenticated",
+            extra={
+                "meeting_id": str(m_id),
+                "participant_id": str(p_id),
+            },
+        )
     except AuthInvalidTokenError as e:
+        logger.warning(
+            "failed to decode participant access token",
+            extra={"meeting_id": str(meeting_id)},
+        )
         raise WebSocketException(
             code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
         ) from e
     except KeyError as e:
+        logger.warning(
+            "participant access token missing required claim",
+            extra={"meeting_id": str(meeting_id), "missing_key": str(e)},
+        )
         raise WebSocketException(
             code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
         ) from e
@@ -197,6 +240,12 @@ async def _decode_access_token(token: str, db: AsyncSession) -> User | None:
         claims = decode_access_token(token=token)
         user_id = uuid.UUID(hex=claims["user_id"])
         user = await get_user(db=db, u_id=user_id)
+        if user is None:
+            logger.warning(
+                "decoded access token but user not found",
+                extra={"user_id": str(user_id)},
+            )
         return user
     except (AuthInvalidTokenError, jwt.InvalidTokenError, ValueError):
+        logger.debug("access token decode failed or invalid")
         return None
