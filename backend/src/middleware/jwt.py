@@ -9,6 +9,7 @@ Usage:
     router = APIRouter(dependencies=[Depends(get_current_user)])
 """
 
+import logging
 import uuid
 from typing import Annotated
 
@@ -16,19 +17,25 @@ import jwt
 from fastapi import (
     Depends,
     HTTPException,
+    Path,
     Request,
     WebSocket,
     WebSocketException,
     status,
 )
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.exceptions import InvalidTokenError as AuthInvalidTokenError
 from src.auth.repository import get_user
-from src.auth.token import decode_access_token
+from src.auth.token import decode_access_token, decode_participants_meeting_access_token
 from src.database import AsyncSessionLocal, get_db
 from src.exceptions import DatabaseError
-from src.models import User
+from src.models import Meeting, User
+from src.types import MeetingStatus
+from src.utils import generate_participants_meeting_access_token_key
+
+logger = logging.getLogger(__name__)
 
 DB = Annotated[AsyncSession, Depends(get_db)]
 
@@ -108,6 +115,62 @@ async def get_current_user_websocket(websocket: WebSocket) -> None:
     except DatabaseError as e:
         raise WebSocketException(
             code=status.WS_1013_TRY_AGAIN_LATER, reason="database error occurred"
+        ) from e
+
+
+async def get_current_participant_id_websocket(
+    websocket: WebSocket, meeting_id: uuid.UUID = Path()
+) -> None:
+    """
+    Authenticate a WebSocket connection by retrieving and validating
+    the participant access token from cookies.
+
+    This dependency extracts the meeting-specific access token from the
+    WebSocket's cookies, decodes it, and sets the authenticated
+    participant ID on the websocket state alongside the meeting ID.
+
+    Args:
+        websocket: The active WebSocket connection.
+        meeting_id: The unique identifier of the meeting, extracted
+            from the path.
+
+    Raises:
+        WebSocketException: If the access token is missing or invalid
+            (HTTP status 1008).
+    """
+    key = generate_participants_meeting_access_token_key(m_id=str(meeting_id))
+    token = websocket.cookies.get(key, None)
+    if token is None:
+        raise WebSocketException(
+            code=status.WS_1008_POLICY_VIOLATION, reason="access token missing"
+        )
+    try:
+        claims = decode_participants_meeting_access_token(token=token)
+        p_id = uuid.UUID(claims["participant_id"])
+        m_id = uuid.UUID(claims["meeting_id"])
+        stmt = select(Meeting.id).where(
+            Meeting.id == m_id, Meeting.status == MeetingStatus.LIVE
+        )
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(stmt)
+            db_id = result.scalar_one_or_none()
+        if db_id is None:
+            raise WebSocketException(
+                code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
+            )
+        if m_id != meeting_id:
+            raise WebSocketException(
+                code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
+            )
+        websocket.state.participant_id = p_id
+        websocket.state.meeting_id = m_id
+    except AuthInvalidTokenError as e:
+        raise WebSocketException(
+            code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
+        ) from e
+    except KeyError as e:
+        raise WebSocketException(
+            code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
         ) from e
 
 

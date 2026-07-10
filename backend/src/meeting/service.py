@@ -42,7 +42,6 @@ from src.meeting.utils import (
     build_meeting_out,
     build_question_out,
     generate_meeting_model,
-    generate_participants_meeting_access_token_key,
     generate_question_model,
     generate_stat_model,
     generate_sub_question,
@@ -51,6 +50,7 @@ from src.models import (
     User,
 )
 from src.types import MeetingStatus
+from src.utils import generate_participants_meeting_access_token_key
 
 logger = logging.getLogger(__name__)
 

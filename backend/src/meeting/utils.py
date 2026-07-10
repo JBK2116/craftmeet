@@ -320,19 +320,6 @@ def generate_sub_question(
             return YesNoQuestion(question_id=question_id)
 
 
-def generate_participants_meeting_access_token_key(m_id: str) -> str:
-    """
-    Generate a key string to identify a participant's access token for a specific meeting.
-
-    Args:
-        m_id (str): The meeting's unique identifier.
-
-    Returns:
-        str: A formatted key string prefixed with "participants_meeting_access_token_".
-    """
-    return f"participants_meeting_access_token_{m_id}"
-
-
 def _generate_room_code() -> str:
     """Generate a numeric random room code of specified length."""
     return "".join(secrets.choice(string.digits) for _ in range(MEETING_CODE_LENGTH))
