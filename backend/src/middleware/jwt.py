@@ -131,7 +131,7 @@ async def get_current_user_websocket(websocket: WebSocket) -> None:
         ) from e
 
 
-async def get_current_participant_id_websocket(
+async def get_current_participant_websocket(
     websocket: WebSocket, meeting_id: uuid.UUID = Path()
 ) -> None:
     """
