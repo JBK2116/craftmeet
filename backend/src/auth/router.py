@@ -1,10 +1,8 @@
 import logging
-from typing import Annotated
 
 from authlib.integrations.starlette_client import OAuth
-from fastapi import APIRouter, Cookie, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.responses import JSONResponse, RedirectResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.exceptions import (
     EmailDeliveryError,
@@ -37,10 +35,9 @@ from src.auth.service import (
     handle_verify_email,
 )
 from src.config import get_settings
-from src.database import get_db
 from src.exceptions import DatabaseError
 from src.middleware.jwt import get_current_user
-from src.types import ErrorTypes
+from src.types import DB, Access_Token, ErrorTypes, Refresh_Token
 
 settings = get_settings()
 
@@ -56,9 +53,6 @@ oauth.register(
 )
 
 # Annotated values for reusability
-DB = Annotated[AsyncSession, Depends(get_db)]
-Access_Token = Annotated[str | None, Cookie()]
-Refresh_Token = Annotated[str | None, Cookie()]
 
 auth_router = APIRouter(
     prefix="/auth",

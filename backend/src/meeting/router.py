@@ -1,14 +1,10 @@
 import logging
-import uuid
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.exceptions import InvalidTokenError
-from src.database import get_db
 from src.exceptions import DatabaseError
 from src.meeting.exceptions import MeetingNotFoundError, MeetingNotLiveError
 from src.meeting.schemas import JoinMeetingPayload, MeetingIn, MeetingOut, MeetingUpdate
@@ -23,7 +19,7 @@ from src.meeting.service import (
     handle_update_meeting,
 )
 from src.middleware.jwt import get_current_user
-from src.types import ErrorTypes
+from src.types import DB, LIMIT, MEETING_ID, OFFSET, ErrorTypes
 
 meeting_router = APIRouter(
     prefix="/meetings",
@@ -42,12 +38,6 @@ meeting_public_router = APIRouter(
 )
 
 logger = logging.getLogger(__name__)
-
-DB = Annotated[AsyncSession, Depends(get_db)]
-LIMIT = Annotated[int, Query(ge=1, le=100)]
-OFFSET = Annotated[int, Query(ge=0, le=1000)]
-MEETING_ID = Annotated[uuid.UUID, Path(title="The id of the meeting to fetch")]
-# arbitrary value to prevent client side mismanagement, will be updated as the app scales
 
 
 @meeting_public_router.post("/join", status_code=status.HTTP_200_OK)

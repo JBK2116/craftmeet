@@ -3,7 +3,21 @@
 Defines the custom types used throughout the application
 """
 
+import uuid
 from enum import Enum, StrEnum
+from typing import Annotated
+
+from fastapi import Cookie, Depends, Path, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.database import get_db
+
+MEETING_ID = Annotated[uuid.UUID, Path()]
+DB = Annotated[AsyncSession, Depends(get_db)]
+LIMIT = Annotated[int, Query(ge=1, le=100)]
+OFFSET = Annotated[int, Query(ge=0, le=1000)]
+ACCESS_TOKEN = Annotated[str | None, Cookie()]
+REFRESH_TOKEN = Annotated[str | None, Cookie()]
 
 
 class ErrorTypes(Enum):
