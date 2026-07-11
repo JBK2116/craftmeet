@@ -13,6 +13,7 @@ from src.auth.router import (  # noqa: F401 - ensures oauth is registered at app
 )
 from src.cache import close_redis, setup_redis
 from src.config import get_settings
+from src.live.router import websocket_router
 from src.logging_config import get_logger, setup_logging
 from src.meeting.router import meeting_public_router, meeting_router
 from src.middleware.request_logging import RequestLoggingMiddleware
@@ -90,5 +91,6 @@ async def validation_exception_handler(_: Request, exc: RequestValidationError):
 
 # initialise sub routers
 app.include_router(auth_router)
+app.include_router(websocket_router)
 app.include_router(meeting_router)
 app.include_router(meeting_public_router)

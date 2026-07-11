@@ -1,0 +1,84 @@
+import datetime
+import uuid
+
+from src.auth.repository import update_user
+from src.constants import MAX_PARTICIPANT_CAP
+from src.database import AsyncSessionLocal
+from src.meeting.repository import (
+    get_meeting_duration,
+    get_meeting_participant_cap,
+    update_meeting,
+)
+from src.meeting.schemas import QuestionOut, ResponseIn
+from src.types import MeetingStatus
+
+
+class LiveService:
+    def __init__(self, host_id: uuid.UUID, meeting_id: uuid.UUID):
+        self.host_id = host_id  # The unique identifier for the host of the meeting
+        self.meeting_id = meeting_id  # The unique identifier for the meeting
+        self.current_question: QuestionOut | None = (
+            None  # The current question being asked, or None if no question
+        )
+        self.responses: dict[
+            uuid.UUID, list[ResponseIn]
+        ] = {}  # A dictionary mapping participant UUIDs to their list of responses
+
+    async def start_meeting(self):
+        """Start a meeting"""
+        now = datetime.datetime.now(tz=datetime.UTC)
+        async with AsyncSessionLocal() as db:
+            await db.begin()
+            started_at = now
+            live_meeting = True
+            status = MeetingStatus.LIVE
+            await update_meeting(
+                db=db, m_id=self.meeting_id, started_at=started_at, status=status
+            )
+            await update_user(db=db, u_id=self.host_id, live_meeting=live_meeting)
+            await db.commit()
+        return
+
+    async def end_stale_meeting(self):
+        """End a meeting that was terminated automatically due to host inactivity"""
+        async with AsyncSessionLocal() as db:
+            await db.begin()
+            started_at = None
+            live_meeting = False
+            status = MeetingStatus.DRAFT
+            await update_meeting(
+                db=db, m_id=self.meeting_id, started_at=started_at, status=status
+            )
+            await update_user(db=db, u_id=self.host_id, live_meeting=live_meeting)
+            await db.commit()
+
+    def add_response(self, response: ResponseIn) -> None:
+        """
+        Add a new response to the current questions response array
+        """
+        if self.current_question is None:
+            return
+        if response.type != self.current_question.type:
+            return
+        self.responses.setdefault(response.question_id, []).append(response)
+
+    def get_current_responses(self) -> list[ResponseIn]:
+        """returns the responses received for the current question"""
+        if self.current_question is None:
+            return []
+        return self.responses.get(self.current_question.id, [])
+
+    async def get_meeting_duration(self) -> int:
+        """Get the meeting duration from the db"""
+        async with AsyncSessionLocal() as db:
+            duration = await get_meeting_duration(db=db, m_id=self.meeting_id)
+            return duration
+
+    async def get_meeting_participant_cap(self) -> int:
+        """Get the meeting participant cap from the db and set it as an attribute"""
+        async with AsyncSessionLocal() as db:
+            cap = await get_meeting_participant_cap(db=db, m_id=self.meeting_id)
+            if cap is None:
+                cap = MAX_PARTICIPANT_CAP
+            self.participant_cap = cap
+            return cap
