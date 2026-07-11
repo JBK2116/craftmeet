@@ -61,7 +61,12 @@ class LiveRoom:
             responses=self.service.get_current_responses(),
             participants=[p.participant for p in self.participants.values()],
         )
-        await self.host.send_json(data=data.model_dump(mode="json"))
+        await self.host.send_json(
+            data={
+                "type": OutboundMessageTypes.MEETING_STATE,
+                "payload": data.model_dump(mode="json"),
+            }
+        )
         await self._broadcast(
             task=_send_message, message={"type": OutboundMessageTypes.HOST_RECONNECTED}
         )
