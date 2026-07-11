@@ -1,4 +1,4 @@
-import type { QuestionIn, QuestionOut } from './question';
+import type { QuestionIn, QuestionOut, QuestionUpdate } from './question';
 
 /** Lifecycle state of a meeting. */
 export type MeetingStatus = 'live' | 'draft' | 'completed';
@@ -39,7 +39,7 @@ export type MeetingUpdate = {
     description: string | null;
     participant_cap: number;
     duration: number;
-    questions: QuestionOut[];
+    questions: QuestionUpdate[];
 };
 
 /** A single meeting session created by a host and sent to the backend */
@@ -62,7 +62,4 @@ export type Stat = {
     total_responses_received: number;
     average_response_rate: number;
     duration_seconds: number | null;
-    // Time
-    created_at: string;
-    updated_at: string;
 };

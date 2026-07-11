@@ -19,7 +19,7 @@ class CloseCode(Enum):
         "A host is already connected to the live meeting",
     )
     PARTICIPANT_RECONNECTED_ELSEWHERE = (
-        status.WS_1000_NORMAL_CLOSURE,
+        status.WS_1008_POLICY_VIOLATION,
         "A participant has reconnected to this meeting on a new websocket",
     )
     INVALID_TOKEN = (status.WS_1008_POLICY_VIOLATION, "invalid access token provided")
