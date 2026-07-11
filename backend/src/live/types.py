@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, StrEnum
 
 from fastapi import status
 
@@ -40,7 +40,7 @@ class InboundMessageTypes(Enum):
     PARTICIPANT_CONNECTED = "participant_connected"  # sent from participants
 
 
-class OutboundMessageTypes(Enum):
+class OutboundMessageTypes(StrEnum):
     """Enumeration of websocket messages sent from server side"""
 
     MEETING_STATE = "meeting_state"  # sent to host
@@ -55,11 +55,3 @@ class OutboundMessageTypes(Enum):
     PARTICIPANT_CONNECTED = "participant_connected"  # sent to host
     PARTICIPANT_DISCONNECTED = "participant_disconnected"  # sent to host
     PARTICIPANT_STATE = "participant_state"  # sent to participant
-
-    def __init__(self, type: str):
-        """Initialize the message type.
-
-        Args:
-            type: The string representation of the message type.
-        """
-        self.type = type
