@@ -1,4 +1,5 @@
 import datetime
+import logging
 import uuid
 
 from src.auth.repository import update_user
@@ -11,6 +12,8 @@ from src.meeting.repository import (
 )
 from src.meeting.schemas import QuestionOut, ResponseIn
 from src.types import MeetingStatus
+
+logger = logging.getLogger(__name__)
 
 
 class LiveService:
@@ -37,7 +40,30 @@ class LiveService:
             )
             await update_user(db=db, u_id=self.host_id, live_meeting=live_meeting)
             await db.commit()
+        logger.debug(
+            "meeting started in service layer",
+            extra={"meeting_id": str(self.meeting_id), "host_id": str(self.host_id)},
+        )
         return
+
+    async def end_meeting(self):
+        """End a meeting that was terminated manually"""
+        async with AsyncSessionLocal() as db:
+            await db.begin()
+            live_meeting = False
+            status = (
+                MeetingStatus.DRAFT
+            )  # TODO: change this to live once participant handling is implemented
+            await update_meeting(db=db, m_id=self.meeting_id, status=status)
+            await update_user(db=db, u_id=self.host_id, live_meeting=live_meeting)
+            await db.commit()
+        logger.debug(
+            "meeting ended in service layer",
+            extra={
+                "meeting_id": str(self.meeting_id),
+                "host_id": str(self.host_id),
+            },
+        )
 
     async def end_stale_meeting(self):
         """End a meeting that was terminated automatically due to host inactivity"""
@@ -51,6 +77,10 @@ class LiveService:
             )
             await update_user(db=db, u_id=self.host_id, live_meeting=live_meeting)
             await db.commit()
+        logger.debug(
+            "stale meeting ended in service layer",
+            extra={"meeting_id": str(self.meeting_id), "host_id": str(self.host_id)},
+        )
 
     def add_response(self, response: ResponseIn) -> None:
         """

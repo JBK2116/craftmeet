@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import uuid
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
@@ -20,6 +21,8 @@ from src.live.schemas import (
 from src.live.service import LiveService
 from src.live.types import CloseCode, OutboundMessageTypes
 from src.utils import set_timeout
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -49,6 +52,10 @@ class LiveRoom:
     async def reconnect_host(self, ws: WebSocket) -> None:
         """Reconnect the host to the current meeting"""
         self.host = ws
+        logger.debug(
+            "host reconnected to room",
+            extra={"room_id": str(self.room_id), "host": ws.state.user.email},
+        )
         data = MeetingStatePayload(
             question=self.service.current_question,
             responses=self.service.get_current_responses(),
@@ -61,6 +68,10 @@ class LiveRoom:
 
     async def host_disconnected(self):
         """Send the host disconnected signal to all connected participants"""
+        logger.debug(
+            "host disconnected from room",
+            extra={"room_id": str(self.room_id)},
+        )
         await self._broadcast(
             task=_send_message, message={"type": OutboundMessageTypes.HOST_DISCONNECTED}
         )
@@ -75,6 +86,13 @@ class LiveRoom:
         self.service.current_question = payload.question
         await self.service.start_meeting()
         await self.start_meeting_timer()
+        logger.debug(
+            "meeting started in room",
+            extra={
+                "room_id": str(self.room_id),
+                "question_id": str(payload.question.id),
+            },
+        )
         await self._broadcast(
             task=_send_message,
             message={
@@ -88,6 +106,13 @@ class LiveRoom:
         self.service.current_question = payload.question
         for p in self.participants.values():
             p.participant.has_answered = False
+        logger.debug(
+            "advanced to next question",
+            extra={
+                "room_id": str(self.room_id),
+                "question_id": str(payload.question.id),
+            },
+        )
         await self._broadcast(
             task=_send_message,
             message={
@@ -101,13 +126,21 @@ class LiveRoom:
         if self.meeting_timer is not None:
             self.meeting_timer.cancel()
         await self.service.end_stale_meeting()
+        logger.debug(
+            "stale meeting ended in room",
+            extra={"room_id": str(self.room_id)},
+        )
         await self._broadcast(task=_send_close)
 
     async def end_meeting(self) -> None:
         """End a meeting and close all connected participant websockets"""
         if self.meeting_timer is not None:
             self.meeting_timer.cancel()
-        # TODO: Call the service to handle the underlying logic
+        await self.service.end_meeting()
+        logger.debug(
+            "meeting ended in room",
+            extra={"room_id": str(self.room_id)},
+        )
         await self._broadcast(
             task=_send_message, message={"type": OutboundMessageTypes.MEETING_ENDED}
         )
@@ -122,6 +155,14 @@ class LiveRoom:
             existing.participant.username = payload.username
             existing.participant.connected = True
             existing.ws = ws
+            logger.debug(
+                "participant reconnected to room",
+                extra={
+                    "room_id": str(self.room_id),
+                    "participant_id": str(p_id),
+                    "username": payload.username,
+                },
+            )
             if old_ws and old_ws is not ws:
                 await old_ws.close(
                     code=CloseCode.PARTICIPANT_RECONNECTED_ELSEWHERE.code,
@@ -137,6 +178,14 @@ class LiveRoom:
             )
             self.participants[p_id] = ParticipantEntry(
                 participant=new_participant, ws=ws
+            )
+            logger.debug(
+                "participant connected to room",
+                extra={
+                    "room_id": str(self.room_id),
+                    "participant_id": str(p_id),
+                    "username": payload.username,
+                },
             )
         asyncio.create_task(
             ws.send_json(
@@ -178,6 +227,13 @@ class LiveRoom:
             return
         existing.participant.connected = False
         existing.ws = None
+        logger.debug(
+            "participant disconnected from room",
+            extra={
+                "room_id": str(self.room_id),
+                "participant_id": str(payload.id),
+            },
+        )
         if self.host:
             asyncio.create_task(
                 self.host.send_json(
@@ -215,6 +271,14 @@ class LiveRoom:
             return
         self.service.add_response(response=payload.response)
         participant.participant.has_answered = True
+        logger.debug(
+            "response received in room",
+            extra={
+                "room_id": str(self.room_id),
+                "participant_id": str(payload.response.participant_id),
+                "question_id": str(payload.response.question_id),
+            },
+        )
         if self.host:
             asyncio.create_task(
                 self.host.send_json(
@@ -229,6 +293,13 @@ class LiveRoom:
         """Reveal the current responses to all connected participants"""
         current_responses = self.service.get_current_responses()
         payload = RevealMeetingPayload(responses=current_responses)
+        logger.debug(
+            "responses revealed to participants",
+            extra={
+                "room_id": str(self.room_id),
+                "response_count": len(current_responses),
+            },
+        )
         await self._broadcast(
             task=_send_message,
             message={"type": OutboundMessageTypes.REVEAL, "payload": payload},

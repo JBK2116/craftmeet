@@ -56,10 +56,12 @@ class WebIn(BaseModel):
     """
 
     type: InboundMessageTypes
-    payload: Any  # raw dict or None when received, then parsed into appropriate type after validation
+    payload: Any = None  # raw dict when received, parsed into appropriate type after validation; None for types without a payload
 
     @model_validator(mode="after")
     def _parse_payload_type(self: Self) -> "WebIn":
+        if self.payload is None:
+            return self
         model = INBOUND_PAYLOAD_MODELS.get(self.type)
         if model is not None:
             self.payload = model(**self.payload)
@@ -137,4 +139,5 @@ INBOUND_PAYLOAD_MODELS: dict[
     InboundMessageTypes.MEETING_STARTED: MeetingStartedPayload,
     InboundMessageTypes.NEXT_QUESTION: NextQuestionPayload,
     InboundMessageTypes.RESPONSE_RECEIVED: ResponseReceivedPayload,
+    InboundMessageTypes.REVEAL: RevealMeetingPayload,
 }
