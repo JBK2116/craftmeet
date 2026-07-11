@@ -32,7 +32,12 @@ class ParticipantEntry:
 
 
 class LiveRoom:
-    def __init__(self, room_id: uuid.UUID, host: WebSocket):
+    def __init__(
+        self,
+        room_id: uuid.UUID,
+        host: WebSocket,
+        on_destroy: Callable[[], Coroutine[Any, Any, None]] | None = None,
+    ):
         self.room_id = (
             room_id  # Unique identifier for the room equivalent to meeting id
         )
@@ -48,6 +53,7 @@ class LiveRoom:
         self.meeting_timer: asyncio.Task | None = (
             None  # timer to auto terminate meeting
         )
+        self._on_destroy = on_destroy
 
     async def reconnect_host(self, ws: WebSocket) -> None:
         """Reconnect the host to the current meeting"""
@@ -139,7 +145,10 @@ class LiveRoom:
 
     async def end_meeting(self) -> None:
         """End a meeting and close all connected participant websockets"""
-        if self.meeting_timer is not None:
+        if (
+            self.meeting_timer is not None
+            and self.meeting_timer is not asyncio.current_task()
+        ):
             self.meeting_timer.cancel()
         await self.service.end_meeting()
         logger.debug(
@@ -149,6 +158,12 @@ class LiveRoom:
         await self._broadcast(
             task=_send_message, message={"type": OutboundMessageTypes.MEETING_ENDED}
         )
+        if self.host:
+            asyncio.create_task(
+                self.host.send_json({"type": OutboundMessageTypes.MEETING_ENDED})
+            )
+        if self._on_destroy:
+            await self._on_destroy()
 
     async def participant_connected(
         self, payload: ParticipantConnectedPayload, p_id: uuid.UUID, ws: WebSocket

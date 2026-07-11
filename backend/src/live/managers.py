@@ -93,7 +93,13 @@ class LiveManager:
 
             existing_room = self.__rooms.get(meeting_id, None)
             if existing_room is None:
-                self.__rooms[meeting_id] = LiveRoom(room_id=meeting_id, host=websocket)
+
+                async def _destroy_room():
+                    await self.__destroy_room(meeting_id)
+
+                self.__rooms[meeting_id] = LiveRoom(
+                    room_id=meeting_id, host=websocket, on_destroy=_destroy_room
+                )
                 logger.debug(
                     "host websocket connected to new meeting room",
                     extra={
@@ -113,19 +119,38 @@ class LiveManager:
                         },
                     )
                     return True
-                else:
-                    await websocket.close(
-                        code=CloseCode.HOST_ALREADY_CONNECTED.code,
-                        reason=CloseCode.HOST_ALREADY_CONNECTED.message,
-                    )
+                # verify that the existing host is still properly connected
+                try:
+                    await existing_room.host.send_json({"type": "__host_verify"})
+                except Exception:
+                    # stale host connection
                     logger.debug(
-                        "host rejected from connecting to meeting room",
+                        "existing host WebSocket is stale, allowing new host",
+                        extra={"room_id": str(meeting_id)},
+                    )
+                    existing_room.host = None
+                    await existing_room.reconnect_host(ws=websocket)
+                    logger.debug(
+                        "host reconnected (stale host cleared)",
                         extra={
                             "room_id": str(meeting_id),
                             "host": websocket.state.user.email,
                         },
                     )
-                    return False
+                    return True
+                # host is still connected so fully reject this connection request
+                await websocket.close(
+                    code=CloseCode.HOST_ALREADY_CONNECTED.code,
+                    reason=CloseCode.HOST_ALREADY_CONNECTED.message,
+                )
+                logger.debug(
+                    "host rejected from connecting to meeting room",
+                    extra={
+                        "room_id": str(meeting_id),
+                        "host": websocket.state.user.email,
+                    },
+                )
+                return False
 
     async def handle_host_disconnect(self, meeting_id: uuid.UUID) -> None:
         """
