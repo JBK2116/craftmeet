@@ -334,4 +334,56 @@
             </button>
         </div>
     </form>
+{:else if meeting.status === 'live'}
+    <div class="mx-auto flex max-w-2xl flex-col items-center px-4 py-16 text-center">
+        <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+            <span class="relative flex h-4 w-4">
+                <span
+                    class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"
+                ></span>
+                <span class="relative inline-flex h-4 w-4 rounded-full bg-primary"></span>
+            </span>
+        </div>
+        <h1 class="mb-2 text-2xl font-bold text-[var(--text-heading)]">Meeting is Live</h1>
+        <p class="mb-2 text-sm text-muted-foreground">
+            &ldquo;{meeting.title}&rdquo; is currently running. You are already hosting it in another
+            tab.
+        </p>
+        <p class="mb-8 text-sm text-muted-foreground">
+            Return to your host tab to continue managing the session.
+        </p>
+        <button
+            onclick={() => goto('/dashboard')}
+            class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+            Back to Dashboard
+        </button>
+    </div>
+{:else if meeting.status === 'completed'}
+    <div class="mx-auto flex max-w-2xl flex-col items-center px-4 py-16 text-center">
+        <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+            <svg
+                class="h-10 w-10 text-muted-foreground"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+        </div>
+        <h1 class="mb-2 text-2xl font-bold text-[var(--text-heading)]">Meeting Completed</h1>
+        <p class="mb-8 text-sm text-muted-foreground">
+            &ldquo;{meeting.title}&rdquo; has ended. You can review the summary or return to your
+            dashboard.
+        </p>
+        <div class="flex gap-3">
+            <button
+                onclick={() => goto('/dashboard')}
+                class="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+                Back to Dashboard
+            </button>
+        </div>
+    </div>
 {/if}

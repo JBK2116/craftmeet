@@ -2,6 +2,7 @@
     import { browser } from '$app/environment';
     import { goto } from '$app/navigation';
     import { page } from '$app/state';
+    import { refreshTokens } from '$lib/api/auth';
     import HostLobby from '$lib/components/host/HostLobby.svelte';
     import HostParticipants from '$lib/components/host/HostParticipants.svelte';
     import HostQuestion from '$lib/components/host/HostQuestion.svelte';
@@ -10,7 +11,18 @@
     import type { Participant } from '$lib/types/participant';
     import type { QuestionIn, QuestionStatus } from '$lib/types/question';
     import type { ResponseOut } from '$lib/types/response';
-    import { untrack } from 'svelte';
+    import {
+        CloseCode,
+        type MeetingStartedPayload,
+        type MeetingStatePayload,
+        MessageTypes,
+        type NextQuestionPayload,
+        type ParticipantDisconnectedPayload,
+        type ResponseReceivedPayload,
+        type RevealMeetingPayload,
+        type WebIn,
+    } from '$lib/types/websocket';
+    import { onMount, untrack } from 'svelte';
     import { toast } from 'svelte-sonner';
 
     import type { PageData } from './$types';
@@ -48,6 +60,13 @@
     let elapsedSeconds = $state<number>(0);
     let questionElapsed = $state<number>(0);
 
+    // websocket logic
+    let ws = $state<WebSocket | null>(null);
+    let wsConnected = $state(false);
+    let wsSuccessTimeout: ReturnType<typeof setTimeout> | null = null;
+    let destroyed = false;
+    let pendingEnd = $state(false);
+
     // derived: status array for HostQuestion progress dots
     let questionStates = $derived(questions.map((q) => ({ status: q.status })));
     let currResponses = $derived(responses[currQuestion?.id] ?? []);
@@ -62,6 +81,7 @@
     // timer effect
     $effect(() => {
         if (meetingStatus === 'lobby' && start === null) return;
+        if (meetingStatus === 'ended') return;
         const timer = setInterval(() => {
             if (start !== null) {
                 elapsedSeconds = Math.floor((Date.now() - start) / 1000);
@@ -75,93 +95,169 @@
 
     /** Start the meeting */
     function handleStartMeeting() {
+        if (!wsConnected || !ws) return;
+        if (meetingStatus !== 'lobby') return;
         start = Date.now();
         meetingEndTime = new Date(Date.now() + meeting.duration * 60 * 1000);
         meetingStatus = 'question';
         handleNextQuestion();
-        // TODO: Send a message to the websocket
+        const payload = JSON.stringify({
+            type: MessageTypes.MEETING_STARTED,
+            payload: { question: currQuestion } as MeetingStartedPayload,
+        });
+        ws?.send(payload);
     }
 
     /** Proceed to the next question (advance, auto-open) */
     function handleNextQuestion() {
-        if (!questionIsLast) {
-            currQuestionIndex++;
-        }
+        if (!wsConnected || !ws) return;
+        if (questionIsLast) return;
+        currQuestionIndex++;
         // Auto-open the new current question
         if (currQuestion) {
             currQuestion.status = 'open';
             questionStart = Date.now();
         }
-        // TODO: Send a message to the websocket
+        const payload = JSON.stringify({
+            type: MessageTypes.NEXT_QUESTION,
+            payload: { question: currQuestion } as NextQuestionPayload,
+        });
+        ws?.send(payload);
     }
 
-    /** End the meeting. Sets the meeting status to 'ended' and notifies the host. */
+    /** End the meeting. Shows a confirmation before proceeding. */
     function handleEndMeeting() {
-        meetingStatus = 'ended';
-        toast.info('Meeting ended');
-        // TODO: Send a message to the websocket
+        pendingEnd = true;
+    }
+
+    function confirmEndMeeting() {
+        pendingEnd = false;
+        const payload = JSON.stringify({ type: MessageTypes.MEETING_ENDED });
+        ws?.send(payload);
+        goto(`/meetings/${page.params.slug}`, { replaceState: true });
+    }
+
+    function cancelEndMeeting() {
+        pendingEnd = false;
     }
 
     function handleReveal() {
-        // TODO: implement reveal logic with websocket
+        if (!wsConnected || !ws) return;
+        const payload = JSON.stringify({
+            type: MessageTypes.REVEAL,
+            payload: { responses: currResponses } as RevealMeetingPayload,
+        });
+        ws?.send(payload);
     }
-
-    //
-    // WebSocket
-    //
-
-    type WsMessage = { type: string; payload: unknown };
-
-    let ws = $state<WebSocket | null>(null);
-    let wsConnected = $state(false);
 
     function getWsUrl(): string {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         return `${protocol}//${window.location.host}/api/v1/meetings/${page.params.slug}/host/ws`;
     }
 
-    function handleWsMessage(msg: WsMessage) {
+    /**
+     * Handles incoming WebSocket messages by dispatching them to the appropriate handler.
+     *
+     * @param msg - The incoming WebSocket message containing a type and payload.
+     * @param msg.type - The type of the message, used to determine the handler.
+     * @param msg.payload - The payload data associated with the message.
+     * @throws {Error} May throw if handlers receive unexpected payload shapes.
+     */
+    function handleWsMessage(msg: WebIn) {
         switch (msg.type) {
-            case 'participant_connected':
+            case MessageTypes.PARTICIPANT_CONNECTED:
                 handleParticipantConnected(msg.payload as Participant);
                 break;
-            case 'participant_disconnected':
-                handleParticipantDisconnected(
-                    (msg.payload as { participant_id: string }).participant_id,
-                );
+            case MessageTypes.PARTICIPANT_DISCONNECTED:
+                handleParticipantDisconnected(msg.payload as ParticipantDisconnectedPayload);
                 break;
-            case 'response':
-                handleResponseReceived(msg.payload as ResponseOut);
+            case MessageTypes.RESPONSE_RECEIVED:
+                handleResponseReceived(msg.payload as ResponseReceivedPayload);
                 break;
-            // TODO: add more message types as needed
+            case MessageTypes.MEETING_STATE:
+                handleMeetingState(msg.payload as MeetingStatePayload);
+                break;
+            case MessageTypes.MEETING_ENDED:
+                meetingStatus = 'ended';
+                toast.info('Meeting time has expired.');
+                break;
+            // NOTE: add more message types as needed
             default:
                 console.warn('[ws] unknown message type:', msg.type);
         }
     }
 
-    function handleWsDisconnect(_event: CloseEvent) {
+    /**
+     * Handles WebSocket disconnection events.
+     *
+     * If the disconnection is due to a server rejection (codes 4001 or 1008),
+     * it logs a warning, displays an error toast, and does not attempt to reconnect.
+     * Otherwise, it logs a warning, shows a reconnection toast, and schedules
+     * a reconnection attempt after 3 seconds, provided the meeting has not ended.
+     *
+     * @param event - The CloseEvent containing the disconnection code, reason, and details.
+     */
+    function handleWsDisconnect(event: CloseEvent) {
+        if (destroyed) return;
+        if (event.code === CloseCode.HOST_ALREADY_CONNECTED) {
+            if (event.reason === 'invalid access token') {
+                // Token expired mid-session — refresh and retry
+                console.warn('[ws] access token invalid, refreshing and reconnecting…');
+                refreshTokens().then((ok) => {
+                    if (ok && !destroyed) {
+                        connectWs();
+                    } else {
+                        toast.error('Your session has expired. Please log in again.');
+                        goto('/login');
+                    }
+                });
+                return;
+            }
+            console.warn('[ws] server rejected connection, not retrying:', event.reason);
+            toast.error('Another host session is already active for this meeting. Redirecting…', {
+                duration: 5000,
+            });
+            goto('/dashboard', { replaceState: true });
+            return;
+        }
         console.warn('[ws] disconnected, attempting reconnect in 3s…');
+        if (meetingStatus !== 'ended') {
+            toast.warning('Connection lost. Reconnecting…');
+        }
         setTimeout(() => {
             if (browser && meetingStatus !== 'ended') {
-                connectWs();
+                void connectWs();
             }
         }, 3000);
     }
 
-    function connectWs() {
+    async function connectWs() {
         if (!browser) return;
         if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) return;
+
+        // Refresh the access token before opening the WebSocket so the
+        // cookie is valid when the server authenticates the connection.
+        const refreshed = await refreshTokens();
+        if (!refreshed) {
+            toast.error('Your session has expired. Please log in again.');
+            goto('/login');
+            return;
+        }
 
         const socket = new WebSocket(getWsUrl());
         ws = socket;
 
         socket.onopen = () => {
             wsConnected = true;
+            // Delay success toast to avoid race with immediate server rejection
+            wsSuccessTimeout = setTimeout(() => {
+                toast.success('Connected to meeting');
+            }, 500);
         };
 
         socket.onmessage = (event: MessageEvent) => {
             try {
-                const msg: WsMessage = JSON.parse(event.data);
+                const msg: WebIn = JSON.parse(event.data);
                 handleWsMessage(msg);
             } catch (err) {
                 console.error('[ws] failed to parse message:', err);
@@ -170,19 +266,29 @@
 
         socket.onclose = (event: CloseEvent) => {
             wsConnected = false;
+            if (wsSuccessTimeout) {
+                clearTimeout(wsSuccessTimeout);
+                wsSuccessTimeout = null;
+            }
             handleWsDisconnect(event);
         };
 
         socket.onerror = (event: Event) => {
             console.error('[ws] error:', event);
+            toast.error('Connection error');
         };
     }
 
-    $effect(() => {
-        connectWs();
+    onMount(() => {
+        void connectWs();
         return () => {
+            destroyed = true;
             ws?.close();
             wsConnected = false;
+            if (wsSuccessTimeout) {
+                clearTimeout(wsSuccessTimeout);
+                wsSuccessTimeout = null;
+            }
         };
     });
 
@@ -203,10 +309,10 @@
     /**
      * Handle a participant disconnecting from the meeting.
      * Sets the participant's `connected` property to `false` if they exist in the list.
-     * @param participant_id - The ID of the participant who disconnected.
+     * @param payload - The payload with the data of the disconnecting participant
      */
-    function handleParticipantDisconnected(participant_id: string) {
-        let existingIndex = participants.findIndex((p) => p.id == participant_id);
+    function handleParticipantDisconnected(payload: ParticipantDisconnectedPayload) {
+        let existingIndex = participants.findIndex((p) => p.id == payload.id);
         if (existingIndex === -1) {
             return;
         }
@@ -218,17 +324,52 @@
      * Marks the participant as having answered and stores the response.
      * @param response - The response data.
      */
-    function handleResponseReceived(response: ResponseOut) {
-        let pIndex = participants.findIndex((p) => p.id === response.participant_id);
+    function handleResponseReceived(payload: ResponseReceivedPayload) {
+        let pIndex = participants.findIndex((p) => p.id === payload.response.participant_id);
         if (pIndex === -1) {
             return;
         }
         participants[pIndex].has_answered = true;
-        const key = response.question_id;
+        const key = payload.response.question_id;
         if (!responses[key]) {
             responses[key] = [];
         }
-        responses[key].push(response);
+        responses[key].push(payload.response);
+    }
+
+    /**
+     * Handles the state of a meeting by updating responses, participants, and the current question.
+     * @param payload - The meeting state payload containing responses, participants, and optionally a question.
+     */
+    function handleMeetingState(payload: MeetingStatePayload) {
+        // Store responses keyed by question ID (responses is a $state Record, not a derived)
+        if (payload.question) {
+            responses[payload.question.id] = payload.responses;
+        }
+        participants = payload.participants;
+        if (!payload.question) {
+            return;
+        }
+        // Update the question in the questions array so the derived picks it up
+        const questionIndex = questions.findIndex((f) => f.id === payload.question!.id);
+        if (questionIndex === -1) return;
+        questions[questionIndex] = payload.question;
+        currQuestionIndex = questionIndex;
+        // Meeting is already in progress — transition from lobby to question
+        if (meetingStatus === 'lobby') {
+            meetingStatus = 'question';
+            // Recalculate timing from the DB-persisted started_at so the host
+            // sees the correct elapsed time and end-time display on reconnect.
+            if (meeting.started_at) {
+                const startedTimestamp = new Date(meeting.started_at).getTime();
+                start = startedTimestamp;
+                meetingEndTime = new Date(startedTimestamp + meeting.duration * 60 * 1000);
+            } else {
+                start = Date.now();
+                meetingEndTime = new Date(Date.now() + meeting.duration * 60 * 1000);
+            }
+            questionStart = Date.now();
+        }
     }
 </script>
 
@@ -320,6 +461,36 @@
             >
                 View Meeting Summary
             </button>
+        </div>
+    </div>
+{/if}
+
+{#if pendingEnd}
+    <!-- End Meeting confirmation overlay -->
+    <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+    >
+        <div
+            class="mx-4 w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-overlay"
+        >
+            <h3 class="mb-2 text-lg font-semibold text-[var(--text-heading)]">End Meeting?</h3>
+            <p class="mb-6 text-sm text-muted-foreground">
+                This will end the meeting for all participants. This action cannot be undone.
+            </p>
+            <div class="flex gap-3">
+                <button
+                    onclick={cancelEndMeeting}
+                    class="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                    Cancel
+                </button>
+                <button
+                    onclick={confirmEndMeeting}
+                    class="flex-1 rounded-xl bg-destructive px-4 py-2.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                    End Meeting
+                </button>
+            </div>
         </div>
     </div>
 {/if}
