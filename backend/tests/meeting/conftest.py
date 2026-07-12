@@ -17,7 +17,7 @@ from src.auth.crypto import hash_password
 from src.auth.token import JWT_ALGORITHM, generate_access_token
 from src.config import get_settings
 from src.models import Meeting, Question, RatingScaleQuestion, Stat, User, YesNoQuestion
-from src.types import QuestionType
+from src.types import MeetingStatus, QuestionType
 
 VALID_PASSWORD = "ExistingP@ss1"  # noqa: S105
 
@@ -313,4 +313,118 @@ async def create_meeting_payload_multiple_questions() -> dict:
                 "sub_question": {"max_length": 300},
             },
         ],
+    }
+
+
+@pytest_asyncio.fixture
+async def join_meeting_payload(verified_user_meeting: Meeting) -> dict[str, Any]:
+    """A valid join-meeting payload whose room code matches ``verified_user_meeting``."""
+    return {
+        "username": "testuser",
+        "code": verified_user_meeting.room_code,
+    }
+
+
+@pytest_asyncio.fixture
+async def completed_meeting(
+    session: AsyncSession, verified_meeting_user: User
+) -> Meeting:
+    """A meeting with COMPLETED status — not joinable."""
+    meeting = Meeting(
+        user_id=verified_meeting_user.id,
+        title="Completed Meeting",
+        description="A meeting that has ended",
+        room_code="COMPLETE",
+        duration=15,
+        participant_cap=20,
+        total_questions=1,
+        status=MeetingStatus.COMPLETED,
+    )
+    session.add(meeting)
+    await session.flush()
+    await session.refresh(meeting)
+
+    question = Question(
+        meeting_id=meeting.id,
+        type=QuestionType.YES_NO,
+        prompt="Was this useful?",
+        position=1,
+    )
+    session.add(question)
+    await session.flush()
+    await session.refresh(question)
+
+    sub_question = YesNoQuestion(question_id=question.id)
+    session.add(sub_question)
+    await session.flush()
+
+    stat = Stat(meeting_id=meeting.id)
+    session.add(stat)
+    await session.commit()
+    await session.refresh(meeting)
+    return meeting
+
+
+@pytest_asyncio.fixture
+async def join_meeting_payload_completed(completed_meeting: Meeting) -> dict[str, Any]:
+    """A join payload with the room code of a COMPLETED (non-joinable) meeting."""
+    return {
+        "username": "John Doe",
+        "code": completed_meeting.room_code,
+    }
+
+
+@pytest_asyncio.fixture
+async def live_meeting(session: AsyncSession, verified_meeting_user: User) -> Meeting:
+    """A meeting with LIVE status — joinable."""
+    meeting = Meeting(
+        user_id=verified_meeting_user.id,
+        title="Live Meeting",
+        description="An ongoing meeting",
+        room_code="LIVEMEET",
+        duration=15,
+        participant_cap=20,
+        total_questions=1,
+        status=MeetingStatus.LIVE,
+    )
+    session.add(meeting)
+    await session.flush()
+    await session.refresh(meeting)
+
+    question = Question(
+        meeting_id=meeting.id,
+        type=QuestionType.YES_NO,
+        prompt="Ready?",
+        position=1,
+    )
+    session.add(question)
+    await session.flush()
+    await session.refresh(question)
+
+    sub_question = YesNoQuestion(question_id=question.id)
+    session.add(sub_question)
+    await session.flush()
+
+    stat = Stat(meeting_id=meeting.id)
+    session.add(stat)
+    await session.commit()
+    await session.refresh(meeting)
+    return meeting
+
+
+@pytest_asyncio.fixture
+async def join_meeting_payload_live(live_meeting: Meeting) -> dict[str, Any]:
+    """A join payload with the room code of a LIVE meeting."""
+    return {
+        "username": "testuser",
+        "code": live_meeting.room_code,
+    }
+
+
+@pytest_asyncio.fixture
+async def join_meeting_payload_nonexistent() -> dict[str, Any]:
+    """A join payload whose room code does not match any meeting in the database."""
+    return {
+        "username": "testuser",
+        "code": "NONEXIST",
     }
