@@ -66,6 +66,7 @@
     let wsSuccessTimeout: ReturnType<typeof setTimeout> | null = null;
     let destroyed = false;
     let pendingEnd = $state(false);
+    let isRevealed = $state(false);
 
     // derived: status array for HostQuestion progress dots
     let questionStates = $derived(questions.map((q) => ({ status: q.status })));
@@ -113,6 +114,7 @@
         if (!wsConnected || !ws) return;
         if (questionIsLast) return;
         currQuestionIndex++;
+        isRevealed = false;
         // Auto-open the new current question
         if (currQuestion) {
             currQuestion.status = 'open';
@@ -143,6 +145,7 @@
 
     function handleReveal() {
         if (!wsConnected || !ws) return;
+        isRevealed = true;
         const payload = JSON.stringify({
             type: MessageTypes.REVEAL,
             payload: { responses: currResponses } as RevealMeetingPayload,
@@ -335,6 +338,15 @@
             responses[key] = [];
         }
         responses[key].push(payload.response);
+        // If currently revealing, push updated responses to participants
+        if (isRevealed) {
+            ws?.send(
+                JSON.stringify({
+                    type: MessageTypes.REVEAL,
+                    payload: { responses: responses[key] } as RevealMeetingPayload,
+                }),
+            );
+        }
     }
 
     /**
@@ -429,6 +441,7 @@
         participantCount={participants.length}
         {questionStates}
         responses={currResponses}
+        {isRevealed}
         onreveal={handleReveal}
         onnext={handleNextQuestion}
         onend={handleEndMeeting}

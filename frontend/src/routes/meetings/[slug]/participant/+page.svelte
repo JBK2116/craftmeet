@@ -11,6 +11,7 @@
         RatingScaleQuestionIn,
     } from '$lib/types/question';
     import type {
+        LongAnswerResponseOut,
         MultipleChoiceResponseOut,
         RankedVotingResponseOut,
         RatingScaleResponseOut,
@@ -45,6 +46,55 @@
     >('connecting');
     let currentQuestion = $state<QuestionIn | null>(null);
     let revealedResponses = $state<ResponseOut[]>([]);
+    let hasAnswered = $state(false);
+
+    // ── Reveal aggregations (derived from revealedResponses) ──
+    let totalResp = $derived(revealedResponses.length);
+
+    let mcCounts = $derived.by(() => {
+        if (!currentQuestion || currentQuestion.type !== 'multiple_choice') return [];
+        const counts: number[] = [];
+        for (const r of revealedResponses as MultipleChoiceResponseOut[]) {
+            for (const o of r.selected_options) {
+                counts[o] = (counts[o] ?? 0) + 1;
+            }
+        }
+        return counts;
+    });
+
+    let ratingAvg = $derived.by(() => {
+        if (
+            !currentQuestion ||
+            currentQuestion.type !== 'rating_scale' ||
+            revealedResponses.length === 0
+        )
+            return null;
+        const vals = (revealedResponses as RatingScaleResponseOut[]).map((r) => r.value);
+        return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+    });
+
+    let yesNoCounts = $derived.by(() => {
+        if (!currentQuestion || currentQuestion.type !== 'yes_no') return null;
+        const yes = (revealedResponses as YesNoResponseOut[]).filter((r) => r.value).length;
+        return { yes, no: revealedResponses.length - yes, total: revealedResponses.length };
+    });
+
+    let rankedFirst = $derived.by(() => {
+        if (!currentQuestion || currentQuestion.type !== 'ranked_voting') return [];
+        const counts: number[] = [0, 0, 0, 0];
+        for (const r of revealedResponses as RankedVotingResponseOut[]) {
+            if (r.rank_1 === 1) counts[0]++;
+            if (r.rank_2 === 1) counts[1]++;
+            if (r.rank_3 === 1) counts[2]++;
+            if (r.rank_4 === 1) counts[3]++;
+        }
+        return counts;
+    });
+
+    let longAnswers = $derived.by(() => {
+        if (!currentQuestion || currentQuestion.type !== 'long_answer') return [];
+        return (revealedResponses as LongAnswerResponseOut[]).map((r) => r.content);
+    });
 
     // Answer input state — varies by question type
     let mcSelected = $state<number[]>([]);
@@ -76,6 +126,8 @@
         rankedRanks = { rank_1: 1, rank_2: 2, rank_3: 3, rank_4: 4 };
         ratingValue = 0;
         yesNoValue = null;
+        hasAnswered = false;
+        revealedResponses = [];
     }
 
     /**
@@ -143,7 +195,9 @@
         }
 
         ws.send(JSON.stringify({ type: MessageTypes.RESPONSE_RECEIVED, payload: { response } }));
-        phase = 'answered';
+        hasAnswered = true;
+        // If the host already revealed while we were answering, go straight to revealed
+        phase = revealedResponses.length > 0 ? 'revealed' : 'answered';
     }
 
     /**
@@ -184,7 +238,8 @@
             case MessageTypes.REVEAL: {
                 const payload = msg.payload as RevealMeetingPayload;
                 revealedResponses = payload.responses;
-                phase = 'revealed';
+                // Only show reveal if already answered; late participants stay on question
+                if (hasAnswered) phase = 'revealed';
                 break;
             }
             case MessageTypes.HOST_DISCONNECTED:
@@ -542,48 +597,155 @@
                 Waiting for the host to move on or reveal responses…
             </p>
         </div>
-    {:else if phase === 'revealed'}
+    {:else if phase === 'revealed' && currentQuestion}
+        {@const sub = currentQuestion.sub_question}
         <div class="space-y-6">
+            <!-- Question header -->
             <div class="rounded-2xl border border-border bg-card p-6">
-                <h2 class="text-xl font-semibold text-[var(--text-heading)]">
-                    {currentQuestion?.prompt}
+                <span
+                    class="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                >
+                    Question {currentQuestion.position}
+                </span>
+                <h2 class="mt-3 text-xl font-semibold text-[var(--text-heading)]">
+                    {currentQuestion.prompt}
                 </h2>
-                <p class="mt-1 text-sm text-muted-foreground">
-                    {revealedResponses.length} response{revealedResponses.length !== 1 ? 's' : ''} revealed
-                </p>
             </div>
+
+            <!-- Question sub-details + aggregated results -->
             <div class="rounded-2xl border border-border bg-card p-6">
-                {#if revealedResponses.length === 0}
-                    <p class="text-sm text-muted-foreground text-center py-8">No responses yet.</p>
-                {:else}
+                {#if currentQuestion.type === 'multiple_choice'}
+                    {@const mc = sub as MultipleChoiceQuestionIn}
+                    {@const options = [mc.option_1, mc.option_2, mc.option_3, mc.option_4].filter(
+                        Boolean,
+                    ) as string[]}
                     <div class="space-y-3">
-                        {#each revealedResponses as resp}
-                            <div class="rounded-xl border border-border bg-background p-4">
-                                {#if resp.type === 'multiple_choice'}
-                                    <p class="text-sm text-muted-foreground">
-                                        Selected options: {resp.selected_options.join(', ')}
-                                    </p>
-                                {:else if resp.type === 'long_answer'}
-                                    <p class="text-sm text-foreground">{resp.content}</p>
-                                {:else if resp.type === 'ranked_voting'}
-                                    <p class="text-sm text-muted-foreground">
-                                        Ranks: {resp.rank_1}, {resp.rank_2}{resp.rank_3
-                                            ? `, ${resp.rank_3}`
-                                            : ''}{resp.rank_4 ? `, ${resp.rank_4}` : ''}
-                                    </p>
-                                {:else if resp.type === 'rating_scale'}
-                                    <p class="text-sm text-muted-foreground">
-                                        Rating: {resp.value}
-                                    </p>
-                                {:else if resp.type === 'yes_no'}
-                                    <p class="text-sm text-foreground">
-                                        {resp.value ? 'Yes' : 'No'}
-                                    </p>
+                        {#each options as option, i}
+                            {@const count = mcCounts[i + 1] ?? 0}
+                            {@const pct = totalResp > 0 ? Math.round((count / totalResp) * 100) : 0}
+                            <div>
+                                <div
+                                    class="flex items-center gap-3 rounded-lg border border-border bg-background p-4"
+                                >
+                                    <span
+                                        class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+                                    >
+                                        {String.fromCharCode(65 + i)}
+                                    </span>
+                                    <span class="flex-1 text-sm">{option}</span>
+                                    {#if mc.allow_multiple}
+                                        <span class="text-xs text-muted-foreground">(multiple)</span
+                                        >
+                                    {/if}
+                                    {#if totalResp > 0}
+                                        <span class="tabular-nums text-sm font-semibold"
+                                            >{count}</span
+                                        >
+                                    {/if}
+                                </div>
+                                {#if totalResp > 0}
+                                    <div class="mt-1 h-1.5 rounded-full bg-muted">
+                                        <div
+                                            class="h-full rounded-full bg-primary transition-all duration-300"
+                                            style="width: {pct}%"
+                                        ></div>
+                                    </div>
                                 {/if}
                             </div>
                         {/each}
                     </div>
+                {:else if currentQuestion.type === 'rating_scale'}
+                    {@const rs = sub as RatingScaleQuestionIn}
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="flex items-center gap-3">
+                            {#each Array(rs.max - rs.min + 1) as _, i}
+                                {@const val = rs.min + i}
+                                <div
+                                    class="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground"
+                                >
+                                    {val}
+                                </div>
+                            {/each}
+                        </div>
+                        <div class="flex w-full justify-between text-xs text-muted-foreground">
+                            <span>{rs.min}</span>
+                            <span>{rs.max}</span>
+                        </div>
+                        {#if ratingAvg !== null}
+                            <p class="text-sm font-medium">
+                                Average: <span class="tabular-nums text-primary">{ratingAvg}</span>
+                            </p>
+                        {/if}
+                    </div>
+                {:else if currentQuestion.type === 'yes_no'}
+                    <div class="flex gap-4">
+                        <div
+                            class="flex-1 rounded-xl border-2 border-green-500/20 bg-green-500/5 p-6 text-center"
+                        >
+                            <span class="text-3xl font-bold text-green-500">&#10003;</span>
+                            <p class="mt-1 text-sm font-medium text-foreground">Yes</p>
+                            {#if yesNoCounts !== null}
+                                <p class="mt-1 text-lg font-bold tabular-nums">{yesNoCounts.yes}</p>
+                            {/if}
+                        </div>
+                        <div
+                            class="flex-1 rounded-xl border-2 border-red-500/20 bg-red-500/5 p-6 text-center"
+                        >
+                            <span class="text-3xl font-bold text-red-500">&#10007;</span>
+                            <p class="mt-1 text-sm font-medium text-foreground">No</p>
+                            {#if yesNoCounts !== null}
+                                <p class="mt-1 text-lg font-bold tabular-nums">{yesNoCounts.no}</p>
+                            {/if}
+                        </div>
+                    </div>
+                {:else if currentQuestion.type === 'ranked_voting'}
+                    {@const rv = sub as RankedVotingQuestionIn}
+                    {@const items = [rv.item_1, rv.item_2, rv.item_3, rv.item_4].filter(
+                        Boolean,
+                    ) as string[]}
+                    <div class="space-y-2">
+                        {#each items as item, i}
+                            {@const count = rankedFirst[i] ?? 0}
+                            <div
+                                class="flex items-center gap-3 rounded-lg border border-border bg-background p-4"
+                            >
+                                <span
+                                    class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+                                >
+                                    {i + 1}
+                                </span>
+                                <span class="flex-1 text-sm">{item}</span>
+                                {#if totalResp > 0}
+                                    <span class="tabular-nums text-xs text-muted-foreground"
+                                        >#1 votes: {count}</span
+                                    >
+                                {/if}
+                            </div>
+                        {/each}
+                    </div>
+                {:else if currentQuestion.type === 'long_answer'}
+                    {#if longAnswers.length > 0}
+                        <div class="max-h-64 space-y-2 overflow-y-auto">
+                            {#each longAnswers as answer}
+                                <div
+                                    class="rounded-lg border border-border bg-muted/30 p-3 text-sm"
+                                >
+                                    {answer}
+                                </div>
+                            {/each}
+                        </div>
+                    {:else}
+                        <div
+                            class="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center"
+                        >
+                            <p class="text-sm text-muted-foreground">No responses yet.</p>
+                        </div>
+                    {/if}
                 {/if}
+
+                <p class="mt-4 text-center text-xs text-muted-foreground">
+                    {revealedResponses.length} response{revealedResponses.length !== 1 ? 's' : ''}
+                </p>
             </div>
         </div>
     {:else if phase === 'host_disconnected'}

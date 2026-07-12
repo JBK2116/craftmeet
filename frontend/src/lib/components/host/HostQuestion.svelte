@@ -38,6 +38,7 @@
         participantCount,
         questionStates,
         responses,
+        isRevealed = false,
         onreveal,
         onnext,
         onend,
@@ -51,6 +52,7 @@
         participantCount: number;
         questionStates: { status: 'pending' | 'open' | 'closed' }[];
         responses: ResponseOut[];
+        isRevealed?: boolean;
         onreveal: () => void;
         onnext: () => void;
         onend: () => void;
@@ -295,9 +297,14 @@
 
     <!-- Controls -->
     <div class="flex items-center justify-evenly gap-3">
-        <Button variant="secondary" size="sm" onclick={onreveal} class="flex-1 gap-1.5 rounded-lg">
+        <Button
+            variant={isRevealed ? 'default' : 'secondary'}
+            size="sm"
+            onclick={onreveal}
+            class="flex-1 gap-1.5 rounded-lg"
+        >
             <Eye class="h-4 w-4" />
-            Reveal
+            {isRevealed ? 'Revealing…' : 'Reveal'}
         </Button>
         <Button
             variant="default"
