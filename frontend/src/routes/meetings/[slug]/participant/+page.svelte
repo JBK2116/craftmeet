@@ -47,6 +47,17 @@
     let currentQuestion = $state<QuestionIn | null>(null);
     let revealedResponses = $state<ResponseOut[]>([]);
     let hasAnswered = $state(false);
+    let hasLeft = false;
+
+    /** Call the leave endpoint once to clear the participant cookie. */
+    function leaveMeeting() {
+        if (hasLeft) return;
+        hasLeft = true;
+        fetch(`/api/v1/meetings/${page.params.slug}/leave`, {
+            method: 'POST',
+            credentials: 'include',
+        }).catch(() => {});
+    }
 
     // ── Reveal aggregations (derived from revealedResponses) ──
     let totalResp = $derived(revealedResponses.length);
@@ -255,6 +266,7 @@
             case MessageTypes.MEETING_ENDED:
                 phase = 'ended';
                 toast.info('The meeting has ended.');
+                leaveMeeting();
                 break;
             default:
                 console.warn('[ws] unknown message type:', msg.type);
@@ -349,11 +361,7 @@
             destroyed = true;
             ws?.close();
             wsConnected = false;
-            // clear the participant cookie when leaving
-            fetch(`/api/v1/meetings/${page.params.slug}/leave`, {
-                method: 'POST',
-                credentials: 'include',
-            }).catch(() => {});
+            leaveMeeting();
         };
     });
 </script>
