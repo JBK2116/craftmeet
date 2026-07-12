@@ -21,7 +21,8 @@
     let isLanding = $derived(landingRoutes.includes(pathname));
     let isPublic = $derived(publicRoutes.includes(pathname));
     let isAuth = $derived(authRoutes.includes(pathname));
-    let isApp = $derived(!isLanding && !isAuth);
+    let isParticipant = $derived(pathname.startsWith('/meetings/') && pathname.endsWith('/participant'));
+    let isApp = $derived(!isLanding && !isAuth && !isParticipant);
 
     const landingLinks: NavLink[] = [
         { title: 'How it Works', href: '#how-it-works' },
@@ -241,7 +242,7 @@
                     </Button>
                 {/if}
             </div>
-        {:else if isPublic}
+        {:else if isPublic || isParticipant}
             <div class="flex items-center gap-3">
                 <Button
                     variant="ghost"
