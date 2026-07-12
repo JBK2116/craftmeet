@@ -1,5 +1,11 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
     import { Button } from '$lib/components/ui/button';
+    import {
+        MAX_USERNAME_LENGTH,
+        MEETING_CODE_LENGTH,
+        MIN_USERNAME_LENGTH,
+    } from '$lib/utils/constants';
     import { LogIn, Plus, X } from '@lucide/svelte';
     import { toast } from 'svelte-sonner';
 
@@ -19,28 +25,64 @@
         name = '';
     }
 
+    /** Validate the meeting code */
+    function validateCode(): boolean {
+        if (code.length !== MEETING_CODE_LENGTH) {
+            toast.error(`Meeting code must be ${MEETING_CODE_LENGTH} digits.`);
+            return false;
+        }
+        return true;
+    }
+
+    /** Validate the participant username */
+    function validateName(): boolean {
+        if (!name.trim()) {
+            toast.error('Please enter your name.');
+            return false;
+        }
+        const len = name.trim().length;
+        if (len < MIN_USERNAME_LENGTH || len > MAX_USERNAME_LENGTH) {
+            toast.error(
+                `Your name must be between ${MIN_USERNAME_LENGTH} and ${MAX_USERNAME_LENGTH} characters.`,
+            );
+            return false;
+        }
+        return true;
+    }
+
+    /** Handle joining a live meeting session */
     async function handleJoin() {
-        if (!code || !name.trim()) {
-            toast.error('Please enter a room code and your name.');
+        if (!validateCode() || !validateName()) {
             return;
         }
         loading = true;
         try {
-            // TODO: POST to backend to validate room code and register participant
-            // const res = await fetch('/api/v1/meetings/join', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ room_code: code, name: name.trim() }),
-            // });
-            // if (!res.ok) throw new Error('Invalid code');
-            // const body = await res.json();
-            // goto(`/meetings/${body.meeting_id}/live`);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            close();
+            const res = await fetch('/api/v1/meetings/join', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, username: name.trim() }),
+            });
+            const body = await res.json();
+            if (!res.ok) {
+                if (res.status === 404) {
+                    toast.error('No meeting found with that code. Please check and try again.');
+                } else if (res.status === 400) {
+                    toast.error('That meeting is not currently live.');
+                } else {
+                    toast.error('Unable to join meeting. Please try again.');
+                }
+                return;
+            }
+            const meetingId = body.meeting_id as string;
+            goto(`/meetings/${meetingId}/participant?name=${encodeURIComponent(name.trim())}`, {
+                replaceState: true,
+            });
         } catch {
-            toast.error('Unable to join meeting.');
+            toast.error('Unable to join meeting. Please try again.');
         } finally {
             loading = false;
+            close();
         }
     }
 </script>
