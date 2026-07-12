@@ -43,6 +43,12 @@ class JoinMeetingPayload(BaseModel):
     code: str = Field(min_length=MEETING_CODE_LENGTH, max_length=MEETING_CODE_LENGTH)
 
 
+class JoinMeetingResponse(BaseModel):
+    """Model representing the response to a join meeting request"""
+
+    meeting_id: uuid.UUID
+
+
 # DATA TO FRONTEND
 # Includes
 # - Questions

@@ -7,7 +7,13 @@ from pydantic import ValidationError
 from src.auth.exceptions import InvalidTokenError
 from src.exceptions import DatabaseError
 from src.meeting.exceptions import MeetingNotFoundError, MeetingNotLiveError
-from src.meeting.schemas import JoinMeetingPayload, MeetingIn, MeetingOut, MeetingUpdate
+from src.meeting.schemas import (
+    JoinMeetingPayload,
+    JoinMeetingResponse,
+    MeetingIn,
+    MeetingOut,
+    MeetingUpdate,
+)
 from src.meeting.service import (
     handle_create_meeting,
     handle_delete_meeting,
@@ -40,16 +46,19 @@ meeting_public_router = APIRouter(
 logger = logging.getLogger(__name__)
 
 
-@meeting_public_router.post("/join", status_code=status.HTTP_200_OK)
+@meeting_public_router.post(
+    "/join", response_model=JoinMeetingResponse, status_code=status.HTTP_200_OK
+)
 async def join_meeting(
     request: Request, response: Response, db: DB, payload: JoinMeetingPayload
 ):
     logger.debug("received join meeting payload", extra={"payload": payload})
 
     try:
-        await handle_join_meeting(
+        response_payload = await handle_join_meeting(
             db=db, request=request, response=response, payload=payload
         )
+        return response_payload
     except MeetingNotFoundError:
         return JSONResponse(
             content="resource not found", status_code=status.HTTP_404_NOT_FOUND

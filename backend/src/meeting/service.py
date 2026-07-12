@@ -30,6 +30,7 @@ from src.meeting.repository import (
 )
 from src.meeting.schemas import (
     JoinMeetingPayload,
+    JoinMeetingResponse,
     MeetingIn,
     MeetingOut,
     MeetingUpdate,
@@ -59,7 +60,7 @@ settings = get_settings()
 
 async def handle_join_meeting(
     db: AsyncSession, request: Request, response: Response, payload: JoinMeetingPayload
-) -> None:
+) -> JoinMeetingResponse:
     """Handle a participant joining a meeting.
 
     Args:
@@ -73,7 +74,8 @@ async def handle_join_meeting(
         MeetingNotLiveError: If the meeting is not currently live.
 
     Returns:
-        None. The function sets a cookie on the response for participant access.
+        A join meeting payload. The function also sets a cookie
+        on the response for participant access.
     """
     meeting = await get_meeting_lazy(db=db, code=payload.code)
     if meeting is None:
@@ -103,7 +105,7 @@ async def handle_join_meeting(
         max_age=meeting.duration,
         path="/api/v1/meetings",
     )
-    return
+    return JoinMeetingResponse(meeting_id=meeting.id)
 
 
 async def handle_leave_meeting(response: Response, m_id: uuid.UUID) -> None:
