@@ -54,7 +54,7 @@
         rank_2: number;
         rank_3: number | null;
         rank_4: number | null;
-    }>({ rank_1: 1, rank_2: 2, rank_3: null, rank_4: null });
+    }>({ rank_1: 1, rank_2: 2, rank_3: 3, rank_4: 4 });
     let ratingValue = $state<number>(0);
     let yesNoValue = $state<boolean | null>(null);
 
@@ -73,7 +73,7 @@
     function resetAnswerState() {
         mcSelected = [];
         longAnswerText = '';
-        rankedRanks = { rank_1: 1, rank_2: 2, rank_3: null, rank_4: null };
+        rankedRanks = { rank_1: 1, rank_2: 2, rank_3: 3, rank_4: 4 };
         ratingValue = 0;
         yesNoValue = null;
     }
@@ -412,7 +412,8 @@
                                     >{item}</span
                                 >
                                 <select
-                                    class="h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary/40"
+                                    class="h-9 rounded-lg border border-border bg-background py-2 pl-3 pr-8 text-sm text-foreground outline-none focus:border-primary/40 appearance-none bg-no-repeat"
+                                    style="background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E'); background-position: right 0.5rem center; background-size: 1rem;"
                                     value={i === 0
                                         ? rankedRanks.rank_1
                                         : i === 1
@@ -421,13 +422,39 @@
                                             ? (rankedRanks.rank_3 ?? '')
                                             : (rankedRanks.rank_4 ?? '')}
                                     onchange={(e) => {
-                                        const val = e.currentTarget.value
+                                        const newVal = e.currentTarget.value
                                             ? parseInt(e.currentTarget.value)
                                             : null;
-                                        if (i === 0) rankedRanks.rank_1 = val!;
-                                        else if (i === 1) rankedRanks.rank_2 = val!;
-                                        else if (i === 2) rankedRanks.rank_3 = val;
-                                        else rankedRanks.rank_4 = val;
+                                        const oldVal =
+                                            i === 0
+                                                ? rankedRanks.rank_1
+                                                : i === 1
+                                                  ? rankedRanks.rank_2
+                                                  : i === 2
+                                                    ? rankedRanks.rank_3
+                                                    : rankedRanks.rank_4;
+                                        // Prevent duplicate ranks: if another item already
+                                        // has this rank, swap values.
+                                        if (newVal !== null && oldVal !== null) {
+                                            const conflictIdx = [
+                                                rankedRanks.rank_1,
+                                                rankedRanks.rank_2,
+                                                rankedRanks.rank_3,
+                                                rankedRanks.rank_4,
+                                            ].findIndex((r, idx) => idx !== i && r === newVal);
+                                            if (conflictIdx !== -1) {
+                                                if (conflictIdx === 0) rankedRanks.rank_1 = oldVal;
+                                                else if (conflictIdx === 1)
+                                                    rankedRanks.rank_2 = oldVal;
+                                                else if (conflictIdx === 2)
+                                                    rankedRanks.rank_3 = oldVal;
+                                                else rankedRanks.rank_4 = oldVal;
+                                            }
+                                        }
+                                        if (i === 0) rankedRanks.rank_1 = newVal!;
+                                        else if (i === 1) rankedRanks.rank_2 = newVal!;
+                                        else if (i === 2) rankedRanks.rank_3 = newVal;
+                                        else rankedRanks.rank_4 = newVal;
                                     }}
                                 >
                                     <option value="">-</option>

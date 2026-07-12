@@ -111,9 +111,12 @@
 
     let rankedFirst = $derived.by(() => {
         if (question.type !== 'ranked_voting') return [];
-        const counts: number[] = [];
+        const counts: number[] = [0, 0, 0, 0];
         for (const r of responses as RankedVotingResponseOut[]) {
-            counts[r.rank_1] = (counts[r.rank_1] ?? 0) + 1;
+            if (r.rank_1 === 1) counts[0]++;
+            if (r.rank_2 === 1) counts[1]++;
+            if (r.rank_3 === 1) counts[2]++;
+            if (r.rank_4 === 1) counts[3]++;
         }
         return counts;
     });
