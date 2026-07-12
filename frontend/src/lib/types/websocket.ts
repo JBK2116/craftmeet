@@ -91,7 +91,7 @@ interface PayloadMap {
     [MessageTypes.CURRENT_QUESTION]: CurrentQuestionPayload;
     [MessageTypes.RESPONSE_RECEIVED]: ResponseReceivedPayload;
     [MessageTypes.REVEAL]: RevealMeetingPayload;
-    [MessageTypes.PARTICIPANT_CONNECTED]: ParticipantConnectedPayload;
+    [MessageTypes.PARTICIPANT_CONNECTED]: Participant;
     [MessageTypes.PARTICIPANT_DISCONNECTED]: ParticipantDisconnectedPayload;
     [MessageTypes.PARTICIPANT_STATE]: Participant;
     [MessageTypes.HOST_DISCONNECTED]: undefined;

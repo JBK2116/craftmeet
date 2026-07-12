@@ -233,7 +233,9 @@ class LiveRoom:
                 self.host.send_json(
                     {
                         "type": OutboundMessageTypes.PARTICIPANT_CONNECTED,
-                        "payload": payload.model_dump(mode="json"),
+                        "payload": self.participants[p_id].participant.model_dump(
+                            mode="json"
+                        ),
                     }
                 )
             )
@@ -304,9 +306,17 @@ class LiveRoom:
                 self.host.send_json(
                     {
                         "type": OutboundMessageTypes.RESPONSE_RECEIVED,
-                        "payload": payload.response.model_dump(mode="json"),
+                        "payload": payload.model_dump(mode="json"),
                     }
                 )
+            )
+            logger.debug(
+                "response forwarded to host",
+                extra={
+                    "room_id": str(self.room_id),
+                    "participant_id": str(payload.response.participant_id),
+                    "question_id": str(payload.response.question_id),
+                },
             )
 
     async def reveal(self) -> None:
