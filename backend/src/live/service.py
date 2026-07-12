@@ -27,18 +27,26 @@ class LiveService:
             uuid.UUID, list[ResponseIn]
         ] = {}  # A dictionary mapping participant UUIDs to their list of responses
 
+    async def host_connected(self):
+        """Mark the meeting as live when the host first connects (opens the host page)."""
+        async with AsyncSessionLocal() as db:
+            await db.begin()
+            await update_meeting(
+                db=db, m_id=self.meeting_id, status=MeetingStatus.LIVE
+            )
+            await update_user(db=db, u_id=self.host_id, live_meeting=True)
+            await db.commit()
+        logger.debug(
+            "host connected, meeting set to live",
+            extra={"meeting_id": str(self.meeting_id), "host_id": str(self.host_id)},
+        )
+
     async def start_meeting(self):
-        """Start a meeting"""
+        """Start the meeting — sets the started_at timestamp and begins the timer."""
         now = datetime.datetime.now(tz=datetime.UTC)
         async with AsyncSessionLocal() as db:
             await db.begin()
-            started_at = now
-            live_meeting = True
-            status = MeetingStatus.LIVE
-            await update_meeting(
-                db=db, m_id=self.meeting_id, started_at=started_at, status=status
-            )
-            await update_user(db=db, u_id=self.host_id, live_meeting=live_meeting)
+            await update_meeting(db=db, m_id=self.meeting_id, started_at=now)
             await db.commit()
         logger.debug(
             "meeting started in service layer",
@@ -47,15 +55,13 @@ class LiveService:
         return
 
     async def end_meeting(self):
-        """End a meeting that was terminated manually"""
+        """End a meeting that was terminated manually."""
         async with AsyncSessionLocal() as db:
             await db.begin()
-            live_meeting = False
-            status = (
-                MeetingStatus.DRAFT
-            )  # TODO: change this to live once participant handling is implemented
-            await update_meeting(db=db, m_id=self.meeting_id, status=status)
-            await update_user(db=db, u_id=self.host_id, live_meeting=live_meeting)
+            await update_meeting(
+                db=db, m_id=self.meeting_id, status=MeetingStatus.COMPLETED
+            )
+            await update_user(db=db, u_id=self.host_id, live_meeting=False)
             await db.commit()
         logger.debug(
             "meeting ended in service layer",
@@ -66,16 +72,16 @@ class LiveService:
         )
 
     async def end_stale_meeting(self):
-        """End a meeting that was terminated automatically due to host inactivity"""
+        """End a meeting that was terminated automatically due to host inactivity."""
         async with AsyncSessionLocal() as db:
             await db.begin()
-            started_at = None
-            live_meeting = False
-            status = MeetingStatus.DRAFT
             await update_meeting(
-                db=db, m_id=self.meeting_id, started_at=started_at, status=status
+                db=db,
+                m_id=self.meeting_id,
+                started_at=None,
+                status=MeetingStatus.COMPLETED,
             )
-            await update_user(db=db, u_id=self.host_id, live_meeting=live_meeting)
+            await update_user(db=db, u_id=self.host_id, live_meeting=False)
             await db.commit()
         logger.debug(
             "stale meeting ended in service layer",

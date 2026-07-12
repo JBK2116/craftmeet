@@ -100,6 +100,7 @@ class LiveManager:
                 self.__rooms[meeting_id] = LiveRoom(
                     room_id=meeting_id, host=websocket, on_destroy=_destroy_room
                 )
+                await self.__rooms[meeting_id].service.host_connected()
                 logger.debug(
                     "host websocket connected to new meeting room",
                     extra={
