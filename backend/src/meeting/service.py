@@ -3,8 +3,6 @@
 This module provides meeting-related services and utilities for the application
 including meeting creation, initialization and live logic.
 """
-from src.constants import PARTICIPANT_COOKIE_BUFFER_SECONDs
-
 import logging
 import uuid
 
@@ -17,6 +15,7 @@ from src.auth.token import (
     generate_participants_meeting_access_token,
 )
 from src.config import get_settings
+from src.constants import PARTICIPANT_COOKIE_BUFFER_SECONDS
 from src.meeting.exceptions import MeetingNotFoundError, MeetingNotLiveError
 from src.meeting.repository import (
     delete_meeting,
@@ -93,7 +92,7 @@ async def handle_join_meeting(
             p_id = uuid.UUID(claims["participant_id"])
         except InvalidTokenError:
             pass  # token is invalid/corrupted, fall through to new id
-    duration_seconds = meeting.duration * 60 + PARTICIPANT_COOKIE_BUFFER_SECONDs
+    duration_seconds = meeting.duration * 60 + PARTICIPANT_COOKIE_BUFFER_SECONDS
     token = generate_participants_meeting_access_token(
         duration=duration_seconds, m_id=meeting.id, p_id=p_id
     )

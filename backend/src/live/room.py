@@ -304,7 +304,7 @@ class LiveRoom:
                 self.host.send_json(
                     {
                         "type": OutboundMessageTypes.RESPONSE_RECEIVED,
-                        "payload": payload.response,
+                        "payload": payload.response.model_dump(mode="json"),
                     }
                 )
             )
@@ -322,7 +322,10 @@ class LiveRoom:
         )
         await self._broadcast(
             task=_send_message,
-            message={"type": OutboundMessageTypes.REVEAL, "payload": payload},
+            message={
+                "type": OutboundMessageTypes.REVEAL,
+                "payload": payload.model_dump(mode="json"),
+            },
         )
 
     async def _broadcast(
