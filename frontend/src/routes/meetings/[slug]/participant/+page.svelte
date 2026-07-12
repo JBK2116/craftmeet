@@ -222,14 +222,21 @@
                 const p = msg.payload as Participant;
                 participantId = p.id;
                 username = p.username;
-                if (phase === 'connecting') phase = 'waiting';
+                hasAnswered = p.has_answered;
+                if (phase === 'connecting') {
+                    phase = 'waiting';
+                } else if (phase === 'question' && hasAnswered) {
+                    phase = 'answered';
+                }
                 break;
             }
             case MessageTypes.CURRENT_QUESTION: {
                 const payload = msg.payload as CurrentQuestionPayload;
                 currentQuestion = payload.question;
-                resetAnswerState();
-                phase = 'question';
+                // Don't reset answer state — CURRENT_QUESTION is only sent on
+                // connect/reconnect (not a new question). PARTICIPANT_STATE
+                // (sent alongside) provides the authoritative has_answered value.
+                phase = hasAnswered ? 'answered' : 'question';
                 break;
             }
             case MessageTypes.MEETING_STARTED: {
@@ -357,11 +364,24 @@
         }
 
         void connectWs();
+
+        // only clear the cookie on actual tab/window close and not on
+        // client-side navigations so the participant can reconnect.
+        function handleBeforeUnload() {
+            navigator.sendBeacon(
+                `/api/v1/meetings/${page.params.slug}/leave`,
+                new Blob([], { type: 'application/json' }),
+            );
+        }
+        addEventListener('beforeunload', handleBeforeUnload);
+        addEventListener('pagehide', handleBeforeUnload);
+
         return () => {
             destroyed = true;
             ws?.close();
             wsConnected = false;
-            leaveMeeting();
+            removeEventListener('beforeunload', handleBeforeUnload);
+            removeEventListener('pagehide', handleBeforeUnload);
         };
     });
 </script>
@@ -777,7 +797,7 @@
             </div>
             <h2 class="mb-2 text-xl font-semibold text-[var(--text-heading)]">Host Disconnected</h2>
             <p class="text-sm text-muted-foreground">
-                The host has temporarily left. Please wait — you'll rejoin automatically when they
+                The host has temporarily left. Please wait and you'll rejoin automatically when they
                 return.
             </p>
         </div>

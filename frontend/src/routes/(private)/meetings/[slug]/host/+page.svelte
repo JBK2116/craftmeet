@@ -66,6 +66,7 @@
     let wsSuccessTimeout: ReturnType<typeof setTimeout> | null = null;
     let destroyed = false;
     let pendingEnd = $state(false);
+    let endingMeeting = $state(false);
     let isRevealed = $state(false);
 
     // derived: status array for HostQuestion progress dots
@@ -134,9 +135,14 @@
 
     function confirmEndMeeting() {
         pendingEnd = false;
+        endingMeeting = true;
         const payload = JSON.stringify({ type: MessageTypes.MEETING_ENDED });
         ws?.send(payload);
-        goto(`/meetings/${page.params.slug}`, { replaceState: true });
+        // small delay to let the backend finish post-meeting processing
+        // (DB status update, user state, room cleanup) before navigating.
+        setTimeout(() => {
+            goto(`/meetings/${page.params.slug}`, { replaceState: true });
+        }, 3000);
     }
 
     function cancelEndMeeting() {
@@ -478,7 +484,18 @@
     </div>
 {/if}
 
-{#if pendingEnd}
+{#if endingMeeting}
+    <div
+        class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm"
+    >
+        <div class="flex flex-col items-center gap-4">
+            <div
+                class="h-8 w-8 rounded-full border-2 border-muted border-t-primary animate-spin"
+            ></div>
+            <p class="text-sm text-muted-foreground">Ending meeting…</p>
+        </div>
+    </div>
+{:else if pendingEnd}
     <!-- End Meeting confirmation overlay -->
     <div
         class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
