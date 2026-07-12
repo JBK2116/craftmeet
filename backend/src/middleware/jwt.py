@@ -21,7 +21,7 @@ from fastapi import (
     WebSocketException,
     status,
 )
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.exceptions import InvalidTokenError as AuthInvalidTokenError
@@ -166,7 +166,11 @@ async def get_current_participant_websocket(
         p_id = uuid.UUID(claims["participant_id"])
         m_id = uuid.UUID(claims["meeting_id"])
         stmt = select(Meeting.id).where(
-            Meeting.id == m_id, Meeting.status == MeetingStatus.LIVE
+            Meeting.id == m_id,
+            or_(
+                Meeting.status == MeetingStatus.DRAFT,
+                Meeting.status == MeetingStatus.LIVE,
+            ),
         )
         async with AsyncSessionLocal() as session:
             result = await session.execute(stmt)

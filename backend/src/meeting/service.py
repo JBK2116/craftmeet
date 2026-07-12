@@ -80,7 +80,7 @@ async def handle_join_meeting(
     meeting = await get_meeting_lazy(db=db, code=payload.code)
     if meeting is None:
         raise MeetingNotFoundError
-    if meeting.status != MeetingStatus.LIVE:
+    if meeting.status not in (MeetingStatus.DRAFT, MeetingStatus.LIVE):
         raise MeetingNotLiveError
     key = generate_participants_meeting_access_token_key(m_id=str(meeting.id))
     existing = request.cookies.get(key, None)
