@@ -320,7 +320,7 @@ def generate_participants_meeting_access_token(
         "iat": now,
         "type": "access",
         "iss": settings.DOMAIN,
-        "jti": u_id,
+        "jti": str(u_id),
     }
     token_hash = jwt.encode(
         payload=payload, key=settings.JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
