@@ -95,6 +95,7 @@ class LiveRoom:
     async def start_meeting(self, payload: MeetingStartedPayload) -> None:
         """Send the start meeting signal to all connected participants."""
         self.service.current_question = payload.question
+        self.service.total_questions_asked += 1
         await self.service.start_meeting()
         await self.start_meeting_timer()
         logger.debug(
@@ -115,6 +116,7 @@ class LiveRoom:
     async def next_question(self, payload: NextQuestionPayload) -> None:
         """Send the next meeting question to all connected participants."""
         self.service.current_question = payload.question
+        self.service.total_questions_asked += 1
         for p in self.participants.values():
             p.participant.has_answered = False
         logger.debug(
@@ -150,7 +152,7 @@ class LiveRoom:
             and self.meeting_timer is not asyncio.current_task()
         ):
             self.meeting_timer.cancel()
-        await self.service.end_meeting()
+        await self.service.end_meeting(total_participants=len(self.participants))
         logger.debug(
             "meeting ended in room",
             extra={"room_id": str(self.room_id)},
