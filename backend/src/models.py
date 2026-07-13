@@ -4,8 +4,8 @@ Defines the declarative base and all database models shared across the
 application.
 """
 
+import datetime
 import uuid
-from datetime import datetime
 
 from sqlalchemy import (
     ARRAY,
@@ -47,10 +47,10 @@ class BaseClass(AsyncAttrs, Base):
 
     __abstract__ = True
 
-    created_at: Mapped[datetime] = mapped_column(
+    created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    updated_at: Mapped[datetime] = mapped_column(
+    updated_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
@@ -79,6 +79,14 @@ class User(BaseClass):
     )
     # Flag indicating if user is currently in a live meeting
     live_meeting: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Integer indicating the curent year to track meetings e.g 2026
+    current_year: Mapped[int] = mapped_column(
+        Integer, default=lambda: datetime.datetime.now(tz=datetime.UTC).year
+    )
+    # Integer indicating the current month to track meetings for [1-12]
+    current_month: Mapped[int] = mapped_column(
+        Integer, default=lambda: datetime.datetime.now().month
+    )
     # Total number of meetings held in the current month
     total_meetings_month: Mapped[int] = mapped_column(Integer, default=0)
     # Total number of meetings held by the user
@@ -96,7 +104,7 @@ class User(BaseClass):
     )
     # Account Verification Status
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
-    verified_at: Mapped[datetime | None] = mapped_column(
+    verified_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
 
@@ -130,11 +138,11 @@ class Meeting(BaseClass):
         default=MeetingStatus.DRAFT,
     )
     # Timestamp when the meeting started, null if not yet started
-    started_at: Mapped[datetime | None] = mapped_column(
+    started_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     # Timestamp when the meeting ended, null if still ongoing
-    ended_at: Mapped[datetime | None] = mapped_column(
+    ended_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     # Max meeting duration in minutes
@@ -142,7 +150,7 @@ class Meeting(BaseClass):
     # URL pointing to the generated PDF export of the meeting (NULL meaning it hasn't been exported yet)
     pdf_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     # Timestamp of the most recent PDF export
-    last_exported_at: Mapped[datetime | None] = mapped_column(
+    last_exported_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     # Maximum number of participants allowed in the meeting, enforced at join time

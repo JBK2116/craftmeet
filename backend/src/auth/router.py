@@ -37,7 +37,7 @@ from src.auth.service import (
 from src.config import get_settings
 from src.exceptions import DatabaseError
 from src.middleware.jwt import get_current_user
-from src.types import DB, ACCESS_TOKEN, ErrorTypes, REFRESH_TOKEN
+from src.types import ACCESS_TOKEN, DB, REFRESH_TOKEN, ErrorTypes
 
 settings = get_settings()
 

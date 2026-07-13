@@ -1,6 +1,7 @@
 """
 This module stores global utility functions used throughout the codebase
 """
+
 import asyncio
 
 
@@ -23,6 +24,7 @@ def set_timeout(callback, delay_seconds: float, *args, **kwargs) -> asyncio.Task
         await callback(*args, **kwargs)
 
     return asyncio.create_task(_waiter())
+
 
 def generate_participants_meeting_access_token_key(m_id: str) -> str:
     """
