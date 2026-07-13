@@ -21,7 +21,9 @@
     let isLanding = $derived(landingRoutes.includes(pathname));
     let isPublic = $derived(publicRoutes.includes(pathname));
     let isAuth = $derived(authRoutes.includes(pathname));
-    let isParticipant = $derived(pathname.startsWith('/meetings/') && pathname.endsWith('/participant'));
+    let isParticipant = $derived(
+        pathname.startsWith('/meetings/') && pathname.endsWith('/participant'),
+    );
     let isApp = $derived(!isLanding && !isAuth && !isParticipant);
 
     const landingLinks: NavLink[] = [

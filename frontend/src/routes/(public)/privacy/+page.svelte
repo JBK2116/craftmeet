@@ -98,8 +98,8 @@
             </p>
             <ul>
                 <li>
-                    Visit our website at <a href="https://craftmeet.live">https://craftmeet.live</a>,
-                    or any website of ours that links to this privacy notice.
+                    Visit our website at <a href="https://craftmeet.live">https://craftmeet.live</a
+                    >, or any website of ours that links to this privacy notice.
                 </li>
                 <li>
                     Engage with us in other related ways including any sales, marketing, or events.
@@ -346,7 +346,8 @@
                 If you are located in Canada, the EEA, or the UK, you have certain rights under
                 applicable data protection laws, including the right to request access to,
                 rectification of, or erasure of your personal information. To make such a request,
-                please contact us at <a href="mailto:support@craftmeet.live">support@craftmeet.live</a
+                please contact us at <a href="mailto:support@craftmeet.live"
+                    >support@craftmeet.live</a
                 >. We will respond to all legitimate requests within 30 days. Occasionally it may
                 take us longer if your request is particularly complex or you have made a number of
                 requests, in which case we will notify you and keep you updated.
@@ -356,13 +357,13 @@
             <p>
                 If you have questions or comments about this notice, or wish to exercise any of your
                 privacy rights, you may contact our Privacy Officer by email at
-                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a>. We will respond to
-                all requests within 30 days.
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a>. We will respond
+                to all requests within 30 days.
             </p>
             <address class="not-italic text-muted-foreground">
                 <strong>Craftmeet</strong><br />
-                Privacy Officer: <a href="mailto:support@craftmeet.live">support@craftmeet.live</a><br
-                />
+                Privacy Officer:
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a><br />
                 United States (DigitalOcean NYC)
             </address>
         </article>

@@ -6,11 +6,7 @@
         open,
         participants,
         onclose,
-    }: {
-        open: boolean;
-        participants: Participant[];
-        onclose: () => void;
-    } = $props();
+    }: { open: boolean; participants: Participant[]; onclose: () => void } = $props();
 
     function handleBackdropClick(e: MouseEvent) {
         if (e.target === e.currentTarget) onclose();
@@ -34,7 +30,9 @@
         aria-label="Participants"
     >
         <!-- Modal panel -->
-        <div class="w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+        <div
+            class="w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+        >
             <!-- Header -->
             <div class="flex items-center justify-between border-b border-border px-5 py-4">
                 <div class="flex items-center gap-2">
@@ -84,7 +82,9 @@
                                         : 'text-muted-foreground'}"
                                 >
                                     <span
-                                        class="h-2 w-2 rounded-full {p.connected ? 'bg-green-500' : 'bg-muted-foreground/30'}"
+                                        class="h-2 w-2 rounded-full {p.connected
+                                            ? 'bg-green-500'
+                                            : 'bg-muted-foreground/30'}"
                                     ></span>
                                     {p.connected ? 'Online' : 'Offline'}
                                 </span>

@@ -19,8 +19,8 @@
                 Free With No Catch.
             </h1>
             <p class="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-                Craftmeet is free while we build. No credit card required, no seat limits, no paywalled
-                features.
+                Craftmeet is free while we build. No credit card required, no seat limits, no
+                paywalled features.
             </p>
         </div>
 

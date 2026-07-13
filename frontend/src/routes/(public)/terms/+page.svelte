@@ -181,8 +181,8 @@
                 password to access the Services. You are responsible for maintaining the
                 confidentiality of your account and for all activity that occurs under it. You agree
                 to notify us immediately at
-                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a> if you suspect any unauthorized
-                access to your account.
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a> if you suspect any
+                unauthorized access to your account.
             </p>
             <p>
                 Participants joining a live session do not require an account. A temporary session
@@ -235,8 +235,8 @@
                 All sales are final. We do not offer refunds for any subscription fees paid,
                 including for unused portions of a billing cycle following cancellation. If you
                 believe a charge was made in error, please contact us at
-                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a> and we will review your
-                case.
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a> and we will review
+                your case.
             </p>
 
             <h2 id="prohibited-activities">8. Prohibited Activities</h2>
@@ -522,13 +522,13 @@
             <h2 id="contact">26. Contact Us</h2>
             <p>
                 If you have questions, concerns, or complaints about these Terms, please contact us
-                at <a href="mailto:support@craftmeet.live">support@craftmeet.live</a>. We will respond
-                within 30 days.
+                at <a href="mailto:support@craftmeet.live">support@craftmeet.live</a>. We will
+                respond within 30 days.
             </p>
             <address class="not-italic text-muted-foreground">
                 <strong class="text-primary">Craftmeet</strong><br />
-                Legal inquiries: <a href="mailto:support@craftmeet.live">support@craftmeet.live</a><br
-                />
+                Legal inquiries:
+                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a><br />
                 United States (DigitalOcean NYC)
             </address>
         </article>
