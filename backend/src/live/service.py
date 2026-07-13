@@ -11,6 +11,7 @@ from src.meeting.repository import (
     get_meeting_duration,
     get_meeting_lazy,
     get_meeting_participant_cap,
+    get_stat,
     update_meeting,
 )
 from src.meeting.schemas import QuestionOut, ResponseIn
@@ -215,8 +216,12 @@ class LiveService:
     async def __save_stats(self, db: AsyncSession, total_participants: int) -> None:
         """Save meeting statistics to the database.
 
+        Creates or updates a Stat record for the current meeting.
+        The stats include participant count, questions asked, responses received,
+        average response rate, and meeting duration.
+
         Args:
-            db: The async database session.
+            db: The async database session used for persistence.
             total_participants: The total number of participants in the meeting.
 
         Returns:
@@ -227,19 +232,26 @@ class LiveService:
         total_questions_asked = self.total_questions_asked
         total_responses_received = sum(len(v) for v in self.responses.values())
         average_response_rate = float(
-            total_responses_received / total_participants if total_participants else 0
+            total_responses_received / total_participants if total_participants else 0.0
         )
-        duration_seconds = (now - self.started_at).total_seconds()
-        obj = Stat(
-            meeting_id=self.meeting_id,
-            total_participants=total_participants,
-            total_questions_asked=total_questions_asked,
-            total_responses_received=total_responses_received,
-            average_response_rate=average_response_rate,
-            duration_seconds=duration_seconds,
-        )
-
-        db.add(obj)
+        duration_seconds = int((now - self.started_at).total_seconds())
+        stat = await get_stat(db=db, m_id=self.meeting_id)
+        if stat is None:
+            stat = Stat(
+                meeting_id=self.meeting_id,
+                total_participants=total_participants,
+                total_questions_asked=total_questions_asked,
+                total_responses_received=total_responses_received,
+                average_response_rate=average_response_rate,
+                duration_seconds=duration_seconds,
+            )
+        else:
+            stat.total_participants = total_participants
+            stat.total_questions_asked = total_questions_asked
+            stat.total_responses_received = total_responses_received
+            stat.average_response_rate = average_response_rate
+            stat.duration_seconds = duration_seconds
+        db.add(stat)
         await db.flush()
         logger.info(
             "meeting stats saved",

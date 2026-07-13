@@ -54,6 +54,7 @@ class LiveRoom:
             None  # timer to auto terminate meeting
         )
         self._on_destroy = on_destroy
+        self._ended = False
 
     async def reconnect_host(self, ws: WebSocket) -> None:
         """Reconnect the host to the current meeting"""
@@ -147,6 +148,9 @@ class LiveRoom:
 
     async def end_meeting(self) -> None:
         """End a meeting and close all connected participant websockets"""
+        if self._ended:
+            return
+        self._ended = True
         if (
             self.meeting_timer is not None
             and self.meeting_timer is not asyncio.current_task()

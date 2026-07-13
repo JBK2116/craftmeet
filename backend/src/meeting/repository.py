@@ -291,6 +291,39 @@ async def get_meeting_lazy(
         raise DatabaseError("database error occurred") from e
 
 
+async def get_stat(
+    db: AsyncSession, m_id: uuid.UUID | None = None, s_id: uuid.UUID | None = None
+) -> Stat | None:
+    """
+    Retrieve a Stat record by meeting_id (m_id) or by its own id (s_id).
+
+    Args:
+        db: The async database session.
+        m_id: UUID of the meeting to look up stats for.
+        s_id: UUID of the stat record.
+
+    Returns:
+        The Stat object if found, otherwise None.
+
+    Raises:
+        DatabaseError: If a SQLAlchemy error occurs.
+    """
+    try:
+        if m_id:
+            stmt = select(Stat).where(Stat.meeting_id == m_id)
+        elif s_id:
+            stmt = select(Stat).where(Stat.id == s_id)
+        else:
+            return None
+        result = await db.execute(stmt)
+        stat = result.scalar_one_or_none()
+        logger.debug(f"get_stat: m_id={m_id}, s_id={s_id}, found={stat is not None}")
+        return stat
+    except SQLAlchemyError as e:
+        logger.error(f"get_stat: database error for m_id={m_id}, s_id={s_id}: {e}")
+        raise DatabaseError("database error occurred") from e
+
+
 async def get_meeting_duration(db: AsyncSession, m_id: uuid.UUID) -> int:
     """
     Retrieve the duration of a meeting by its unique identifier.
