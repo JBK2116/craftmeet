@@ -346,8 +346,8 @@
         </div>
         <h1 class="mb-2 text-2xl font-bold text-[var(--text-heading)]">Meeting is Live</h1>
         <p class="mb-2 text-sm text-muted-foreground">
-            &ldquo;{meeting.title}&rdquo; is currently running. You are already hosting it in another
-            tab.
+            &ldquo;{meeting.title}&rdquo; is currently running. You are already hosting it in
+            another tab.
         </p>
         <p class="mb-8 text-sm text-muted-foreground">
             Return to your host tab to continue managing the session.
@@ -383,6 +383,12 @@
                 class="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
             >
                 Back to Dashboard
+            </button>
+            <button
+                onclick={() => goto(`/meetings/${meeting.id}/summary`)}
+                class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+                View Summary
             </button>
         </div>
     </div>
