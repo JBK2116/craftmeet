@@ -1,10 +1,8 @@
 import { apiFetch } from '$lib/api/auth';
-import { user } from '$lib/stores/stores';
 import { AuthError } from '$lib/types/errors';
 import type { MeetingIn } from '$lib/types/meeting';
 import type { PageMeta } from '$lib/types/meta';
 import { error, redirect } from '@sveltejs/kit';
-import { get } from 'svelte/store';
 
 import type { PageLoad } from './$types';
 
@@ -24,9 +22,6 @@ export const load: PageLoad = async ({ fetch, params }) => {
     } catch (err: any) {
         if (err instanceof AuthError) throw redirect(302, '/login');
         throw err;
-    }
-    if (meeting.user_id !== get(user)?.id) {
-        throw error(401, 'You are not the host of this meeting');
     }
     return {
         meta: {
