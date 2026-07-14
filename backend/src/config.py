@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     IS_DEV: bool
     FRONTEND_URL: str
     BACKEND_URL: str
+    # AI
+    OPENAI_API: str
     # Logging
     LOG_LEVEL: str
     SERVICE_NAME: str
