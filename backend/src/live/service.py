@@ -37,7 +37,7 @@ class LiveService:
         )
         self.responses: dict[
             uuid.UUID, list[ResponseIn]
-        ] = {}  # A dictionary mapping participant UUIDs to their list of responses
+        ] = {}  # Sub-question ID → list of responses for that question
         self.total_questions_asked: int = 0
 
     async def host_connected(self):
@@ -124,12 +124,12 @@ class LiveService:
                 },
             )
             return
-        self.responses.setdefault(response.question_id, []).append(response)
+        self.responses.setdefault(self.current_question.sub_question.id, []).append(response)
         logger.debug(
             "response added",
             extra={
                 "meeting_id": str(self.meeting_id),
-                "question_id": str(response.question_id),
+                "sub_question_id": str(self.current_question.sub_question.id),
                 "participant_id": str(response.participant_id),
                 "type": response.type.value,
             },
@@ -139,7 +139,7 @@ class LiveService:
         """returns the responses received for the current question"""
         if self.current_question is None:
             return []
-        return self.responses.get(self.current_question.id, [])
+        return self.responses.get(self.current_question.sub_question.id, [])
 
     async def get_meeting_duration(self) -> int:
         """Get the meeting duration from the db"""

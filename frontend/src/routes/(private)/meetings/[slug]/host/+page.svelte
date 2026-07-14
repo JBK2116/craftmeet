@@ -19,7 +19,6 @@
         type NextQuestionPayload,
         type ParticipantDisconnectedPayload,
         type ResponseReceivedPayload,
-        type RevealMeetingPayload,
         type WebIn,
     } from '$lib/types/websocket';
     import { onMount, untrack } from 'svelte';
@@ -67,6 +66,7 @@
     let destroyed = false;
     let pendingEnd = $state(false);
     let endingMeeting = $state(false);
+    let endTimeout: ReturnType<typeof setTimeout> | null = null;
     let isRevealed = $state(false);
 
     // derived: status array for HostQuestion progress dots
@@ -102,10 +102,17 @@
         start = Date.now();
         meetingEndTime = new Date(Date.now() + meeting.duration * 60 * 1000);
         meetingStatus = 'question';
-        handleNextQuestion();
+        currQuestionIndex++;
+        const question = questions[currQuestionIndex];
+        // Auto-open the first question
+        if (question) {
+            question.status = 'open';
+            questionStart = Date.now();
+        }
+        isRevealed = false;
         const payload = JSON.stringify({
             type: MessageTypes.MEETING_STARTED,
-            payload: { question: currQuestion } as MeetingStartedPayload,
+            payload: { question } as MeetingStartedPayload,
         });
         ws?.send(payload);
     }
@@ -140,7 +147,7 @@
         ws?.send(payload);
         // small delay to let the backend finish post-meeting processing
         // (DB status update, user state, room cleanup) before navigating.
-        setTimeout(() => {
+        endTimeout = setTimeout(() => {
             goto(`/meetings/${page.params.slug}`, { replaceState: true });
         }, 3000);
     }
@@ -152,11 +159,7 @@
     function handleReveal() {
         if (!wsConnected || !ws) return;
         isRevealed = true;
-        const payload = JSON.stringify({
-            type: MessageTypes.REVEAL,
-            payload: { responses: currResponses } as RevealMeetingPayload,
-        });
-        ws?.send(payload);
+        ws?.send(JSON.stringify({ type: MessageTypes.REVEAL }));
     }
 
     function getWsUrl(): string {
@@ -244,7 +247,7 @@
         if (!browser) return;
         if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) return;
 
-        // Refresh the access token before opening the WebSocket so the
+        // refresh the access token before opening the WebSocket so the
         // cookie is valid when the server authenticates the connection.
         const refreshed = await refreshTokens();
         if (!refreshed) {
@@ -298,6 +301,10 @@
                 clearTimeout(wsSuccessTimeout);
                 wsSuccessTimeout = null;
             }
+            if (endTimeout) {
+                clearTimeout(endTimeout);
+                endTimeout = null;
+            }
         };
     });
 
@@ -321,7 +328,7 @@
      * @param payload - The payload with the data of the disconnecting participant
      */
     function handleParticipantDisconnected(payload: ParticipantDisconnectedPayload) {
-        let existingIndex = participants.findIndex((p) => p.id == payload.id);
+        let existingIndex = participants.findIndex((p) => p.id === payload.id);
         if (existingIndex === -1) {
             return;
         }
@@ -346,12 +353,7 @@
         responses[key].push(payload.response);
         // If currently revealing, push updated responses to participants
         if (isRevealed) {
-            ws?.send(
-                JSON.stringify({
-                    type: MessageTypes.REVEAL,
-                    payload: { responses: responses[key] } as RevealMeetingPayload,
-                }),
-            );
+            ws?.send(JSON.stringify({ type: MessageTypes.REVEAL }));
         }
     }
 
@@ -403,6 +405,17 @@
             {/if}
         </div>
         <div class="flex items-center gap-4 text-sm text-muted-foreground">
+            <button
+                class="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-mono font-medium text-primary cursor-pointer select-all"
+                title="Click to copy"
+                onclick={() => {
+                    navigator.clipboard.writeText(meeting.room_code);
+                    toast.success('Code copied');
+                }}
+            >
+                {meeting.room_code}
+            </button>
+            <span class="hidden h-4 w-px bg-border sm:block"></span>
             <button
                 onclick={() => (showParticipants = true)}
                 class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-muted"

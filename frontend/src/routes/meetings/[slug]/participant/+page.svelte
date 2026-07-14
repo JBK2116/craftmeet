@@ -365,23 +365,10 @@
 
         void connectWs();
 
-        // only clear the cookie on actual tab/window close and not on
-        // client-side navigations so the participant can reconnect.
-        function handleBeforeUnload() {
-            navigator.sendBeacon(
-                `/api/v1/meetings/${page.params.slug}/leave`,
-                new Blob([], { type: 'application/json' }),
-            );
-        }
-        addEventListener('beforeunload', handleBeforeUnload);
-        addEventListener('pagehide', handleBeforeUnload);
-
         return () => {
             destroyed = true;
             ws?.close();
             wsConnected = false;
-            removeEventListener('beforeunload', handleBeforeUnload);
-            removeEventListener('pagehide', handleBeforeUnload);
         };
     });
 </script>
