@@ -124,7 +124,9 @@ class LiveService:
                 },
             )
             return
-        self.responses.setdefault(self.current_question.sub_question.id, []).append(response)
+        self.responses.setdefault(self.current_question.sub_question.id, []).append(
+            response
+        )
         logger.debug(
             "response added",
             extra={
@@ -232,7 +234,9 @@ class LiveService:
         total_questions_asked = self.total_questions_asked
         total_responses_received = sum(len(v) for v in self.responses.values())
         average_response_rate = float(
-            total_responses_received / total_participants if total_participants else 0.0
+            total_responses_received / (total_questions_asked * total_participants)
+            if total_participants and total_questions_asked
+            else 0.0
         )
         duration_seconds = int((now - self.started_at).total_seconds())
         stat = await get_stat(db=db, m_id=self.meeting_id)

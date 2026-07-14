@@ -32,6 +32,7 @@ export function timeAgo(isoString: string): string {
  */
 export function formatDuration(startIso: string, endIso: string): string {
     const diff = Math.floor((new Date(endIso).getTime() - new Date(startIso).getTime()) / 1000);
+    if (diff < 60) return `${diff}s`;
     if (diff < 3600) return `${Math.floor(diff / 60)}m`;
     return `${Math.floor(diff / 3600)}h ${Math.floor((diff % 3600) / 60)}m`;
 }
