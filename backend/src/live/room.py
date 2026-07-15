@@ -96,6 +96,7 @@ class LiveRoom:
     async def start_meeting(self, payload: MeetingStartedPayload) -> None:
         """Send the start meeting signal to all connected participants."""
         self.service.current_question = payload.question
+        self.service.asked_questions_id.add(payload.question.id)
         self.service.total_questions_asked += 1
         await self.service.start_meeting()
         await self.start_meeting_timer()
