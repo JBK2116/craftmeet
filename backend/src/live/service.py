@@ -13,6 +13,7 @@ from src.meeting.repository import (
     get_meeting_participant_cap,
     get_stat,
     update_meeting,
+    update_question,
 )
 from src.meeting.schemas import QuestionOut, ResponseIn
 from src.models import (
@@ -23,7 +24,7 @@ from src.models import (
     Stat,
     YesNoResponse,
 )
-from src.types import MeetingStatus, QuestionType
+from src.types import MeetingStatus, QuestionStatus, QuestionType
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,9 @@ class LiveService:
         self.current_question: QuestionOut | None = (
             None  # The current question being asked, or None if no question
         )
+        self.asked_questions_id: set[uuid.UUID] = (
+            set()
+        )  # The ids of all questions asked to participants
         self.responses: dict[
             uuid.UUID, list[ResponseIn]
         ] = {}  # Sub-question ID → list of responses for that question
@@ -73,6 +77,7 @@ class LiveService:
             await self._update_meeting_user(
                 db=db, total_participants=total_participants
             )
+            await self._update_questions(db=db)
             await self.__save_stats(db=db, total_participants=total_participants)
             await self.__save_responses(db=db)
             await db.commit()
@@ -268,6 +273,21 @@ class LiveService:
                 "duration_seconds": duration_seconds,
             },
         )
+
+    async def _update_questions(self, db: AsyncSession):
+        """
+        Update the status of all asked questions to CLOSED.
+
+        This method is called after the assessment is complete to mark all
+        previously asked questions as closed in the database.
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+        """
+        logger.info(f"closing {len(self.asked_questions_id)} asked questions.")
+        for q_id in self.asked_questions_id:
+            await update_question(db=db, q_id=q_id, status=QuestionStatus.CLOSED)
+        logger.info("all asked questions have been closed.")
 
     async def _update_meeting_user(
         self, db: AsyncSession, total_participants: int

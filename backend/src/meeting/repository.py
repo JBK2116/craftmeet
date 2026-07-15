@@ -440,7 +440,7 @@ async def delete_meetings(db: AsyncSession, u_id: uuid.UUID) -> None:
 
 async def update_meeting(
     db: AsyncSession, m_id: uuid.UUID, returning: bool = False, **kwargs
-):
+) -> Meeting | None:
     """
     Update a meeting record in the database.
 
@@ -463,6 +463,7 @@ async def update_meeting(
         DatabaseError: If a database error occurs during the update.
     """
     try:
+        logger.debug("Updating meeting %s with fields: %s", m_id, kwargs)
         if returning:
             stmt = (
                 update(Meeting)
@@ -471,10 +472,43 @@ async def update_meeting(
                 .returning(Meeting)
             )
             result = await db.execute(stmt)
-            return result.scalar_one_or_none()
+            updated_meeting = result.scalar_one_or_none()
+            if updated_meeting:
+                logger.info("meeting %s updated successfully, returning object", m_id)
+            else:
+                logger.warning("meeting %s not found for update", m_id)
+            return updated_meeting
         else:
             stmt = update(Meeting).where(Meeting.id == m_id).values(**kwargs)
             await db.execute(stmt)
+            logger.info("meeting %s updated successfully", m_id)
             return
     except SQLAlchemyError as e:
+        logger.error("failed to update meeting %s: %s", m_id, e)
+        raise DatabaseError from e
+
+
+async def update_question(db: AsyncSession, q_id: uuid.UUID, **kwargs) -> None:
+    """
+    Update a question by its ID with the provided keyword arguments.
+
+    Args:
+        db: The asynchronous database session.
+        q_id: The UUID of the question to update.
+        **kwargs: The fields and values to update on the question.
+
+    Raises:
+        DatabaseError: If a database error occurs during the update.
+
+    Returns:
+        None
+    """
+    try:
+        logger.info("updating question with ID %s", q_id)
+        stmt = update(Question).where(Question.id == q_id).values(**kwargs)
+        await db.execute(stmt)
+        logger.info("successfully updated question with ID %s", q_id)
+        return
+    except SQLAlchemyError as e:
+        logger.error("failed to update question with ID %s: %s", q_id, str(e))
         raise DatabaseError from e

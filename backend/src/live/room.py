@@ -117,6 +117,7 @@ class LiveRoom:
     async def next_question(self, payload: NextQuestionPayload) -> None:
         """Send the next meeting question to all connected participants."""
         self.service.current_question = payload.question
+        self.service.asked_questions_id.add(payload.question.id)
         self.service.total_questions_asked += 1
         for p in self.participants.values():
             p.participant.has_answered = False
