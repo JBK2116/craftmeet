@@ -2,7 +2,7 @@
     import { Button } from '$lib/components/ui/button';
     import type { MeetingIn } from '$lib/types/meeting';
     import { timeAgo } from '$lib/utils/time';
-    import { ArrowRight, Users } from '@lucide/svelte';
+    import { ArrowRight } from '@lucide/svelte';
 
     // current live meeting
     const { meeting }: { meeting: MeetingIn } = $props();
@@ -33,10 +33,6 @@
         <!-- Meeting Details -->
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span class="text-room-code">{meeting.room_code}</span>
-            <span class="flex items-center gap-1.5 text-meta">
-                <Users class="h-4 w-4" />
-                {meeting.stats.total_participants ?? 0} participants
-            </span>
             {#if meeting.started_at}
                 <span class="text-meta">Started {timeAgo(meeting.started_at)}</span>
             {/if}

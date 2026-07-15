@@ -8,16 +8,12 @@
     const { meetings }: { meetings: MeetingIn[] } = $props();
 
     // filter based on meeting status type
-    type Tab = 'Upcoming' | 'Drafts' | 'Completed';
-    const tabs: Tab[] = ['Upcoming', 'Drafts', 'Completed'];
-    const tabStatus: Record<Tab, MeetingIn['status']> = {
-        Upcoming: 'live',
-        Drafts: 'draft',
-        Completed: 'completed',
-    };
+    type Tab = 'Drafts' | 'Completed';
+    const tabs: Tab[] = ['Drafts', 'Completed'];
+    const tabStatus: Record<Tab, MeetingIn['status']> = { Drafts: 'draft', Completed: 'completed' };
 
     // current filter type
-    let activeTab = $state<Tab>('Upcoming');
+    let activeTab = $state<Tab>('Drafts');
 
     const filtered = $derived(meetings.filter((m) => m.status === tabStatus[activeTab]));
 </script>
@@ -54,10 +50,6 @@
                         <th
                             class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"
                             >Questions</th
-                        >
-                        <th
-                            class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"
-                            >Participants</th
                         >
                         <th
                             class="hidden px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase md:table-cell"

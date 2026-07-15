@@ -29,19 +29,6 @@
         {meeting.total_questions} questions
     </td>
 
-    <!-- Participant Count -->
-    <td class="hidden px-3 py-2.5 align-middle text-xs text-muted-foreground md:table-cell">
-        {#if meeting.status === 'completed'}
-            {meeting.participant_cap ?? 0} joined
-        {:else if meeting.status === 'live'}
-            <span class="inline-flex items-center gap-1.5">
-                <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500"></span>
-                {meeting.participant_cap ?? 0} live
-            </span>
-        {:else}
-            --
-        {/if}
-    </td>
 
     <!-- Created At -->
     <td class="hidden px-3 py-2.5 align-middle text-xs text-muted-foreground md:table-cell">

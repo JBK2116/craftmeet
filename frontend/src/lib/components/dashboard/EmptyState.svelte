@@ -1,19 +1,13 @@
 <script lang="ts">
     import { Button } from '$lib/components/ui/button';
-    import { CircleCheck, FilePen, Video } from '@lucide/svelte';
+    import { CircleCheck, FilePen } from '@lucide/svelte';
 
     // table filter types
-    const { tab }: { tab: 'Upcoming' | 'Drafts' | 'Completed' } = $props();
+    const { tab }: { tab: 'Drafts' | 'Completed' } = $props();
 
     // empty content placeholders
     const content = $derived(
         {
-            Upcoming: {
-                icon: Video,
-                heading: 'No live meetings',
-                subtext: 'Launch a draft or create a new meeting to get started.',
-                cta: true,
-            },
             Drafts: {
                 icon: FilePen,
                 heading: 'No drafts yet',
