@@ -336,3 +336,6 @@ http-client.private.env.json
 
 # AI Agents
 AGENTS.md
+
+# PDF Storage
+storage

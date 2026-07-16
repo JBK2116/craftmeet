@@ -17,6 +17,7 @@ from src.live.router import websocket_router
 from src.logging_config import get_logger, setup_logging
 from src.meeting.router import meeting_public_router, meeting_router
 from src.middleware.request_logging import RequestLoggingMiddleware
+from src.summary.router import summary_router
 
 # initialise settings
 settings = get_settings()
@@ -94,3 +95,4 @@ app.include_router(auth_router)
 app.include_router(websocket_router)
 app.include_router(meeting_router)
 app.include_router(meeting_public_router)
+app.include_router(summary_router)
