@@ -1,5 +1,5 @@
 import { user } from '$lib/stores/stores';
-import { AuthError } from '$lib/types/errors';
+import { AuthError, RateLimitedError } from '$lib/types/errors';
 
 /**
  * Refreshes the authentication tokens by making a POST request to the refresh endpoint.
@@ -65,6 +65,9 @@ export async function apiFetch(
             }
             res = await fetch(url, opts);
             return res;
+        }
+        if (res.status === 429) {
+            throw new RateLimitedError();
         }
         return res;
     } catch (err: any) {

@@ -23,3 +23,9 @@ export class AuthError extends Error {
         super('AUTH_FAILED');
     }
 }
+
+export class RateLimitedError extends Error {
+    constructor() {
+        super('You are being rate limited. Please slow down and try again shortly.');
+    }
+}

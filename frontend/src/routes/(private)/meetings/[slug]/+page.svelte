@@ -3,7 +3,7 @@
     import { apiFetch } from '$lib/api/auth';
     import MeetingSetup from '$lib/components/create/MeetingSetup.svelte';
     import QuestionCard from '$lib/components/create/QuestionCard.svelte';
-    import { AuthError, ErrorTypes } from '$lib/types/errors';
+    import { AuthError, ErrorTypes, RateLimitedError } from '$lib/types/errors';
     import type { MeetingIn, MeetingUpdate } from '$lib/types/meeting';
     import type { QuestionTypes, QuestionUpdate } from '$lib/types/question';
     import { MAX_QUESTION_CAP } from '$lib/utils/constants';
@@ -180,6 +180,10 @@
             if (err instanceof AuthError) {
                 return;
             }
+            if (err instanceof RateLimitedError) {
+                toast.error(err.message)
+                return
+            }
             backendError = 'An unexpected network error occurred. Please try again.';
         }
     }
@@ -201,8 +205,11 @@
             return;
         } catch (err: any) {
             if (err instanceof AuthError) {
-                goto('/login');
                 return;
+            }
+            if (err instanceof RateLimitedError) {
+                toast.error(err.message)
+                return
             }
         }
     }

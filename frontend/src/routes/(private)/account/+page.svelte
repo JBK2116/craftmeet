@@ -2,7 +2,7 @@
     import { goto } from '$app/navigation';
     import { apiFetch } from '$lib/api/auth';
     import { user } from '$lib/stores/stores';
-    import { AuthError, ErrorTypes } from '$lib/types/errors';
+    import { AuthError, ErrorTypes, RateLimitedError } from '$lib/types/errors';
     import type { User } from '$lib/types/user';
     import {
         BadgeCheck,
@@ -117,7 +117,10 @@
                 $user = prevStore;
                 pageUser = prevUser;
                 if (err instanceof AuthError) {
-                    goto('/login');
+                    return;
+                }
+                if (err instanceof RateLimitedError) {
+                    toast.error(err.message);
                     return;
                 }
                 throw err;
@@ -158,8 +161,11 @@
             showDeleteConfirm = false;
         } catch (err: any) {
             if (err instanceof AuthError) {
-                goto('/login');
                 return;
+            }
+            if (err instanceof RateLimitedError) {
+                toast.error(err.message)
+                return
             }
             throw err;
         }

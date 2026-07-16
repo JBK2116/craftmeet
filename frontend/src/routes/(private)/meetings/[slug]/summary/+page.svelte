@@ -1,7 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { apiFetch } from '$lib/api/auth';
-    import { AuthError } from '$lib/types/errors';
+    import { AuthError, RateLimitedError } from '$lib/types/errors';
     import type { MeetingIn, Stat } from '$lib/types/meeting';
     import type { QuestionTypes } from '$lib/types/question';
     import { formatDuration } from '$lib/utils/time';
@@ -153,7 +153,13 @@
             URL.revokeObjectURL(downloadUrl);
             toast.success('Summary downloaded!');
         } catch (err: any) {
-            if (err instanceof AuthError) return;
+            if (err instanceof AuthError) {
+                return;
+            }
+            if (err instanceof RateLimitedError) {
+                toast.error(err.message)
+                return
+            }
             toast.error('Could not generate summary. Please try again.');
         } finally {
             generating = false;
@@ -178,7 +184,13 @@
             toast.success(`"${meeting.title}" has been deleted.`);
             goto('/dashboard');
         } catch (err: any) {
-            if (err instanceof AuthError) return;
+            if (err instanceof AuthError) {
+                return;
+            }
+            if (err instanceof RateLimitedError) {
+                toast.error(err.message)
+                return
+            }
             toast.error('Failed to delete meeting. Please try again.');
         } finally {
             deleting = false;

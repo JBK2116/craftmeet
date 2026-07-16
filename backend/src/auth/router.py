@@ -36,6 +36,7 @@ from src.auth.service import (
 )
 from src.config import get_settings
 from src.exceptions import DatabaseError
+from src.limiter import limiter
 from src.middleware.jwt import get_current_user
 from src.types import ACCESS_TOKEN, DB, REFRESH_TOKEN, ErrorTypes
 
@@ -100,8 +101,10 @@ async def google_callback(request: Request, db: DB):
 
 
 @auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def signup(db: DB, payload: SignupRequest):
+@limiter.limit("3/h")
+async def signup(request: Request, db: DB, payload: SignupRequest):
     logger.debug(msg="Received signup payload", extra={"payload": payload})
+    logger.debug(msg="request included for rating limiting", extra={"request": request})
     try:
         await handle_signup(db=db, payload=payload)
     except (DatabaseError, EmailDeliveryError):
@@ -131,8 +134,10 @@ async def signup(db: DB, payload: SignupRequest):
 
 
 @auth_router.post("/login", status_code=status.HTTP_200_OK, response_model=UserOut)
-async def login(db: DB, response: Response, payload: LoginRequest):
+@limiter.limit("10/m")
+async def login(request: Request, db: DB, response: Response, payload: LoginRequest):
     logger.debug(msg="Received login payload", extra={"payload": payload})
+    logger.debug(msg="request included for rating limiting", extra={"request": request})
     try:
         user = await handle_login(db=db, payload=payload, response=response)
         return user
@@ -164,10 +169,14 @@ async def login(db: DB, response: Response, payload: LoginRequest):
 
 
 @auth_router.post("/logout", status_code=status.HTTP_200_OK)
-async def logout(db: DB, response: Response, refresh_token: REFRESH_TOKEN):
+@limiter.limit("20/m")
+async def logout(
+    request: Request, db: DB, response: Response, refresh_token: REFRESH_TOKEN
+):
     logger.debug(
         "received logout refresh token", extra={"refresh_token": refresh_token}
     )
+    logger.debug(msg="request included for rating limiting", extra={"request": request})
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
     try:
@@ -186,8 +195,10 @@ async def logout(db: DB, response: Response, refresh_token: REFRESH_TOKEN):
 
 
 @auth_router.post("/verify-email", status_code=status.HTTP_200_OK)
-async def verify_email(db: DB, payload: VerifyEmailRequest):
+@limiter.limit("5/m")
+async def verify_email(request: Request, db: DB, payload: VerifyEmailRequest):
     logger.debug(msg="Received verify email payload", extra={"payload": payload})
+    logger.debug(msg="request included for rating limiting", extra={"request": request})
     try:
         await handle_verify_email(db=db, payload=payload)
     except DatabaseError:
@@ -197,8 +208,10 @@ async def verify_email(db: DB, payload: VerifyEmailRequest):
 
 
 @auth_router.post("/forgot-password", status_code=status.HTTP_200_OK)
-async def forgot_password(db: DB, payload: ForgotPasswordRequest):
+@limiter.limit("5/h")
+async def forgot_password(request: Request, db: DB, payload: ForgotPasswordRequest):
     logger.debug("Received forgot-password payload", extra={"payload": payload})
+    logger.debug(msg="request included for rating limiting", extra={"request": request})
     try:
         await handle_forgot_password(db=db, payload=payload)
     except (DatabaseError, EmailDeliveryError):
@@ -212,8 +225,10 @@ async def forgot_password(db: DB, payload: ForgotPasswordRequest):
 
 
 @auth_router.post("/reset-password", status_code=status.HTTP_200_OK)
-async def reset_password(db: DB, payload: ResetPasswordRequest):
+@limiter.limit("5/h")
+async def reset_password(request: Request, db: DB, payload: ResetPasswordRequest):
     logger.debug("Received reset-password payload", extra={"payload": payload})
+    logger.debug("request included for rate limiting", extra={"request": request})
     try:
         await handle_reset_password(db=db, payload=payload)
     except DatabaseError:
@@ -235,8 +250,10 @@ async def reset_password(db: DB, payload: ResetPasswordRequest):
 
 
 @auth_router.get("/me", status_code=status.HTTP_200_OK, response_model=UserOut)
-async def me(db: DB, access_token: ACCESS_TOKEN = None):
+@limiter.limit("30/m")
+async def me(request: Request, db: DB, access_token: ACCESS_TOKEN = None):
     logger.debug("Received access token", extra={"token": access_token})
+    logger.debug("request included for rate limiting", extra={"request": request})
     if access_token is None:
         return Response(status_code=status.HTTP_401_UNAUTHORIZED)
     try:
@@ -254,6 +271,7 @@ async def me(db: DB, access_token: ACCESS_TOKEN = None):
     response_model=UserOut,
     dependencies=[Depends(get_current_user)],
 )
+@limiter.limit("10/m")
 async def update_me(db: DB, request: Request, payload: MeRequest):
     logger.debug("Received update user payload", extra={"payload": payload})
     logger.debug(
@@ -264,8 +282,10 @@ async def update_me(db: DB, request: Request, payload: MeRequest):
 
 
 @auth_router.post("/refresh", status_code=status.HTTP_200_OK)
-async def refresh(db: DB, response: Response, refresh_token: REFRESH_TOKEN = None):
+@limiter.limit("20/m")
+async def refresh(request: Request, db: DB, response: Response, refresh_token: REFRESH_TOKEN = None):
     logger.debug("Received refresh token", extra={"token": refresh_token})
+    logger.debug("request included for rate limiting", extra={"request": request})
     if refresh_token is None:
         return Response(status_code=status.HTTP_401_UNAUTHORIZED)
     try:

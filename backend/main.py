@@ -5,6 +5,8 @@ from fastapi.concurrency import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from starlette.middleware.sessions import SessionMiddleware
 
 from src.auth.router import (  # noqa: F401 - ensures oauth is registered at app startup
@@ -13,6 +15,7 @@ from src.auth.router import (  # noqa: F401 - ensures oauth is registered at app
 )
 from src.cache import close_redis, setup_redis
 from src.config import get_settings
+from src.limiter import limiter
 from src.live.router import websocket_router
 from src.logging_config import get_logger, setup_logging
 from src.meeting.router import meeting_public_router, meeting_router
@@ -56,6 +59,11 @@ app = FastAPI(
     strict_content_type=True,
     lifespan=lifespan,
 )
+
+# rate limiting integration
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty:ignore[invalid-argument-type]
+
 
 # initialise middleware
 if not settings.IS_DEV:

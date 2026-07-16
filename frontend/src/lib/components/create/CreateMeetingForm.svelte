@@ -2,7 +2,7 @@
     import { goto } from '$app/navigation';
     import { apiFetch } from '$lib/api/auth';
     import { meetings } from '$lib/stores/stores';
-    import { AuthError, ErrorTypes } from '$lib/types/errors';
+    import { AuthError, ErrorTypes, RateLimitedError } from '$lib/types/errors';
     import type { MeetingIn, MeetingOut } from '$lib/types/meeting';
     import type { QuestionTypes } from '$lib/types/question';
     import type { QuestionOut } from '$lib/types/question';
@@ -165,8 +165,11 @@
             }, 2000);
         } catch (err) {
             if (err instanceof AuthError) {
-                goto('/login');
                 return;
+            }
+            if (err instanceof RateLimitedError) {
+                toast.error(err.message)
+                return
             }
             backendError = 'An unexpected network error occurred. Please try again.';
             return;
