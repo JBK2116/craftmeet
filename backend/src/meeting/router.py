@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 @meeting_public_router.post(
     "/join", response_model=JoinMeetingResponse, status_code=status.HTTP_200_OK
 )
-@limiter.limit("5/m", key_func=ip_or_user_key_func)
+@limiter.limit("5/minute", key_func=ip_or_user_key_func)
 async def join_meeting(
     request: Request, response: Response, db: DB, payload: JoinMeetingPayload
 ):
@@ -83,7 +83,7 @@ async def join_meeting(
 @meeting_public_router.post(
     "/{meeting_id}/leave", status_code=status.HTTP_204_NO_CONTENT
 )
-@limiter.limit("10/m", key_func=ip_or_user_key_func)
+@limiter.limit("10/minute", key_func=ip_or_user_key_func)
 async def leave_meeting(
     request: Request, response: Response, meeting_id: MEETING_ID
 ) -> None:
@@ -99,7 +99,7 @@ async def leave_meeting(
     response_model=MeetingOut,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("10/h", key_func=ip_or_user_key_func)
+@limiter.limit("10/hour", key_func=ip_or_user_key_func)
 async def create_meeting(request: Request, db: DB, payload: MeetingIn):
     logger.debug("received create meeting payload", extra={"payload": payload})
     logger.debug(
@@ -121,7 +121,7 @@ async def create_meeting(request: Request, db: DB, payload: MeetingIn):
 
 
 @meeting_router.get("", response_model=list[MeetingOut], status_code=status.HTTP_200_OK)
-@limiter.limit("60/m", key_func=ip_or_user_key_func)
+@limiter.limit("60/minute", key_func=ip_or_user_key_func)
 async def get_meetings(request: Request, db: DB, limit: LIMIT = 20, offset: OFFSET = 0):
     logging.debug(
         "received get meetings payload", extra={"limit": limit, "offset": offset}
@@ -147,7 +147,7 @@ async def get_meetings(request: Request, db: DB, limit: LIMIT = 20, offset: OFFS
 @meeting_router.get(
     "/{meeting_id}", response_model=MeetingOut, status_code=status.HTTP_200_OK
 )
-@limiter.limit("60/m", key_func=ip_or_user_key_func)
+@limiter.limit("60/minute", key_func=ip_or_user_key_func)
 async def get_meeting(request: Request, db: DB, meeting_id: MEETING_ID):
     logger.debug("received get meeting payload", extra={"meeting_id": str(meeting_id)})
     logger.debug(
@@ -177,7 +177,7 @@ async def get_meeting(request: Request, db: DB, meeting_id: MEETING_ID):
 @meeting_router.patch(
     path="/{meeting_id}", response_model=MeetingOut, status_code=status.HTTP_200_OK
 )
-@limiter.limit("30/m", key_func=ip_or_user_key_func)
+@limiter.limit("30/minute", key_func=ip_or_user_key_func)
 async def update_meeting(
     request: Request, db: DB, meeting_id: MEETING_ID, payload: MeetingUpdate
 ):
@@ -213,7 +213,7 @@ async def update_meeting(
 
 
 @meeting_router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT)
-@limiter.limit("20/m", key_func=ip_or_user_key_func)
+@limiter.limit("20/minute", key_func=ip_or_user_key_func)
 async def delete_meeting(request: Request, db: DB, meeting_id: MEETING_ID):
     logger.debug("received delete meeting request", extra={"id": meeting_id})
     logger.debug(
@@ -236,7 +236,7 @@ async def delete_meeting(request: Request, db: DB, meeting_id: MEETING_ID):
 
 
 @meeting_router.delete("", status_code=status.HTTP_204_NO_CONTENT)
-@limiter.limit("5/d", key_func=ip_or_user_key_func)
+@limiter.limit("5/day", key_func=ip_or_user_key_func)
 async def delete_meetings(db: DB, request: Request):
     logger.debug("received delete meetings request")
     logger.debug(

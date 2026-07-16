@@ -77,6 +77,12 @@
             });
             if (!response.ok) {
                 // handle the error response sent by the backend
+                if (response.status === 429) {
+                    toast.error(
+                        'You are being rate limited. Please slow down and try again shortly.',
+                    );
+                    return;
+                }
                 const body = await response.json();
                 switch (body.type) {
                     case ErrorTypes.INVALID_CREDENTIALS:

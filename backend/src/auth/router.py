@@ -101,7 +101,7 @@ async def google_callback(request: Request, db: DB):
 
 
 @auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
-@limiter.limit("3/h")
+@limiter.limit("3/hour")
 async def signup(request: Request, db: DB, payload: SignupRequest):
     logger.debug(msg="Received signup payload", extra={"payload": payload})
     logger.debug(msg="request included for rating limiting", extra={"request": request})
@@ -134,7 +134,7 @@ async def signup(request: Request, db: DB, payload: SignupRequest):
 
 
 @auth_router.post("/login", status_code=status.HTTP_200_OK, response_model=UserOut)
-@limiter.limit("10/m")
+@limiter.limit("10/minute")
 async def login(request: Request, db: DB, response: Response, payload: LoginRequest):
     logger.debug(msg="Received login payload", extra={"payload": payload})
     logger.debug(msg="request included for rating limiting", extra={"request": request})
@@ -169,7 +169,7 @@ async def login(request: Request, db: DB, response: Response, payload: LoginRequ
 
 
 @auth_router.post("/logout", status_code=status.HTTP_200_OK)
-@limiter.limit("20/m")
+@limiter.limit("20/minute")
 async def logout(
     request: Request, db: DB, response: Response, refresh_token: REFRESH_TOKEN
 ):
@@ -195,7 +195,7 @@ async def logout(
 
 
 @auth_router.post("/verify-email", status_code=status.HTTP_200_OK)
-@limiter.limit("5/m")
+@limiter.limit("5/minute")
 async def verify_email(request: Request, db: DB, payload: VerifyEmailRequest):
     logger.debug(msg="Received verify email payload", extra={"payload": payload})
     logger.debug(msg="request included for rating limiting", extra={"request": request})
@@ -208,7 +208,7 @@ async def verify_email(request: Request, db: DB, payload: VerifyEmailRequest):
 
 
 @auth_router.post("/forgot-password", status_code=status.HTTP_200_OK)
-@limiter.limit("5/h")
+@limiter.limit("5/hour")
 async def forgot_password(request: Request, db: DB, payload: ForgotPasswordRequest):
     logger.debug("Received forgot-password payload", extra={"payload": payload})
     logger.debug(msg="request included for rating limiting", extra={"request": request})
@@ -225,7 +225,7 @@ async def forgot_password(request: Request, db: DB, payload: ForgotPasswordReque
 
 
 @auth_router.post("/reset-password", status_code=status.HTTP_200_OK)
-@limiter.limit("5/h")
+@limiter.limit("5/hour")
 async def reset_password(request: Request, db: DB, payload: ResetPasswordRequest):
     logger.debug("Received reset-password payload", extra={"payload": payload})
     logger.debug("request included for rate limiting", extra={"request": request})
@@ -250,7 +250,7 @@ async def reset_password(request: Request, db: DB, payload: ResetPasswordRequest
 
 
 @auth_router.get("/me", status_code=status.HTTP_200_OK, response_model=UserOut)
-@limiter.limit("30/m")
+@limiter.limit("30/minute")
 async def me(request: Request, db: DB, access_token: ACCESS_TOKEN = None):
     logger.debug("Received access token", extra={"token": access_token})
     logger.debug("request included for rate limiting", extra={"request": request})
@@ -271,7 +271,7 @@ async def me(request: Request, db: DB, access_token: ACCESS_TOKEN = None):
     response_model=UserOut,
     dependencies=[Depends(get_current_user)],
 )
-@limiter.limit("10/m")
+@limiter.limit("10/minute")
 async def update_me(db: DB, request: Request, payload: MeRequest):
     logger.debug("Received update user payload", extra={"payload": payload})
     logger.debug(
@@ -282,8 +282,10 @@ async def update_me(db: DB, request: Request, payload: MeRequest):
 
 
 @auth_router.post("/refresh", status_code=status.HTTP_200_OK)
-@limiter.limit("20/m")
-async def refresh(request: Request, db: DB, response: Response, refresh_token: REFRESH_TOKEN = None):
+@limiter.limit("20/minute")
+async def refresh(
+    request: Request, db: DB, response: Response, refresh_token: REFRESH_TOKEN = None
+):
     logger.debug("Received refresh token", extra={"token": refresh_token})
     logger.debug("request included for rate limiting", extra={"request": request})
     if refresh_token is None:

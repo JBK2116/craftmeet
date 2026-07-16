@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 @summary_router.post("/{meeting_id}/summary")
-@limiter.limit("5/h", key_func=ip_or_user_key_func)
+@limiter.limit("5/hour", key_func=ip_or_user_key_func)
 async def summarize_meeting(request: Request, db: DB, meeting_id: uuid.UUID):
     user: User = request.state.user
     logger.debug("received summarize meeting request", extra={"meeting_id": meeting_id})

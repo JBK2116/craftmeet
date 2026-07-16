@@ -56,6 +56,12 @@
                     emailError = 'Please enter a valid email address';
                     return;
                 }
+                if (response.status === 429) {
+                    toast.error(
+                        'You are being rate limited. Please slow down and try again shortly.',
+                    );
+                    return;
+                }
                 switch (body.type) {
                     case ErrorTypes.EMAIL:
                         emailError = body.message;
