@@ -9,6 +9,8 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from starlette.middleware.sessions import SessionMiddleware
 
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
 from src.auth.router import (  # noqa: F401 - ensures oauth is registered at app startup
     auth_router,
     oauth,
@@ -68,6 +70,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty
 # initialise middleware
 if not settings.IS_DEV:
     app.add_middleware(HTTPSRedirectMiddleware)
+    app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 app.add_middleware(
     SessionMiddleware,
