@@ -19,6 +19,7 @@ dependencies = [
     "redis>=8.0.1",
     "reportlab>=5.0.0",
     "sendgrid>=6.12.5",
+    "slowapi>=0.1.10",
     "sqlalchemy>=2.0.50",
     "websockets>=16.0",
 ]
