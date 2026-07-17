@@ -141,6 +141,7 @@
             <div class="h-150 w-150 rounded-full bg-primary/5 blur-3xl"></div>
         </div>
 
+        <p class="relative mb-4 text-xs uppercase tracking-widest text-muted-foreground">Craftmeet</p>
         <h1
             class="relative max-w-3xl text-5xl leading-[1.08] tracking-tight text-foreground/80 sm:text-6xl lg:text-7xl"
         >
