@@ -1,21 +1,2 @@
-# Set the base image and alias
-FROM node:22-slim AS frontend-build
-
-# Set the working directory
-COPY frontend/package.json frontend/package-lock.json ./ 
-
-# Install venv dependencies into /app/
-RUN npm ci
-
-# Copy remaining source code into /app/
-COPY frontend/ ./ 
-
-# Build the frontend
-RUN npm run build
-
-# Set the caddy base image
-FROM caddy:2-alpine 
-
-# Copy frontend static build into caddy for serving
-COPY --from=frontend-build /app/build /srv
-
+FROM caddy:2-alpine
+COPY frontend/build /srv

@@ -8,7 +8,6 @@ from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from starlette.middleware.sessions import SessionMiddleware
-
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from src.auth.router import (  # noqa: F401 - ensures oauth is registered at app startup
