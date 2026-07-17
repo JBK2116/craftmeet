@@ -6,6 +6,8 @@ import { error, redirect } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
+export const prerender = false;
+
 export const load: PageLoad = async ({ fetch, params }) => {
     const slug = params.slug;
     const url = `/api/v1/meetings/${slug}`;

@@ -157,8 +157,8 @@
                 return;
             }
             if (err instanceof RateLimitedError) {
-                toast.error(err.message)
-                return
+                toast.error(err.message);
+                return;
             }
             toast.error('Could not generate summary. Please try again.');
         } finally {
@@ -188,8 +188,8 @@
                 return;
             }
             if (err instanceof RateLimitedError) {
-                toast.error(err.message)
-                return
+                toast.error(err.message);
+                return;
             }
             toast.error('Failed to delete meeting. Please try again.');
         } finally {

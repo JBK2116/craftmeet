@@ -164,8 +164,8 @@
                 return;
             }
             if (err instanceof RateLimitedError) {
-                toast.error(err.message)
-                return
+                toast.error(err.message);
+                return;
             }
             throw err;
         }

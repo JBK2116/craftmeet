@@ -6,6 +6,8 @@ import { error, redirect } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
+export const prerender = false;
+
 export const load: PageLoad = async ({ fetch, params }) => {
     // load the starting meetings from the backend
     const slug = params.slug;

@@ -29,7 +29,6 @@
         {meeting.total_questions} questions
     </td>
 
-
     <!-- Created At -->
     <td class="hidden px-3 py-2.5 align-middle text-xs text-muted-foreground md:table-cell">
         {timeAgo(meeting.created_at)}

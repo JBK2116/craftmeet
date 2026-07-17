@@ -36,6 +36,7 @@
         "@hugeicons/svelte": "^1.1.2",
         "@internationalized/date": "^3.12.1",
         "@sveltejs/adapter-auto": "^7.0.1",
+        "@sveltejs/adapter-static": "^3.0.10",
         "@sveltejs/kit": "^2.57.0",
         "@sveltejs/package": "^2.5.7",
         "@sveltejs/vite-plugin-svelte": "^7.0.0",

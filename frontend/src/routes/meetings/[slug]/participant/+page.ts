@@ -2,6 +2,8 @@ import type { PageMeta } from '$lib/types/meta';
 
 import type { PageLoad } from './$types';
 
+export const prerender = false;
+
 export const load: PageLoad = ({ params }) => {
     return {
         meta: {

@@ -2,11 +2,13 @@ import { browser } from '$app/environment';
 import { refreshTokens } from '$lib/api/auth.js';
 import { user } from '$lib/stores/stores';
 
+import type { LayoutLoad } from './$types';
+
 export const csr = true; // Enable client side rendering
 export const ssr = false; // Disable server side rendering
-export const prerender = false; // Disable prerendering
+export const prerender = true;
 
-export async function load({ fetch }) {
+export const load: LayoutLoad = async ({ fetch }) => {
     // this function should only run when the user is in the browser
     if (!browser) {
         return;
@@ -29,4 +31,4 @@ export async function load({ fetch }) {
     const body = await response.json();
     user.set(body);
     return;
-}
+};

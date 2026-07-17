@@ -168,8 +168,8 @@
                 return;
             }
             if (err instanceof RateLimitedError) {
-                toast.error(err.message)
-                return
+                toast.error(err.message);
+                return;
             }
             backendError = 'An unexpected network error occurred. Please try again.';
             return;
