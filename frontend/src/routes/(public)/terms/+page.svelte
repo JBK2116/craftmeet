@@ -1,6 +1,3 @@
-<!-- TODO: LEGAL Craftmeet currently operates under a trade name with no incorporated entity.
-     Personal liability is unlimited. Incorporate (federally via Corporations Canada or
-     provincially) before onboarding paying customers or signing any vendor agreements. -->
 <script lang="ts">
     import { onMount } from 'svelte';
 
@@ -9,28 +6,25 @@
         { id: 'intellectual-property', title: '2. Intellectual Property' },
         { id: 'user-representations', title: '3. User Representations' },
         { id: 'user-registration', title: '4. User Registration' },
-        { id: 'purchases-payment', title: '5. Purchases & Payment' },
-        { id: 'subscriptions', title: '6. Subscriptions' },
-        { id: 'refund-policy', title: '7. Refund Policy' },
-        { id: 'prohibited-activities', title: '8. Prohibited Activities' },
-        { id: 'user-contributions', title: '9. User Generated Contributions' },
-        { id: 'contribution-license', title: '10. Contribution License' },
-        { id: 'third-party', title: '11. Third-Party Websites' },
-        { id: 'services-management', title: '12. Services Management' },
-        { id: 'privacy-policy', title: '13. Privacy Policy' },
-        { id: 'dmca', title: '14. DMCA' },
-        { id: 'term-termination', title: '15. Term & Termination' },
-        { id: 'modifications', title: '16. Modifications & Interruptions' },
-        { id: 'governing-law', title: '17. Governing Law' },
-        { id: 'dispute-resolution', title: '18. Dispute Resolution' },
-        { id: 'corrections', title: '19. Corrections' },
-        { id: 'disclaimer', title: '20. Disclaimer' },
-        { id: 'liability', title: '21. Limitations of Liability' },
-        { id: 'indemnification', title: '22. Indemnification' },
-        { id: 'user-data', title: '23. User Data' },
-        { id: 'electronic-communications', title: '24. Electronic Communications' },
-        { id: 'miscellaneous', title: '25. Miscellaneous' },
-        { id: 'contact', title: '26. Contact Us' },
+        { id: 'prohibited-activities', title: '5. Prohibited Activities' },
+        { id: 'user-contributions', title: '6. User Generated Contributions' },
+        { id: 'contribution-license', title: '7. Contribution License' },
+        { id: 'third-party', title: '8. Third-Party Websites' },
+        { id: 'services-management', title: '9. Services Management' },
+        { id: 'privacy-policy', title: '10. Privacy Policy' },
+        { id: 'dmca', title: '11. DMCA' },
+        { id: 'term-termination', title: '12. Term & Termination' },
+        { id: 'modifications', title: '13. Modifications & Interruptions' },
+        { id: 'governing-law', title: '14. Governing Law' },
+        { id: 'dispute-resolution', title: '15. Dispute Resolution' },
+        { id: 'corrections', title: '16. Corrections' },
+        { id: 'disclaimer', title: '17. Disclaimer' },
+        { id: 'liability', title: '18. Limitations of Liability' },
+        { id: 'indemnification', title: '19. Indemnification' },
+        { id: 'user-data', title: '20. User Data' },
+        { id: 'electronic-communications', title: '21. Electronic Communications' },
+        { id: 'miscellaneous', title: '22. Miscellaneous' },
+        { id: 'contact', title: '23. Contact Us' },
     ];
 
     let activeSection = $state('');
@@ -93,9 +87,9 @@
             class="prose prose-p:text-muted-foreground prose-headings:text-foreground prose-a:text-primary prose-a:underline-offset-4 hover:prose-a:text-primary/80 max-w-3xl
                     [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24"
         >
-            <!-- TODO: Update "Last updated" date below every time these terms are modified -->
+            <!-- NOTE: Update "Last updated" date below every time these terms are modified -->
             <h1>Terms and Conditions</h1>
-            <p class="text-sm text-muted-foreground">Last updated: May 24, 2026</p>
+            <p class="text-sm text-muted-foreground">Last updated: July 17, 2026</p>
 
             <p>
                 These Terms and Conditions constitute a legally binding agreement between you and
@@ -153,7 +147,7 @@
                 If you send us feedback, suggestions, or ideas about the Services directly, you
                 agree that we may use them freely without any obligation or compensation to you. For
                 content you submit through the Services during live sessions (responses, ideas, chat
-                messages), you retain ownership but grant us the rights described in section 10
+                messages), you retain ownership but grant us the rights described in section 7
                 (Contribution License) to operate and improve the Services.
             </p>
 
@@ -189,57 +183,7 @@
                 token is issued on join and is valid only for the duration of that session.
             </p>
 
-            <h2 id="purchases-payment">5. Purchases & Payment</h2>
-            <!-- TODO: Confirm accepted payment methods once Stripe integration is implemented in
-                 billing/service.py and update this section accordingly before launch -->
-            <p>
-                Paid subscription plans are available for hosts who require additional meeting
-                capacity or access to premium features. All payments are processed securely through
-                Stripe. By subscribing, you agree to provide accurate and current billing
-                information and authorize us to charge your chosen payment method on a recurring
-                basis.
-            </p>
-            <p>
-                We reserve the right to change pricing at any time. Any price changes will be
-                communicated to you in advance and in accordance with applicable law. All
-                transactions are processed in Canadian dollars (CAD) unless otherwise stated.
-            </p>
-
-            <h2 id="subscriptions">6. Subscriptions</h2>
-            <h3>Billing and Renewal</h3>
-            <p>
-                Your subscription renews automatically at the end of each billing cycle unless
-                cancelled. By subscribing, you authorize us to charge your payment method on a
-                recurring basis without requiring separate approval for each charge.
-            </p>
-
-            <h3>Free Trial</h3>
-            <!-- TODO: Update free trial duration once subscription tiers are finalized in
-                 billing/service.py before first deployment -->
-            <p>
-                We offer a free trial period to new host accounts. Your account will be charged
-                according to your chosen subscription plan at the end of the free trial unless
-                cancelled before the trial expires.
-            </p>
-
-            <h3>Cancellation</h3>
-            <p>
-                You may cancel your subscription at any time from your account settings.
-                Cancellation takes effect immediately — you will not be charged for any future
-                billing cycles. You will retain access to paid features until the end of the current
-                billing period you have already paid for.
-            </p>
-
-            <h2 id="refund-policy">7. Refund Policy</h2>
-            <p>
-                All sales are final. We do not offer refunds for any subscription fees paid,
-                including for unused portions of a billing cycle following cancellation. If you
-                believe a charge was made in error, please contact us at
-                <a href="mailto:support@craftmeet.live">support@craftmeet.live</a> and we will review
-                your case.
-            </p>
-
-            <h2 id="prohibited-activities">8. Prohibited Activities</h2>
+            <h2 id="prohibited-activities">5. Prohibited Activities</h2>
             <p>
                 You may only use the Services for their intended purpose. The following activities
                 are strictly prohibited:
@@ -274,7 +218,7 @@
                 <li>Using the Services in any way that violates applicable laws or regulations.</li>
             </ul>
 
-            <h2 id="user-contributions">9. User Generated Contributions</h2>
+            <h2 id="user-contributions">6. User Generated Contributions</h2>
             <p>
                 The Services allow hosts and participants to submit content including meeting
                 responses, ideas, votes, ratings, and chat messages (collectively, "Contributions").
@@ -304,7 +248,7 @@
                 or liability.
             </p>
 
-            <h2 id="contribution-license">10. Contribution License</h2>
+            <h2 id="contribution-license">7. Contribution License</h2>
             <p>
                 By submitting Contributions through the Services, you grant us a limited,
                 non-exclusive license to store, process, and transmit your Contributions solely as
@@ -318,7 +262,7 @@
                 everything you submit.
             </p>
 
-            <h2 id="third-party">11. Third-Party Websites</h2>
+            <h2 id="third-party">8. Third-Party Websites</h2>
             <p>
                 The Services may contain links to third-party websites. We do not investigate,
                 monitor, or endorse any third-party content, and we are not responsible for any harm
@@ -327,7 +271,7 @@
                 policies of any site you visit.
             </p>
 
-            <h2 id="services-management">12. Services Management</h2>
+            <h2 id="services-management">9. Services Management</h2>
             <p>
                 We reserve the right, but not the obligation, to monitor the Services for violations
                 of these Terms and to take appropriate action, including suspending or terminating
@@ -336,7 +280,7 @@
                 and performance of the platform.
             </p>
 
-            <h2 id="privacy-policy">13. Privacy Policy</h2>
+            <h2 id="privacy-policy">10. Privacy Policy</h2>
             <p>
                 Your use of the Services is also governed by our
                 <a href="/privacy">Privacy Notice</a>, which is incorporated into these Terms by
@@ -346,7 +290,7 @@
                 in the United States.
             </p>
 
-            <h2 id="dmca">14. Digital Millennium Copyright Act (DMCA)</h2>
+            <h2 id="dmca">11. Digital Millennium Copyright Act (DMCA)</h2>
             <h3>Notifications</h3>
             <p>
                 We respect the intellectual property rights of others. If you believe that any
@@ -385,7 +329,7 @@
                 Canada, and your physical or electronic signature.
             </p>
 
-            <h2 id="term-termination">15. Term & Termination</h2>
+            <h2 id="term-termination">12. Term & Termination</h2>
             <p>
                 These Terms remain in effect for as long as you use the Services. We reserve the
                 right to deny, suspend, or terminate your access to the Services at any time and for
@@ -397,7 +341,7 @@
                 remedies available to us.
             </p>
 
-            <h2 id="modifications">16. Modifications & Interruptions</h2>
+            <h2 id="modifications">13. Modifications & Interruptions</h2>
             <p>
                 We reserve the right to change, modify, or remove any part of the Services at any
                 time without notice. We are not liable for any loss or inconvenience caused by
@@ -406,7 +350,7 @@
                 uninterrupted access.
             </p>
 
-            <h2 id="governing-law">17. Governing Law</h2>
+            <h2 id="governing-law">14. Governing Law</h2>
             <p>
                 These Terms and your use of the Services are governed by the laws of the Province of
                 Ontario and the federal laws of Canada applicable therein, without regard to
@@ -415,7 +359,7 @@
                 of competent jurisdiction located in Ontario, Canada.
             </p>
 
-            <h2 id="dispute-resolution">18. Dispute Resolution</h2>
+            <h2 id="dispute-resolution">15. Dispute Resolution</h2>
             <p>
                 If you have a dispute with us, we ask that you first contact us at
                 <a href="mailto:support@craftmeet.live">support@craftmeet.live</a> and allow us 30 days
@@ -432,14 +376,14 @@
                 brought within that period are permanently barred.
             </p>
 
-            <h2 id="corrections">19. Corrections</h2>
+            <h2 id="corrections">16. Corrections</h2>
             <p>
                 There may be information on the Services that contains typographical errors,
                 inaccuracies, or omissions. We reserve the right to correct any such errors and to
                 update information at any time without prior notice.
             </p>
 
-            <h2 id="disclaimer">20. Disclaimer</h2>
+            <h2 id="disclaimer">17. Disclaimer</h2>
             <p>
                 THE SERVICES ARE PROVIDED ON AN AS-IS AND AS-AVAILABLE BASIS WITHOUT ANY WARRANTIES
                 OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS
@@ -448,7 +392,7 @@
                 SERVICES IS ENTIRELY AT YOUR OWN RISK.
             </p>
 
-            <h2 id="liability">21. Limitations of Liability</h2>
+            <h2 id="liability">18. Limitations of Liability</h2>
             <p>
                 TO THE FULLEST EXTENT PERMITTED BY LAW, CRAFTMEET AND ITS OFFICERS, EMPLOYEES, AND
                 AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT, CONSEQUENTIAL, INCIDENTAL, SPECIAL, OR
@@ -467,7 +411,7 @@
                 ADDITIONAL RIGHTS.
             </p>
 
-            <h2 id="indemnification">22. Indemnification</h2>
+            <h2 id="indemnification">19. Indemnification</h2>
             <p>
                 You agree to defend, indemnify, and hold harmless Craftmeet and its officers,
                 employees, and agents from and against any claims, losses, damages, liabilities, and
@@ -489,9 +433,7 @@
                 any such claims.
             </p>
 
-            <h2 id="user-data">23. User Data</h2>
-            <!-- TODO: Ensure the PDF deletion timeline correctly matches the value specified
-                 in /privacy and the backend before launch -->
+            <h2 id="user-data">20. User Data</h2>
             <p>
                 We retain certain data you transmit to the Services for the purpose of managing and
                 operating the platform. While we perform routine backups, you are solely responsible
@@ -500,7 +442,7 @@
                 creation. We are not liable for any loss or corruption of your data.
             </p>
 
-            <h2 id="electronic-communications">24. Electronic Communications</h2>
+            <h2 id="electronic-communications">21. Electronic Communications</h2>
             <p>
                 By using the Services or contacting us by email, you consent to receive electronic
                 communications from us. You agree that all agreements, notices, and disclosures we
@@ -508,7 +450,7 @@
                 writing.
             </p>
 
-            <h2 id="miscellaneous">25. Miscellaneous</h2>
+            <h2 id="miscellaneous">22. Miscellaneous</h2>
             <p>
                 These Terms, together with our Privacy Notice, constitute the entire agreement
                 between you and Craftmeet regarding your use of the Services. If any provision of
@@ -519,7 +461,7 @@
                 written consent.
             </p>
 
-            <h2 id="contact">26. Contact Us</h2>
+            <h2 id="contact">23. Contact Us</h2>
             <p>
                 If you have questions, concerns, or complaints about these Terms, please contact us
                 at <a href="mailto:support@craftmeet.live">support@craftmeet.live</a>. We will

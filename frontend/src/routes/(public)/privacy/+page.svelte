@@ -1,6 +1,3 @@
-<!-- TODO: LEGAL Craftmeet currently operates under a trade name with no incorporated entity.
-     Personal liability is unlimited. Incorporate (federally via Corporations Canada or
-     provincially) before onboarding paying customers or signing any vendor agreements. -->
 <script lang="ts">
     import { onMount } from 'svelte';
 
@@ -87,9 +84,9 @@
                    prose-p:text-muted-foreground prose-headings:text-foreground prose-a:text-foreground prose-a:underline-offset-4 hover:prose-a:text-muted-foreground
                    [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24 [&_hr]:border-border [&_blockquote]:border-border"
         >
-            <!-- TODO: Update "Last updated" date below every time this notice is modified -->
+            <!-- NOTE: Update "Last updated" date below every time this notice is modified -->
             <h1>Privacy Notice</h1>
-            <p class="text-sm text-muted-foreground/70">Last updated: May 23, 2026</p>
+            <p class="text-sm text-muted-foreground/70">Last updated: July 17, 2026</p>
 
             <p>
                 This privacy notice for <strong>Craftmeet</strong>
@@ -178,18 +175,6 @@
                 </li>
             </ul>
 
-            <!-- TODO: Execute Stripe's Data Processing Agreement before accepting any paid subscriptions.
-                 Available at: dashboard.stripe.com → Settings → Data Processing Agreement -->
-            <h3>Payment Data</h3>
-            <p>
-                We may collect data necessary to process your payment if you subscribe to a paid
-                tier. All payment data is strictly handled and stored by our payment processor,
-                Stripe. You may find their privacy notice here:
-                <a href="https://stripe.com/en-ca/privacy"
-                    >Stripe Payment Processor Privacy Policy</a
-                >.
-            </p>
-
             <h3>Information Automatically Collected</h3>
             <p>
                 We automatically collect log and usage data (IP addresses, browser type, diagnostic
@@ -236,9 +221,6 @@
                 reached at
                 <a href="mailto:support@craftmeet.live">support@craftmeet.live</a>.
             </p>
-            <!-- TODO: Before scaling to paid Quebec users, implement formal breach register,
-                 data portability request flow, and de-indexing request handling as required
-                 under Quebec Law 25. -->
             <p>
                 <strong>If you are located in the EU or UK:</strong> We rely on Consent, Performance of
                 a Contract, and Legitimate Interests to process your data.
@@ -250,15 +232,11 @@
                 infrastructure providers to run the Service:
             </p>
             <ul>
-                <!-- TODO: Sign the DPA under the OpenAI organization registered to support@craftmeet.live before launch -->
                 <li>
                     <strong>Artificial Intelligence Services:</strong> OpenAI (strictly for processing
-                    meeting transcripts into summaries, governed by a signed Data Processing Agreement
-                    ensuring your data is not used for model training and is handled in accordance with
-                    applicable privacy law).
+                    meeting transcripts into summaries; under OpenAI's API data usage policy, your data
+                    is not used for model training).
                 </li>
-                <!-- TODO: Execute DigitalOcean's Data Processing Agreement before launch.
-                     Available at: cloud.digitalocean.com → Account → Legal → Data Processing Agreement -->
                 <li>
                     <strong>Cloud Computing & Database Services:</strong> DigitalOcean (for hosting).
                 </li>
@@ -278,43 +256,38 @@
             </p>
 
             <h2 id="tracking">6. Do We Use Cookies and Other Tracking Technologies?</h2>
-            <!-- TODO: Once JWT expiry is finalized in auth/jwt.py, update this section to disclose
-                 the exact cookie lifetime (e.g. "expires after X days of inactivity") as required
-                 under GDPR ePrivacy guidance -->
             <p>
                 We use a single HTTP-only cookie strictly for authentication purposes to identify
                 you as a logged-in host while you use the application. This cookie contains no
-                personally identifiable information beyond a secure session token and is cleared on
-                logout. We do not use tracking cookies, analytics cookies, or any cookies for
-                third-party advertising.
+                personally identifiable information beyond a secure session token, expires after 1
+                day of inactivity, and is cleared on logout. We do not use tracking cookies,
+                analytics cookies, or any cookies for third-party advertising.
             </p>
 
             <h2 id="social-logins">7. How We Use Google Data</h2>
             <p>
-                Craftmeet uses <strong>Sign in with Google</strong> as an authentication method for
-                host accounts. When you sign in with Google, we request access to the following
-                scopes:
+                Craftmeet uses <strong>Sign in with Google</strong> as an authentication method for host
+                accounts. When you sign in with Google, we request access to the following scopes:
             </p>
             <ul>
                 <li>
-                    <strong>openid</strong> — to verify your Google identity and associate it with
-                    your Craftmeet account.
+                    <strong>openid</strong> — to verify your Google identity and associate it with your
+                    Craftmeet account.
                 </li>
                 <li>
-                    <strong>profile</strong> — to retrieve your Google display name and profile
-                    picture for your Craftmeet account.
+                    <strong>profile</strong> — to retrieve your Google display name and profile picture
+                    for your Craftmeet account.
                 </li>
                 <li>
-                    <strong>email</strong> — to retrieve your email address for account
-                    identification, communication, and support purposes.
+                    <strong>email</strong> — to retrieve your email address for account identification,
+                    communication, and support purposes.
                 </li>
             </ul>
             <p>
                 We use this information <strong>solely</strong> to create and manage your Craftmeet
-                account. We do not access your Google Drive, Calendar, Contacts, or any other
-                Google service data. We do not share your Google account information with third
-                parties. You can revoke Craftmeet's access to your Google account at any time
-                through your
+                account. We do not access your Google Drive, Calendar, Contacts, or any other Google
+                service data. We do not share your Google account information with third parties.
+                You can revoke Craftmeet's access to your Google account at any time through your
                 <a href="https://myaccount.google.com/permissions">Google Account permissions</a>
                 page.
             </p>
@@ -328,20 +301,17 @@
             </p>
             <p>
                 Additionally, meeting transcript data is transmitted to OpenAI for processing, also
-                in the United States. This transfer is governed by a signed Data Processing
-                Agreement with OpenAI and their Standard Contractual Clauses, which provide adequate
-                safeguards under GDPR and applicable Canadian privacy law. OpenAI is contractually
-                prohibited from using your meeting data to train its models.
+                in the United States. Under OpenAI's API data usage policy, your data is not used
+                for model training.
             </p>
 
             <h2 id="retention">9. How Long Do We Keep Your Information?</h2>
-            <!-- TODO: Once background workers are created in the backend, update the deletion timeline accordingly to match the value used by the worker.-->
             <p>
                 We keep your information for as long as necessary to fulfill the purposes outlined
-                in this privacy notice unless otherwise required by law. Inactive accounts and their
-                associated meeting data are deleted after 12 months.
+                in this privacy notice unless otherwise required by law. Account data is retained
+                until you choose to delete your account. Meeting data is retained until you delete
+                the specific meeting.
             </p>
-            <!-- TODO: Once background workers are created in the backend, update the deletion timeline accordingly to match the value used by the worker.-->
             <p>
                 AI-generated meeting export PDFs are automatically and permanently deleted 24 hours
                 after creation. It is the host's responsibility to download and retain any export
