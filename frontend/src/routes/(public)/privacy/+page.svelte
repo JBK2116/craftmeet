@@ -13,7 +13,7 @@
         { id: 'sharing', title: '4. Sharing Your Personal Information' },
         { id: 'third-party', title: '5. Third-Party Websites' },
         { id: 'tracking', title: '6. Tracking Technologies' },
-        { id: 'social-logins', title: '7. Social Logins' },
+        { id: 'social-logins', title: '7. How We Use Google Data' },
         { id: 'international', title: '8. International Transfers' },
         { id: 'retention', title: '9. Data Retention' },
         { id: 'security', title: '10. Security' },
@@ -289,11 +289,34 @@
                 third-party advertising.
             </p>
 
-            <h2 id="social-logins">7. How Do We Handle Your Social Logins?</h2>
+            <h2 id="social-logins">7. How We Use Google Data</h2>
             <p>
-                Our Services allow you to register using your Google account. We receive your name,
-                email address, and profile picture URL, which we use strictly to provision and
-                secure your Craftmeet host account.
+                Craftmeet uses <strong>Sign in with Google</strong> as an authentication method for
+                host accounts. When you sign in with Google, we request access to the following
+                scopes:
+            </p>
+            <ul>
+                <li>
+                    <strong>openid</strong> — to verify your Google identity and associate it with
+                    your Craftmeet account.
+                </li>
+                <li>
+                    <strong>profile</strong> — to retrieve your Google display name and profile
+                    picture for your Craftmeet account.
+                </li>
+                <li>
+                    <strong>email</strong> — to retrieve your email address for account
+                    identification, communication, and support purposes.
+                </li>
+            </ul>
+            <p>
+                We use this information <strong>solely</strong> to create and manage your Craftmeet
+                account. We do not access your Google Drive, Calendar, Contacts, or any other
+                Google service data. We do not share your Google account information with third
+                parties. You can revoke Craftmeet's access to your Google account at any time
+                through your
+                <a href="https://myaccount.google.com/permissions">Google Account permissions</a>
+                page.
             </p>
 
             <h2 id="international">8. Is Your Information Transferred Internationally?</h2>

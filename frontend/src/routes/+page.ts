@@ -5,11 +5,11 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = () => {
     return {
         meta: {
-            title: 'Craftmeet',
+            title: 'Craftmeet — Structured, Idea-Driven Meetings',
             description:
-                'Host real-time structured meetings with flexible question formats, live collaboration, and AI-generated summaries of every idea your room produces.',
+                'Craftmeet is a real-time meeting platform for hosting structured, idea-driven sessions with flexible question formats, live collaboration, and AI-generated summaries.',
             url: 'https://craftmeet.live',
-            ogTitle: 'Craftmeet - Structured, Idea-Driven Meetings',
+            ogTitle: 'Craftmeet — Structured, Idea-Driven Meetings',
         } satisfies PageMeta,
     };
 };
