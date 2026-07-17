@@ -3,7 +3,6 @@ import logging
 from fastapi import FastAPI, Request, status
 from fastapi.concurrency import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -69,7 +68,6 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty
 # initialise middleware
 if not settings.IS_DEV:
     app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
-    app.add_middleware(HTTPSRedirectMiddleware)
 
 app.add_middleware(
     SessionMiddleware,
