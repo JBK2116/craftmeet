@@ -30,6 +30,7 @@
         { title: 'How it Works', href: '#how-it-works' },
         { title: 'Features', href: '#features' },
         { title: 'Pricing', href: '/pricing' },
+        { title: 'Privacy', href: '/privacy' },
         { title: 'Join Meeting', href: '#join-meeting' },
     ];
 

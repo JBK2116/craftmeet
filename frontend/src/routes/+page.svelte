@@ -141,24 +141,27 @@
             <div class="h-150 w-150 rounded-full bg-primary/5 blur-3xl"></div>
         </div>
 
-        <p class="relative mb-4 text-sm uppercase tracking-widest text-muted-foreground">
-            Craftmeet
-        </p>
         <h1
-            class="relative max-w-3xl text-5xl leading-[1.08] tracking-tight text-foreground/80 sm:text-6xl lg:text-7xl"
+            class="relative max-w-3xl text-5xl leading-[1.08] tracking-tight text-foreground sm:text-6xl lg:text-7xl"
+        >
+            Craftmeet
+        </h1>
+        <p
+            class="relative max-w-3xl text-3xl leading-[1.15] tracking-tight text-foreground/80 sm:text-4xl lg:text-5xl"
         >
             Meetings that
             <span class="inline-block font-black text-primary" style="min-width: 3.3ch">
                 {displayed}<span class="animate-pulse">|</span>
             </span>
             great ideas.
-        </h1>
+        </p>
 
         <p
             class="relative mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
         >
-            Host real-time structured sessions with flexible question formats, live participant
-            responses, and an AI-generated summary delivered the moment your meeting ends.
+            Craftmeet lets you host real-time structured sessions with flexible question formats,
+            live participant responses, and an AI-generated summary delivered the moment your
+            meeting ends.
         </p>
 
         <div class="relative mt-10 flex flex-wrap items-center justify-center gap-3">
