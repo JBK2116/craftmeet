@@ -1,9 +1,9 @@
 craftmeet.live {
     root * /srv
     encode gzip
-    file_server
-    try_files {path} /index.html
-    handle_path /api/* {
+    handle_path /api/v1/* {
         reverse_proxy backend:8000
     }
+    file_server
+    try_files {path} /index.html
 }
