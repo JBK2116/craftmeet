@@ -68,8 +68,8 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty
 
 # initialise middleware
 if not settings.IS_DEV:
-    app.add_middleware(HTTPSRedirectMiddleware)
     app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 app.add_middleware(
     SessionMiddleware,
