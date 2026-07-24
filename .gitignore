@@ -339,3 +339,6 @@ AGENTS.md
 
 # PDF Storage
 storage
+
+# k6 load test artifacts
+k6/test-data.json

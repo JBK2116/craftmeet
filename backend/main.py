@@ -1,5 +1,6 @@
 import logging
 
+import uvicorn
 from fastapi import FastAPI, Request, status
 from fastapi.concurrency import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
@@ -104,3 +105,7 @@ app.include_router(websocket_router)
 app.include_router(meeting_router)
 app.include_router(meeting_public_router)
 app.include_router(summary_router)
+
+if __name__ == "__main__":
+    if settings.IS_DEV:
+        uvicorn.run(app, host="0.0.0.0", port=8000)  # noqa: S104
