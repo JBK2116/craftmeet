@@ -616,6 +616,8 @@ async def handle_update_me(
         "updating user profile", extra={"user_id": user.id, "email": user.email}
     )
     user = await update_user(db=db, u_id=user.id, username=payload.username)
+    await db.commit()
+    await db.refresh(user)
     logger.debug("user profile updated successfully", extra={"user_id": user.id})
     return UserOut.model_validate(user)
 
