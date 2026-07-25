@@ -8,6 +8,9 @@ from typing import Any
 from fastapi import WebSocket, status
 
 from src.live.schemas import (
+    ChatMessage,
+    ChatReceivedPayload,
+    ChatStatePayload,
     CurrentQuestionPayload,
     MeetingStartedPayload,
     MeetingStatePayload,
@@ -47,6 +50,7 @@ class LiveRoom:
         self.participants: dict[
             uuid.UUID, ParticipantEntry
         ] = {}  # all connected participants
+        self.chat: list[ChatMessage] = []  # list of all chat messages
         self.service = LiveService(
             host_id=host.state.user.id, meeting_id=room_id
         )  # service layer for business logic
@@ -63,15 +67,24 @@ class LiveRoom:
             "host reconnected to room",
             extra={"room_id": str(self.room_id), "host": ws.state.user.email},
         )
-        data = MeetingStatePayload(
+        m_state = MeetingStatePayload(
             question=self.service.current_question,
             responses=self.service.get_current_responses(),
             participants=[p.participant for p in self.participants.values()],
         )
+        if len(self.chat) > 0:
+            await self.host.send_json(
+                data={
+                    "type": OutboundMessageTypes.CHAT_STATE,
+                    "payload": ChatStatePayload(chats=self.chat).model_dump(
+                        mode="json"
+                    ),
+                }
+            )
         await self.host.send_json(
             data={
                 "type": OutboundMessageTypes.MEETING_STATE,
-                "payload": data.model_dump(mode="json"),
+                "payload": m_state.model_dump(mode="json"),
             }
         )
         await self._broadcast(
@@ -236,6 +249,15 @@ class LiveRoom:
                     }
                 )
             )
+        if len(self.chat) > 0:
+            await ws.send_json(
+                {
+                    "type": OutboundMessageTypes.CHAT_STATE,
+                    "payload": ChatStatePayload(chats=self.chat).model_dump(
+                        mode="json"
+                    ),
+                }
+            )
         if self.host:
             asyncio.create_task(
                 self.host.send_json(
@@ -345,6 +367,34 @@ class LiveRoom:
                 "payload": payload.model_dump(mode="json"),
             },
         )
+
+    async def chat_received(self, payload: ChatReceivedPayload) -> None:
+        """Register the received chat and broadcast it to everyone else"""
+        chat = payload.chat
+        self.chat.append(chat)
+        if self.host is not None:
+            asyncio.create_task(
+                self.host.send_json(
+                    data={
+                        "type": OutboundMessageTypes.CHAT_RECEIVED,
+                        "payload": ChatReceivedPayload(chat=payload.chat).model_dump(
+                            mode="json"
+                        ),
+                    }
+                )
+            )
+        for _, p in self.participants.items():
+            if p.ws:
+                asyncio.create_task(
+                    p.ws.send_json(
+                        data={
+                            "type": OutboundMessageTypes.CHAT_RECEIVED,
+                            "payload": ChatReceivedPayload(
+                                chat=payload.chat
+                            ).model_dump(mode="json"),
+                        }
+                    )
+                )
 
     async def _broadcast(
         self, task: Callable[..., Coroutine[Any, Any, Any]], *args, **kwargs

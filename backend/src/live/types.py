@@ -38,6 +38,7 @@ class InboundMessageTypes(Enum):
     RESPONSE_RECEIVED = "response_received"  # sent from participants
     REVEAL = "reveal"  # sent from host
     PARTICIPANT_CONNECTED = "participant_connected"  # sent from participants
+    CHAT_RECEIVED = "chat_received"  # sent from host or participant
 
 
 class OutboundMessageTypes(StrEnum):
@@ -55,3 +56,5 @@ class OutboundMessageTypes(StrEnum):
     PARTICIPANT_CONNECTED = "participant_connected"  # sent to host
     PARTICIPANT_DISCONNECTED = "participant_disconnected"  # sent to host
     PARTICIPANT_STATE = "participant_state"  # sent to participant
+    CHAT_RECEIVED = "chat_received"  # sent to host or participant
+    CHAT_STATE = "chat_state"  # sent to host or participant

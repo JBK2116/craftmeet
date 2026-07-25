@@ -1,10 +1,11 @@
+import datetime
 import uuid
 from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from src.constants import MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH
-from src.live.types import InboundMessageTypes, OutboundMessageTypes
+from src.constants import MAX_CHAT_LENGTH, MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH
+from src.live.types import InboundMessageTypes
 from src.meeting.schemas import QuestionOut, ResponseIn
 
 
@@ -82,6 +83,46 @@ class MeetingStatePayload(BaseModel):
     participants: list[Participant]
 
 
+class ChatMessage(BaseModel):
+    """Represents a chat message in the current meeting session.
+
+    Attributes:
+        name: The name of the user that sent the message
+        u_id: The id of the user that sent the message
+        message: The contents of the message
+        is_host: Boolean indicating if the chat was sent by a host or participant
+        created_at: The time of the message's creation
+    """
+
+    name: str = Field(min_length=MIN_USERNAME_LENGTH, max_length=MAX_USERNAME_LENGTH)
+    u_id: uuid.UUID
+    message: str = Field(min_length=1, max_length=MAX_CHAT_LENGTH)
+    is_host: bool = Field(default=False)
+    created_at: datetime.datetime = Field(
+        init=False, default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
+    )
+
+
+class ChatStatePayload(BaseModel):
+    """Payload for the current snapshot of the meeting chat bar.
+
+    Attributes:
+        chats: List of all chats received so far in the meeting.
+    """
+
+    chats: list[ChatMessage]
+
+
+class ChatReceivedPayload(BaseModel):
+    """Payload for a chat message received from the frontend.
+
+    Attributes:
+        chat: The chat message sent from the frontend
+    """
+
+    chat: ChatMessage
+
+
 class MeetingStartedPayload(BaseModel):
     """Payload for when a meeting has started.
 
@@ -132,12 +173,11 @@ class RevealMeetingPayload(BaseModel):
     responses: list[ResponseIn]
 
 
-INBOUND_PAYLOAD_MODELS: dict[
-    InboundMessageTypes | OutboundMessageTypes, type[BaseModel]
-] = {
+INBOUND_PAYLOAD_MODELS: dict[InboundMessageTypes, type[BaseModel]] = {
     InboundMessageTypes.PARTICIPANT_CONNECTED: ParticipantConnectedPayload,
     InboundMessageTypes.MEETING_STARTED: MeetingStartedPayload,
     InboundMessageTypes.NEXT_QUESTION: NextQuestionPayload,
     InboundMessageTypes.RESPONSE_RECEIVED: ResponseReceivedPayload,
+    InboundMessageTypes.CHAT_RECEIVED: ChatReceivedPayload,
     InboundMessageTypes.REVEAL: RevealMeetingPayload,
 }

@@ -36,3 +36,13 @@ export function formatDuration(startIso: string, endIso: string): string {
     if (diff < 3600) return `${Math.floor(diff / 60)}m`;
     return `${Math.floor(diff / 3600)}h ${Math.floor((diff % 3600) / 60)}m`;
 }
+
+/**
+ * Formats a createdAt timestamp into a localized time string (hours and minutes).
+ * @param {string} createdAt - An ISO date string or any date parsable by Date constructor.
+ * @returns {string} A localized time string (e.g., "02:30 PM" or "14:30").
+ */
+export function formatCreatedAtChat(createdAt: string): string {
+    const localDate = new Date(createdAt);
+    return localDate.toLocaleString(undefined, { hour: '2-digit', minute: '2-digit' });
+}

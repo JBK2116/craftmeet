@@ -2,6 +2,7 @@
     import { browser } from '$app/environment';
     import { goto } from '$app/navigation';
     import { page } from '$app/state';
+    import ChatBar from '$lib/components/chat/ChatBar.svelte';
     import type { Participant } from '$lib/types/participant';
     import type {
         LongAnswerQuestionIn,
@@ -19,6 +20,9 @@
         YesNoResponseOut,
     } from '$lib/types/response';
     import {
+        type ChatMessage,
+        type ChatReceivedPayload,
+        type ChatStatePayload,
         CloseCode,
         type CurrentQuestionPayload,
         type MeetingStartedPayload,
@@ -33,6 +37,10 @@
     // Participant state sourced from URL query param and server messages
     let username = $state('');
     let participantId = $state<string | null>(null);
+
+    // Chat
+    let chats = $state<ChatMessage[]>([]);
+    let chatOpen = $state(false);
 
     // Meeting state
     let phase = $state<
@@ -59,7 +67,7 @@
         }).catch(() => {});
     }
 
-    // ── Reveal aggregations (derived from revealedResponses) ──
+    // Reveal aggregations
     let totalResp = $derived(revealedResponses.length);
 
     let mcCounts = $derived.by(() => {
@@ -253,6 +261,14 @@
                 phase = 'question';
                 break;
             }
+            case MessageTypes.CHAT_RECEIVED: {
+                handleChatReceived(msg.payload as ChatReceivedPayload);
+                break;
+            }
+            case MessageTypes.CHAT_STATE: {
+                handleChatState(msg.payload as ChatStatePayload);
+                break;
+            }
             case MessageTypes.REVEAL: {
                 const payload = msg.payload as RevealMeetingPayload;
                 revealedResponses = payload.responses;
@@ -277,6 +293,40 @@
                 break;
             default:
                 console.warn('[ws] unknown message type:', msg.type);
+        }
+    }
+
+    /** Append the incoming chat to the chat bar */
+    function handleChatReceived(payload: ChatReceivedPayload) {
+        chats.push(payload.chat);
+        return;
+    }
+
+    /** Update the chats state to match the incoming server state */
+    function handleChatState(payload: ChatStatePayload) {
+        chats = [];
+        chats.push(...payload.chats);
+        return;
+    }
+
+    /** Send the chat message to the backend if the message is valid */
+    function handleChatSend(message: string) {
+        if (message.length < 1 || message.length > 255) {
+            toast.error('Chat message must be between 1 and 255 characters.');
+            return;
+        }
+        if (!participantId || username.length === 0) {
+            return; // participant will have to wait to receive their id and a proper username first
+        }
+        if (ws) {
+            const chatMessage = {
+                name: username,
+                u_id: participantId,
+                message: message,
+                is_host: false,
+            } as ChatMessage;
+            const payload = { type: MessageTypes.CHAT_RECEIVED, payload: { chat: chatMessage } };
+            ws.send(JSON.stringify(payload));
         }
     }
 
@@ -374,6 +424,9 @@
 </script>
 
 <div class="mx-auto max-w-2xl px-4 py-10">
+    <div class="flex justify-end mb-4">
+        <ChatBar bind:open={chatOpen} {chats} onsend={handleChatSend} />
+    </div>
     {#if phase === 'connecting'}
         <div class="flex flex-col items-center py-20">
             <div

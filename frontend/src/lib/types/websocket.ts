@@ -27,6 +27,8 @@ export enum MessageTypes {
     PARTICIPANT_CONNECTED = 'participant_connected',
     PARTICIPANT_DISCONNECTED = 'participant_disconnected',
     PARTICIPANT_STATE = 'participant_state',
+    CHAT_RECEIVED = 'chat_received',
+    CHAT_STATE = 'chat_state',
 }
 
 /** Payload for when a participant connects. */
@@ -63,6 +65,32 @@ export interface NextQuestionPayload {
     question: QuestionIn;
 }
 
+/** A chat message */
+export interface ChatMessage {
+    /** The name of the user who sent the message */
+    name: string;
+    /** The id of the user that sent the message */
+    u_id: string;
+    /** The content of the chat message */
+    message: string;
+    /** Whether the user is the host of the chat */
+    is_host: boolean;
+    /** The time of the message's creation */
+    created_at: string;
+}
+
+/** Represents the state for chat bar. */
+export interface ChatStatePayload {
+    /** Array of chat messages. */
+    chats: ChatMessage[];
+}
+
+/** Payload for when a chat message arrives. */
+export interface ChatReceivedPayload {
+    /** The incoming chat message */
+    chat: ChatMessage;
+}
+
 /** Payload for managing the current question */
 export interface CurrentQuestionPayload {
     /** The current question used in the meeting */
@@ -90,6 +118,8 @@ interface PayloadMap {
     [MessageTypes.NEXT_QUESTION]: NextQuestionPayload;
     [MessageTypes.CURRENT_QUESTION]: CurrentQuestionPayload;
     [MessageTypes.RESPONSE_RECEIVED]: ResponseReceivedPayload;
+    [MessageTypes.CHAT_RECEIVED]: ChatReceivedPayload;
+    [MessageTypes.CHAT_STATE]: ChatStatePayload;
     [MessageTypes.REVEAL]: RevealMeetingPayload;
     [MessageTypes.PARTICIPANT_CONNECTED]: Participant;
     [MessageTypes.PARTICIPANT_DISCONNECTED]: ParticipantDisconnectedPayload;
@@ -122,6 +152,8 @@ export type WebIn =
     | WebInMessage<MessageTypes.PARTICIPANT_STATE>
     | WebInMessage<MessageTypes.CURRENT_QUESTION>
     | WebInMessage<MessageTypes.RESPONSE_RECEIVED>
+    | WebInMessage<MessageTypes.CHAT_RECEIVED>
+    | WebInMessage<MessageTypes.CHAT_STATE>
     | WebInMessage<MessageTypes.REVEAL>
     | WebInMessage<MessageTypes.MEETING_ENDED>
     | WebInMessage<MessageTypes.HOST_DISCONNECTED>

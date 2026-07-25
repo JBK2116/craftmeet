@@ -3,6 +3,7 @@
     import { goto } from '$app/navigation';
     import { page } from '$app/state';
     import { refreshTokens } from '$lib/api/auth';
+    import ChatBar from '$lib/components/chat/ChatBar.svelte';
     import HostLobby from '$lib/components/host/HostLobby.svelte';
     import HostParticipants from '$lib/components/host/HostParticipants.svelte';
     import HostQuestion from '$lib/components/host/HostQuestion.svelte';
@@ -12,6 +13,9 @@
     import type { QuestionIn, QuestionStatus } from '$lib/types/question';
     import type { ResponseOut } from '$lib/types/response';
     import {
+        type ChatMessage,
+        type ChatReceivedPayload,
+        type ChatStatePayload,
         CloseCode,
         type MeetingStartedPayload,
         type MeetingStatePayload,
@@ -23,13 +27,14 @@
     } from '$lib/types/websocket';
     import { onMount, untrack } from 'svelte';
     import { toast } from 'svelte-sonner';
+    import { get } from 'svelte/store';
 
     import type { PageData } from './$types';
 
     let { data }: { data: PageData } = $props();
 
     // host info
-    let hostUsername = $derived($user?.username ?? 'Unknown');
+    let hostUsername = $derived($user?.username ?? 'Host');
     let today = $state(
         new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
     );
@@ -51,6 +56,10 @@
 
     // responses
     let responses = $state<Record<string, ResponseOut[]>>({});
+
+    // chat
+    let chats = $state<ChatMessage[]>([]);
+    let chatOpen = $state(false);
 
     // timer logic
     let start = $state<number | null>(null);
@@ -135,6 +144,41 @@
         ws?.send(payload);
     }
 
+    /** Append the incoming chat to the chat bar */
+    function handleChatReceived(payload: ChatReceivedPayload) {
+        chats.push(payload.chat);
+        return;
+    }
+
+    /** Update the chats state to match the incoming server state */
+    function handleChatState(payload: ChatStatePayload) {
+        chats = [];
+        chats.push(...payload.chats);
+        return;
+    }
+
+    /** Send the chat message to the backend if the message is valid */
+    function handleChatSend(message: string) {
+        if (message.length < 1 || message.length > 255) {
+            toast.error('Chat message must be between 1 and 255 characters.');
+            return;
+        }
+        const hostId = get(user)?.id;
+        if (!hostId) {
+            return; // should never happen on this page
+        }
+        if (ws) {
+            const chatMessage = {
+                name: hostUsername,
+                u_id: hostId,
+                message: message,
+                is_host: true,
+            } as ChatMessage;
+            const payload = { type: MessageTypes.CHAT_RECEIVED, payload: { chat: chatMessage } };
+            ws.send(JSON.stringify(payload));
+        }
+    }
+
     /** End the meeting. Shows a confirmation before proceeding. */
     function handleEndMeeting() {
         pendingEnd = true;
@@ -185,6 +229,12 @@
                 break;
             case MessageTypes.RESPONSE_RECEIVED:
                 handleResponseReceived(msg.payload as ResponseReceivedPayload);
+                break;
+            case MessageTypes.CHAT_RECEIVED:
+                handleChatReceived(msg.payload as ChatReceivedPayload);
+                break;
+            case MessageTypes.CHAT_STATE:
+                handleChatState(msg.payload as ChatStatePayload);
                 break;
             case MessageTypes.MEETING_STATE:
                 handleMeetingState(msg.payload as MeetingStatePayload);
@@ -416,6 +466,7 @@
                 {meeting.room_code}
             </button>
             <span class="hidden h-4 w-px bg-border sm:block"></span>
+            <ChatBar bind:open={chatOpen} {chats} onsend={handleChatSend} />
             <button
                 onclick={() => (showParticipants = true)}
                 class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-muted"

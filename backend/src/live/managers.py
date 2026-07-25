@@ -48,6 +48,8 @@ class LiveManager:
                 await room.next_question(payload=message.payload)
             case InboundMessageTypes.REVEAL:
                 await room.reveal()
+            case InboundMessageTypes.CHAT_RECEIVED:
+                await room.chat_received(payload=message.payload)
 
     async def handle_participant_message(
         self, meeting_id: uuid.UUID, p_id: uuid.UUID, ws: WebSocket, message: WebIn
@@ -62,6 +64,11 @@ class LiveManager:
                 if room is None:
                     return
                 await room.response_received(payload=message.payload)
+            case InboundMessageTypes.CHAT_RECEIVED:
+                room = self.__rooms.get(meeting_id, None)
+                if room is None:
+                    return
+                await room.chat_received(payload=message.payload)
 
     async def handle_host_connect(
         self, meeting_id: uuid.UUID, websocket: WebSocket, lock: asyncio.Lock
