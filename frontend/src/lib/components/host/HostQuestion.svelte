@@ -295,31 +295,40 @@
         {/if}
     </div>
 
-    <!-- Controls -->
-    <div class="flex items-center justify-evenly gap-3">
-        <Button
-            variant={isRevealed ? 'default' : 'secondary'}
-            size="sm"
-            onclick={onreveal}
-            class="flex-1 gap-1.5 rounded-lg"
-        >
-            <Eye class="h-4 w-4" />
-            {isRevealed ? 'Revealing…' : 'Reveal'}
-        </Button>
-        <Button
-            variant="default"
-            size="sm"
-            disabled={isLast}
-            onclick={onnext}
-            class="flex-1 gap-1.5 rounded-lg"
-        >
-            <ChevronRight class="h-4 w-4" />
-            Next Question
-        </Button>
-        <Button variant="destructive" size="sm" onclick={onend} class="flex-1 gap-1.5 rounded-lg">
-            <X class="h-4 w-4" />
-            End Meeting
-        </Button>
+    <!-- Controls (sticky) -->
+    <div
+        class="sticky bottom-0 -mx-4 border-t border-border bg-background/80 px-4 py-3 backdrop-blur-sm"
+    >
+        <div class="flex items-center justify-evenly gap-3">
+            <Button
+                variant={isRevealed ? 'default' : 'secondary'}
+                size="sm"
+                onclick={onreveal}
+                class="flex-1 gap-1.5 rounded-lg"
+            >
+                <Eye class="h-4 w-4" />
+                {isRevealed ? 'Revealing…' : 'Reveal'}
+            </Button>
+            <Button
+                variant="default"
+                size="sm"
+                disabled={isLast}
+                onclick={onnext}
+                class="flex-1 gap-1.5 rounded-lg"
+            >
+                <ChevronRight class="h-4 w-4" />
+                Next Question
+            </Button>
+            <Button
+                variant="destructive"
+                size="sm"
+                onclick={onend}
+                class="flex-1 gap-1.5 rounded-lg"
+            >
+                <X class="h-4 w-4" />
+                End Meeting
+            </Button>
+        </div>
     </div>
 
     <!-- Question Progress Dots -->

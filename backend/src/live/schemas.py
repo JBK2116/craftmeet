@@ -83,6 +83,16 @@ class MeetingStatePayload(BaseModel):
     participants: list[Participant]
 
 
+class ParticipantsStatePayload(BaseModel):
+    """Payload for the current snapshot of participants in the meeting.
+
+    Attributes:
+        participants: List of participants in the meeting.
+    """
+
+    participants: list[Participant]
+
+
 class ChatMessage(BaseModel):
     """Represents a chat message in the current meeting session.
 

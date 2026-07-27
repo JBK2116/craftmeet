@@ -7,6 +7,7 @@
     import HostLobby from '$lib/components/host/HostLobby.svelte';
     import HostParticipants from '$lib/components/host/HostParticipants.svelte';
     import HostQuestion from '$lib/components/host/HostQuestion.svelte';
+    import { Button } from '$lib/components/ui/button';
     import { user } from '$lib/stores/stores';
     import type { LiveMeetingStatus } from '$lib/types/meeting';
     import type { Participant } from '$lib/types/participant';
@@ -25,6 +26,7 @@
         type ResponseReceivedPayload,
         type WebIn,
     } from '$lib/types/websocket';
+    import { Users } from '@lucide/svelte';
     import { onMount, untrack } from 'svelte';
     import { toast } from 'svelte-sonner';
     import { get } from 'svelte/store';
@@ -52,14 +54,17 @@
 
     // meeting participants
     let participants = $state<Participant[]>([]);
-    let showParticipants = $state(false);
 
     // responses
     let responses = $state<Record<string, ResponseOut[]>>({});
 
     // chat
     let chats = $state<ChatMessage[]>([]);
+    let chatUnread = $state(0);
     let chatOpen = $state(false);
+
+    // participants sheet
+    let participantsOpen = $state(false);
 
     // timer logic
     let start = $state<number | null>(null);
@@ -88,6 +93,13 @@
             ? meetingEndTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
             : null,
     );
+
+    // reset chat unread when sheet opens on mobile
+    $effect(() => {
+        if (chatOpen) {
+            chatUnread = 0;
+        }
+    });
 
     // timer effect
     $effect(() => {
@@ -147,6 +159,7 @@
     /** Append the incoming chat to the chat bar */
     function handleChatReceived(payload: ChatReceivedPayload) {
         chats.push(payload.chat);
+        chatUnread++;
         return;
     }
 
@@ -443,110 +456,136 @@
     }
 </script>
 
-<!-- Persistent header -->
-<div class="px-6 py-4">
-    <div class="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3">
-        <div class="min-w-0">
-            <h1 class="truncate text-lg font-semibold text-[var(--text-heading)]">
-                {meeting.title}
-            </h1>
-            {#if meeting.description}
-                <p class="truncate text-sm text-muted-foreground">{meeting.description}</p>
+<div class="flex h-[calc(100vh-56px)] flex-col">
+    <!-- Persistent header -->
+    <div class="shrink-0 px-6 py-4 border-b border-border">
+        <div class="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+                <h1 class="truncate text-lg font-semibold text-[var(--text-heading)]">
+                    {meeting.title}
+                </h1>
+                {#if meeting.description}
+                    <p class="truncate text-sm text-muted-foreground">{meeting.description}</p>
+                {/if}
+            </div>
+            <div class="flex items-center gap-4 text-sm text-muted-foreground">
+                <button
+                    class="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-mono font-medium text-primary cursor-pointer select-all"
+                    title="Click to copy"
+                    onclick={() => {
+                        navigator.clipboard.writeText(meeting.room_code);
+                        toast.success('Code copied');
+                    }}
+                >
+                    {meeting.room_code}
+                </button>
+                <span class="hidden h-4 w-px bg-border sm:block"></span>
+                <span>{hostUsername}</span>
+                {#if endTimeDisplay}
+                    <span class="hidden h-4 w-px bg-border sm:block"></span>
+                    <span class="hidden sm:inline">Ends at {endTimeDisplay}</span>
+                {/if}
+                <span class="hidden h-4 w-px bg-border sm:block"></span>
+                <span class="hidden sm:inline">{today}</span>
+
+                <!-- Mobile: Participants + Chat icon buttons -->
+                <div class="flex lg:hidden items-center gap-2">
+                    <Button variant="ghost" size="icon" onclick={() => (participantsOpen = true)}>
+                        <Users class="size-5" />
+                    </Button>
+                    <ChatBar variant="sheet" bind:open={chatOpen} {chats} onsend={handleChatSend} />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid layout: main content + sidebar -->
+    <div class="grid lg:grid-cols-[1fr_360px] flex-1 min-h-0 overflow-hidden">
+        <!-- Main content area -->
+        <div class="overflow-y-auto">
+            {#if meetingStatus === 'lobby'}
+                <HostLobby
+                    {meeting}
+                    overallElapsed={0}
+                    {participants}
+                    onstart={handleStartMeeting}
+                />
+            {:else if meetingStatus === 'question'}
+                <HostQuestion
+                    {meeting}
+                    questionIndex={currQuestionIndex}
+                    {questionElapsed}
+                    questionState={currQuestionState}
+                    isLast={questionIsLast}
+                    totalQuestions={meeting.questions.length}
+                    participantCount={participants.length}
+                    {questionStates}
+                    responses={currResponses}
+                    {isRevealed}
+                    onreveal={handleReveal}
+                    onnext={handleNextQuestion}
+                    onend={handleEndMeeting}
+                />
+            {:else if meetingStatus === 'ended'}
+                <div class="mx-auto flex max-w-2xl flex-col items-center px-4 py-16 text-center">
+                    <div
+                        class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10"
+                    >
+                        <svg
+                            class="h-10 w-10 text-primary"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M5 13l4 4L19 7"
+                            />
+                        </svg>
+                    </div>
+                    <h1 class="mb-2 text-2xl font-bold text-[var(--text-heading)]">
+                        Meeting Ended
+                    </h1>
+                    <p class="mb-2 text-sm text-muted-foreground">
+                        Your meeting &ldquo;{meeting.title}&rdquo; has ended.
+                    </p>
+                    <p class="mb-8 text-sm text-muted-foreground">
+                        {participants.length} participant{participants.length !== 1 ? 's' : ''} &middot;
+                        {Math.floor(overallElapsed / 60)} min elapsed
+                    </p>
+                    <div class="flex gap-3">
+                        <button
+                            onclick={() => goto(`/meetings/${page.params.slug}/summary`)}
+                            class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                            View Meeting Summary
+                        </button>
+                    </div>
+                </div>
             {/if}
         </div>
-        <div class="flex items-center gap-4 text-sm text-muted-foreground">
-            <button
-                class="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-mono font-medium text-primary cursor-pointer select-all"
-                title="Click to copy"
-                onclick={() => {
-                    navigator.clipboard.writeText(meeting.room_code);
-                    toast.success('Code copied');
-                }}
-            >
-                {meeting.room_code}
-            </button>
-            <span class="hidden h-4 w-px bg-border sm:block"></span>
-            <ChatBar bind:open={chatOpen} {chats} onsend={handleChatSend} />
-            <button
-                onclick={() => (showParticipants = true)}
-                class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-muted"
-            >
-                <span class="tabular-nums font-medium text-foreground">{participants.length}</span>
-                <span>participant{participants.length !== 1 ? 's' : ''}</span>
-            </button>
-            <span class="hidden h-4 w-px bg-border sm:block"></span>
-            <span>{hostUsername}</span>
-            {#if endTimeDisplay}
-                <span class="hidden h-4 w-px bg-border sm:block"></span>
-                <span class="hidden sm:inline">Ends at {endTimeDisplay}</span>
-            {/if}
-            <span class="hidden h-4 w-px bg-border sm:block"></span>
-            <span class="hidden sm:inline">{today}</span>
+
+        <!-- Sidebar: Participants + Chat (desktop only) -->
+        <div class="hidden lg:flex flex-col border-l border-border">
+            <div class="flex-1 min-h-0 border-b border-border">
+                <HostParticipants variant="inline" {participants} />
+            </div>
+            <div class="flex-1 min-h-0">
+                <ChatBar variant="inline" {chats} onsend={handleChatSend} />
+            </div>
         </div>
     </div>
 </div>
 
+<!-- Mobile: Participants modal -->
 <HostParticipants
-    open={showParticipants}
+    variant="modal"
+    bind:open={participantsOpen}
+    onclose={() => (participantsOpen = false)}
     {participants}
-    onclose={() => (showParticipants = false)}
 />
-
-{#if meetingStatus === 'lobby'}
-    <HostLobby
-        {meeting}
-        overallElapsed={0}
-        {participants}
-        onstart={handleStartMeeting}
-        onopenparticipants={() => (showParticipants = true)}
-    />
-{:else if meetingStatus === 'question'}
-    <HostQuestion
-        {meeting}
-        questionIndex={currQuestionIndex}
-        {questionElapsed}
-        questionState={currQuestionState}
-        isLast={questionIsLast}
-        totalQuestions={meeting.questions.length}
-        participantCount={participants.length}
-        {questionStates}
-        responses={currResponses}
-        {isRevealed}
-        onreveal={handleReveal}
-        onnext={handleNextQuestion}
-        onend={handleEndMeeting}
-    />
-{:else if meetingStatus === 'ended'}
-    <div class="mx-auto flex max-w-2xl flex-col items-center px-4 py-16 text-center">
-        <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-            <svg
-                class="h-10 w-10 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-            >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-        </div>
-        <h1 class="mb-2 text-2xl font-bold text-[var(--text-heading)]">Meeting Ended</h1>
-        <p class="mb-2 text-sm text-muted-foreground">
-            Your meeting &ldquo;{meeting.title}&rdquo; has ended.
-        </p>
-        <p class="mb-8 text-sm text-muted-foreground">
-            {participants.length} participant{participants.length !== 1 ? 's' : ''} &middot;
-            {Math.floor(overallElapsed / 60)} min elapsed
-        </p>
-        <div class="flex gap-3">
-            <button
-                onclick={() => goto(`/meetings/${page.params.slug}/summary`)}
-                class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-                View Meeting Summary
-            </button>
-        </div>
-    </div>
-{/if}
 
 {#if endingMeeting}
     <div

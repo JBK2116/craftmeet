@@ -2,21 +2,18 @@
     import { Button } from '$lib/components/ui/button';
     import type { MeetingIn } from '$lib/types/meeting';
     import type { Participant } from '$lib/types/participant';
-    import { Clock, Copy, Hash, Play, Users } from '@lucide/svelte';
+    import { Clock, Copy, Hash, Play } from '@lucide/svelte';
     import { toast } from 'svelte-sonner';
 
     let {
         meeting,
         overallElapsed,
-        participants,
         onstart,
-        onopenparticipants,
     }: {
         meeting: MeetingIn;
         overallElapsed: number;
         participants: Participant[];
         onstart: () => void;
-        onopenparticipants: () => void;
     } = $props();
 
     // Derived
@@ -83,22 +80,6 @@
             <span>0:00</span>
             <span>{meeting.duration}:00</span>
         </div>
-    </div>
-
-    <!-- Participants -->
-    <div class="mb-8 w-full max-w-md">
-        <button
-            onclick={onopenparticipants}
-            class="flex w-full items-center justify-between rounded-xl border border-border bg-card px-5 py-4 text-left transition-colors hover:bg-muted/50"
-        >
-            <div class="flex items-center gap-2 text-sm">
-                <Users class="h-4 w-4 text-muted-foreground" />
-                <span class="text-muted-foreground">Participants</span>
-            </div>
-            <span class="tabular-nums text-sm font-semibold text-foreground"
-                >{participants.length}</span
-            >
-        </button>
     </div>
 
     <!-- Start Button -->

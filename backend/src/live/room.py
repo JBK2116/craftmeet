@@ -18,6 +18,7 @@ from src.live.schemas import (
     Participant,
     ParticipantConnectedPayload,
     ParticipantDisconnectedPayload,
+    ParticipantsStatePayload,
     ResponseReceivedPayload,
     RevealMeetingPayload,
 )
@@ -205,10 +206,13 @@ class LiveRoom:
                 },
             )
             if old_ws and old_ws is not ws:
-                await old_ws.close(
-                    code=CloseCode.PARTICIPANT_RECONNECTED_ELSEWHERE.code,
-                    reason=CloseCode.PARTICIPANT_RECONNECTED_ELSEWHERE.message,
-                )
+                try:
+                    await old_ws.close(
+                        code=CloseCode.PARTICIPANT_RECONNECTED_ELSEWHERE.code,
+                        reason=CloseCode.PARTICIPANT_RECONNECTED_ELSEWHERE.message,
+                    )
+                except RuntimeError:
+                    pass
 
         else:
             new_participant = Participant(
@@ -245,6 +249,20 @@ class LiveRoom:
                         "type": OutboundMessageTypes.CURRENT_QUESTION,
                         "payload": CurrentQuestionPayload(
                             question=self.service.current_question
+                        ).model_dump(mode="json"),
+                    }
+                )
+            )
+        if len(self.participants) > 0:
+            asyncio.create_task(
+                ws.send_json(
+                    {
+                        "type": OutboundMessageTypes.PARTICIPANTS_STATE,
+                        "payload": ParticipantsStatePayload(
+                            participants=[
+                                entry.participant
+                                for entry in self.participants.values()
+                            ]
                         ).model_dump(mode="json"),
                     }
                 )

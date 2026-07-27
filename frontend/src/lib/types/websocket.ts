@@ -27,6 +27,7 @@ export enum MessageTypes {
     PARTICIPANT_CONNECTED = 'participant_connected',
     PARTICIPANT_DISCONNECTED = 'participant_disconnected',
     PARTICIPANT_STATE = 'participant_state',
+    PARTICIPANTS_STATE = 'participants_state',
     CHAT_RECEIVED = 'chat_received',
     CHAT_STATE = 'chat_state',
 }
@@ -41,6 +42,12 @@ export interface ParticipantConnectedPayload {
 export interface ParticipantDisconnectedPayload {
     /** The id of the disconnecting participant */
     id: string;
+}
+
+/** Payload for the current snapshot of the participants state */
+export interface ParticipantsStatePayload {
+    /** List of all participants registered in the meeting */
+    participants: Participant[];
 }
 
 /** Payload for the current snapshot of the meeting state */
@@ -124,6 +131,7 @@ interface PayloadMap {
     [MessageTypes.PARTICIPANT_CONNECTED]: Participant;
     [MessageTypes.PARTICIPANT_DISCONNECTED]: ParticipantDisconnectedPayload;
     [MessageTypes.PARTICIPANT_STATE]: Participant;
+    [MessageTypes.PARTICIPANTS_STATE]: ParticipantsStatePayload;
     [MessageTypes.HOST_DISCONNECTED]: undefined;
     [MessageTypes.HOST_RECONNECTED]: undefined;
     [MessageTypes.MEETING_ENDED]: undefined;
@@ -150,6 +158,7 @@ export type WebIn =
     | WebInMessage<MessageTypes.PARTICIPANT_CONNECTED>
     | WebInMessage<MessageTypes.PARTICIPANT_DISCONNECTED>
     | WebInMessage<MessageTypes.PARTICIPANT_STATE>
+    | WebInMessage<MessageTypes.PARTICIPANTS_STATE>
     | WebInMessage<MessageTypes.CURRENT_QUESTION>
     | WebInMessage<MessageTypes.RESPONSE_RECEIVED>
     | WebInMessage<MessageTypes.CHAT_RECEIVED>
