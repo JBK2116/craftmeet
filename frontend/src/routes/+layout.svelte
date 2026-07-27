@@ -52,7 +52,7 @@
     class="relative flex min-h-screen flex-col bg-background text-foreground antialiased selection:bg-primary/20"
 >
     <Navbar />
-    <main class="flex-1 pb-20 md:pb-0">
+    <main class="flex flex-col flex-1 pb-20 md:pb-0">
         {@render children()}
     </main>
     <BottomNav />
