@@ -27,6 +27,9 @@ export const load: PageLoad = async ({ fetch, params }) => {
         }
         const body = await res.json();
         meeting = body as MeetingIn;
+        if (meeting.status === 'completed') {
+            redirect(302, `/meetings/${meeting.id}/summary`);
+        }
     } catch (err: any) {
         if (err instanceof AuthError) {
             throw redirect(302, '/login');

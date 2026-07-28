@@ -7,7 +7,6 @@
     import { formatDuration } from '$lib/utils/time';
     import {
         AlignStartVertical,
-        ArrowLeft,
         ChartBar,
         CheckCheck,
         Clock,
@@ -18,7 +17,6 @@
         Sparkles,
         Star,
         ToggleLeft,
-        Trash2,
         Users,
     } from '@lucide/svelte';
     import { untrack } from 'svelte';
@@ -41,7 +39,7 @@
         const s: Stat | undefined = meeting.stats;
         return [
             { icon: Users, label: 'Participants', value: s?.total_participants ?? '—' },
-            { icon: Hash, label: 'Questions Asked', value: s?.total_questions_asked ?? '—' },
+            { icon: Hash, label: 'Questions', value: s?.total_questions_asked ?? '—' },
             {
                 icon: MessageSquareText,
                 label: 'Responses',
@@ -199,15 +197,6 @@
 </script>
 
 <div class="mx-auto max-w-3xl px-4 py-8 md:px-6">
-    <!-- Back navigation -->
-    <button
-        onclick={() => goto(`/meetings/${meeting.id}`)}
-        class="group mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-    >
-        <ArrowLeft class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-        Back to meeting
-    </button>
-
     <!-- Header -->
     <div class="mb-8">
         <div class="mb-3 flex flex-wrap items-center gap-3">
@@ -216,11 +205,6 @@
             >
                 {meeting.title}
             </h1>
-            <span
-                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {statusClass}"
-            >
-                {statusLabel}
-            </span>
         </div>
         {#if meeting.description}
             <p class="text-meta mb-2">{meeting.description}</p>
@@ -265,8 +249,8 @@
             class="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
         >
             <div>
-                <h3 class="text-sm font-semibold text-foreground">AI Summary</h3>
-                <p class="text-xs text-muted-foreground">
+                <h3 class="text-base font-semibold text-foreground">AI Summary</h3>
+                <p class="text-sm text-muted-foreground">
                     Generate an AI-powered summary of this meeting's activity and responses.
                 </p>
             </div>
@@ -292,11 +276,6 @@
     <section>
         <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Questions
-            <span
-                class="ml-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-            >
-                {meeting.questions.length}
-            </span>
         </h2>
 
         {#if sortedQuestions.length === 0}
@@ -363,20 +342,9 @@
         </button>
         <button
             onclick={() => goto(`/meetings/${meeting.id}`)}
-            class="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-            <CheckCheck class="mr-1.5 h-4 w-4" />
-            Meeting Details
-        </button>
-    </div>
-
-    <!-- Delete button -->
-    <div class="mt-6 flex justify-center border-t border-border pt-6">
-        <button
-            onclick={() => (showDeleteConfirm = true)}
             class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 focus:outline-none focus:ring-2 focus:ring-ring"
         >
-            <Trash2 class="h-4 w-4" />
+            <CheckCheck class="mr-1.5 h-4 w-4" />
             Delete Meeting
         </button>
     </div>
