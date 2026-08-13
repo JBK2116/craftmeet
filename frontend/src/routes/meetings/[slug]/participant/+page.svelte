@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { browser } from '$app/environment';
-    import { goto } from '$app/navigation';
-    import { page } from '$app/state';
+    import {browser} from '$app/environment';
+    import {goto} from '$app/navigation';
+    import {page} from '$app/state';
     import ChatBar from '$lib/components/chat/ChatBar.svelte';
     import HostParticipants from '$lib/components/host/HostParticipants.svelte';
-    import { Button } from '$lib/components/ui/button';
-    import type { Participant } from '$lib/types/participant';
+    import {Button} from '$lib/components/ui/button';
+    import type {Participant} from '$lib/types/participant';
     import type {
         LongAnswerQuestionIn,
         MultipleChoiceQuestionIn,
@@ -35,9 +35,9 @@
         type RevealMeetingPayload,
         type WebIn,
     } from '$lib/types/websocket';
-    import { Users } from '@lucide/svelte';
-    import { onMount } from 'svelte';
-    import { toast } from 'svelte-sonner';
+    import {Users} from '@lucide/svelte';
+    import {onMount} from 'svelte';
+    import {toast} from 'svelte-sonner';
 
     // Participant state sourced from URL query param and server messages
     let username = $state('');
@@ -73,7 +73,8 @@
         fetch(`/api/v1/meetings/${page.params.slug}/leave`, {
             method: 'POST',
             credentials: 'include',
-        }).catch(() => {});
+        }).catch(() => {
+        });
     }
 
     // Reveal aggregations
@@ -104,7 +105,7 @@
     let yesNoCounts = $derived.by(() => {
         if (!currentQuestion || currentQuestion.type !== 'yes_no') return null;
         const yes = (revealedResponses as YesNoResponseOut[]).filter((r) => r.value).length;
-        return { yes, no: revealedResponses.length - yes, total: revealedResponses.length };
+        return {yes, no: revealedResponses.length - yes, total: revealedResponses.length};
     });
 
     let rankedFirst = $derived.by(() => {
@@ -132,7 +133,7 @@
         rank_2: number;
         rank_3: number | null;
         rank_4: number | null;
-    }>({ rank_1: 1, rank_2: 2, rank_3: 3, rank_4: 4 });
+    }>({rank_1: 1, rank_2: 2, rank_3: 3, rank_4: 4});
     let ratingValue = $state<number>(0);
     let yesNoValue = $state<boolean | null>(null);
 
@@ -151,7 +152,7 @@
     function resetAnswerState() {
         mcSelected = [];
         longAnswerText = '';
-        rankedRanks = { rank_1: 1, rank_2: 2, rank_3: 3, rank_4: 4 };
+        rankedRanks = {rank_1: 1, rank_2: 2, rank_3: 3, rank_4: 4};
         ratingValue = 0;
         yesNoValue = null;
         hasAnswered = false;
@@ -222,7 +223,7 @@
                 return;
         }
 
-        ws.send(JSON.stringify({ type: MessageTypes.RESPONSE_RECEIVED, payload: { response } }));
+        ws.send(JSON.stringify({type: MessageTypes.RESPONSE_RECEIVED, payload: {response}}));
         hasAnswered = true;
         // If the host already revealed while we were answering, go straight to revealed
         phase = revealedResponses.length > 0 ? 'revealed' : 'answered';
@@ -346,7 +347,7 @@
                 message: message,
                 is_host: false,
             } as ChatMessage;
-            const payload = { type: MessageTypes.CHAT_RECEIVED, payload: { chat: chatMessage } };
+            const payload = {type: MessageTypes.CHAT_RECEIVED, payload: {chat: chatMessage}};
             ws.send(JSON.stringify(payload));
         }
     }
@@ -400,13 +401,13 @@
         if (event.code === CloseCode.PARTICIPANT_RECONNECTED_ELSEWHERE) {
             toast.error(
                 'You joined this meeting from another tab. This connection is now closed.',
-                { duration: 6000 },
+                {duration: 6000},
             );
             return;
         }
         if (event.code === CloseCode.INVALID_TOKEN) {
-            toast.error('Your session has expired. Please rejoin the meeting.', { duration: 6000 });
-            goto('/', { replaceState: true });
+            toast.error('Your session has expired. Please rejoin the meeting.', {duration: 6000});
+            goto('/', {replaceState: true});
             return;
         }
         console.warn('[ws] participant disconnected, attempting reconnect in 3s…');
@@ -437,7 +438,7 @@
             wsConnected = true;
             // send participant_connected message with the username
             socket.send(
-                JSON.stringify({ type: MessageTypes.PARTICIPANT_CONNECTED, payload: { username } }),
+                JSON.stringify({type: MessageTypes.PARTICIPANT_CONNECTED, payload: {username}}),
             );
         };
 
@@ -486,9 +487,9 @@
             <span class="text-sm font-medium text-muted-foreground">{username}</span>
             <div class="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onclick={() => (participantsOpen = true)}>
-                    <Users class="size-5" />
+                    <Users class="size-5"/>
                 </Button>
-                <ChatBar variant="sheet" bind:open={chatOpen} {chats} onsend={handleChatSend} />
+                <ChatBar variant="sheet" bind:open={chatOpen} {chats} onsend={handleChatSend}/>
             </div>
         </div>
 
@@ -496,24 +497,24 @@
             {#if phase === 'connecting'}
                 <div class="flex flex-col items-center py-20">
                     <div
-                        class="h-8 w-8 rounded-full border-2 border-muted border-t-primary animate-spin"
+                            class="h-8 w-8 rounded-full border-2 border-muted border-t-primary animate-spin"
                     ></div>
                     <p class="mt-4 text-sm text-muted-foreground">Connecting to meeting…</p>
                 </div>
             {:else if phase === 'waiting'}
                 <div class="flex flex-col items-center py-20 text-center">
                     <div
-                        class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10"
+                            class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10"
                     >
                         <span class="relative flex h-4 w-4">
                             <span
-                                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"
+                                    class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"
                             ></span>
                             <span class="relative inline-flex h-4 w-4 rounded-full bg-primary"
                             ></span>
                         </span>
                     </div>
-                    <h1 class="mb-2 text-2xl font-bold text-[var(--text-heading)]">You're in!</h1>
+                    <h1 class="mb-2 text-2xl font-bold text-(--text-heading)">You're in!</h1>
                     <p class="text-sm text-muted-foreground">
                         Joined as <span class="font-medium text-foreground">{username}</span>.
                         Waiting for the host to start the meeting…
@@ -524,11 +525,11 @@
                     <!-- Question header -->
                     <div class="rounded-2xl border border-border bg-card p-6">
                         <span
-                            class="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                                class="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
                         >
                             Question {currentQuestion.position}
                         </span>
-                        <h2 class="mt-3 text-xl font-semibold text-[var(--text-heading)]">
+                        <h2 class="mt-3 text-xl font-semibold text-(--text-heading)">
                             {currentQuestion.prompt}
                         </h2>
                     </div>
@@ -540,7 +541,7 @@
                             <div class="space-y-3">
                                 {#each [sub.option_1, sub.option_2, sub.option_3, sub.option_4].filter(Boolean) as option, i}
                                     <label
-                                        class="flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors hover:bg-accent {mcSelected.includes(
+                                            class="flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors hover:bg-accent {mcSelected.includes(
                                             i + 1,
                                         )
                                             ? 'border-primary bg-primary/5'
@@ -548,10 +549,10 @@
                                     >
                                         {#if sub.allow_multiple}
                                             <input
-                                                type="checkbox"
-                                                class="h-4 w-4 rounded accent-primary"
-                                                checked={mcSelected.includes(i + 1)}
-                                                onchange={(e) => {
+                                                    type="checkbox"
+                                                    class="h-4 w-4 rounded accent-primary"
+                                                    checked={mcSelected.includes(i + 1)}
+                                                    onchange={(e) => {
                                                     const checked = e.currentTarget.checked;
                                                     if (checked) {
                                                         mcSelected = [...mcSelected, i + 1];
@@ -564,11 +565,11 @@
                                             />
                                         {:else}
                                             <input
-                                                type="radio"
-                                                name="mc"
-                                                class="h-4 w-4 accent-primary"
-                                                checked={mcSelected.includes(i + 1)}
-                                                onchange={() => {
+                                                    type="radio"
+                                                    name="mc"
+                                                    class="h-4 w-4 accent-primary"
+                                                    checked={mcSelected.includes(i + 1)}
+                                                    onchange={() => {
                                                     mcSelected = [i + 1];
                                                 }}
                                             />
@@ -580,11 +581,11 @@
                         {:else if currentQuestion.type === 'long_answer'}
                             {@const sub = currentQuestion.sub_question as LongAnswerQuestionIn}
                             <textarea
-                                bind:value={longAnswerText}
-                                maxlength={sub.max_length}
-                                rows={4}
-                                placeholder="Type your answer…"
-                                class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20 resize-none"
+                                    bind:value={longAnswerText}
+                                    maxlength={sub.max_length}
+                                    rows={4}
+                                    placeholder="Type your answer…"
+                                    class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20 resize-none"
                             ></textarea>
                             <p class="mt-2 text-xs text-muted-foreground text-right">
                                 {longAnswerText.length}/{sub.max_length}
@@ -600,22 +601,22 @@
                             <div class="space-y-3">
                                 {#each items as item, i}
                                     <div
-                                        class="flex items-center gap-3 rounded-xl border border-border p-4"
+                                            class="flex items-center gap-3 rounded-xl border border-border p-4"
                                     >
                                         <span class="text-sm font-medium text-foreground flex-1"
-                                            >{item}</span
+                                        >{item}</span
                                         >
                                         <select
-                                            class="h-9 rounded-lg border border-border bg-background py-2 pl-3 pr-8 text-sm text-foreground outline-none focus:border-primary/40 appearance-none bg-no-repeat"
-                                            style="background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E'); background-position: right 0.5rem center; background-size: 1rem;"
-                                            value={i === 0
+                                                class="h-9 rounded-lg border border-border bg-background py-2 pl-3 pr-8 text-sm text-foreground outline-none focus:border-primary/40 appearance-none bg-no-repeat"
+                                                style="background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E'); background-position: right 0.5rem center; background-size: 1rem;"
+                                                value={i === 0
                                                 ? rankedRanks.rank_1
                                                 : i === 1
                                                   ? rankedRanks.rank_2
                                                   : i === 2
                                                     ? (rankedRanks.rank_3 ?? '')
                                                     : (rankedRanks.rank_4 ?? '')}
-                                            onchange={(e) => {
+                                                onchange={(e) => {
                                                 const newVal = e.currentTarget.value
                                                     ? parseInt(e.currentTarget.value)
                                                     : null;
@@ -668,19 +669,19 @@
                                 Select your rating ({sub.min}–{sub.max}):
                             </p>
                             <div class="flex flex-wrap gap-2">
-                                {#each Array.from({ length: sub.max - sub.min + 1 }, (_, i) => sub.min + i) as val}
+                                {#each Array.from({length: sub.max - sub.min + 1}, (_, i) => sub.min + i) as val}
                                     <button
-                                        onclick={() => {
+                                            onclick={() => {
                                             ratingValue = val;
                                         }}
-                                        class="h-12 w-12 rounded-xl border text-sm font-medium transition-colors"
-                                        class:border-primary={ratingValue === val}
-                                        class:bg-primary={ratingValue === val}
-                                        class:text-primary-foreground={ratingValue === val}
-                                        class:border-border={ratingValue !== val}
-                                        class:bg-card={ratingValue !== val}
-                                        class:text-foreground={ratingValue !== val}
-                                        class:hover:bg-accent={ratingValue !== val}
+                                            class="h-12 w-12 rounded-xl border text-sm font-medium transition-colors"
+                                            class:border-primary={ratingValue === val}
+                                            class:bg-primary={ratingValue === val}
+                                            class:text-primary-foreground={ratingValue === val}
+                                            class:border-border={ratingValue !== val}
+                                            class:bg-card={ratingValue !== val}
+                                            class:text-foreground={ratingValue !== val}
+                                            class:hover:bg-accent={ratingValue !== val}
                                     >
                                         {val}
                                     </button>
@@ -689,10 +690,10 @@
                         {:else if currentQuestion.type === 'yes_no'}
                             <div class="flex gap-4">
                                 <button
-                                    onclick={() => {
+                                        onclick={() => {
                                         yesNoValue = true;
                                     }}
-                                    class="flex-1 rounded-xl border px-6 py-4 text-sm font-medium transition-colors {yesNoValue ===
+                                        class="flex-1 rounded-xl border px-6 py-4 text-sm font-medium transition-colors {yesNoValue ===
                                     true
                                         ? 'border-green-500 bg-green-500/10 text-green-600'
                                         : 'border-border bg-card text-foreground hover:bg-accent'}"
@@ -700,10 +701,10 @@
                                     Yes
                                 </button>
                                 <button
-                                    onclick={() => {
+                                        onclick={() => {
                                         yesNoValue = false;
                                     }}
-                                    class="flex-1 rounded-xl border px-6 py-4 text-sm font-medium transition-colors {yesNoValue ===
+                                        class="flex-1 rounded-xl border px-6 py-4 text-sm font-medium transition-colors {yesNoValue ===
                                     false
                                         ? 'border-red-500 bg-red-500/10 text-red-600'
                                         : 'border-border bg-card text-foreground hover:bg-accent'}"
@@ -714,11 +715,11 @@
                         {/if}
 
                         <div
-                            class="sticky bottom-0 bg-background/80 backdrop-blur-sm pt-3 -mx-6 px-6 pb-6 -mb-6"
+                                class="sticky bottom-0 bg-background/80 backdrop-blur-sm pt-3 -mx-6 px-6 pb-6 -mb-6"
                         >
                             <button
-                                onclick={submitAnswer}
-                                class="w-full rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+                                    onclick={submitAnswer}
+                                    class="w-full rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
                             >
                                 Submit Answer
                             </button>
@@ -728,23 +729,23 @@
             {:else if phase === 'answered'}
                 <div class="flex flex-col items-center py-20 text-center">
                     <div
-                        class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10"
+                            class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10"
                     >
                         <svg
-                            class="h-10 w-10 text-primary"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
+                                class="h-10 w-10 text-primary"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="2"
                         >
                             <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M5 13l4 4L19 7"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M5 13l4 4L19 7"
                             />
                         </svg>
                     </div>
-                    <h2 class="mb-2 text-xl font-semibold text-[var(--text-heading)]">
+                    <h2 class="mb-2 text-xl font-semibold text-(--text-heading)">
                         Answer submitted!
                     </h2>
                     <p class="text-sm text-muted-foreground">
@@ -757,11 +758,11 @@
                     <!-- Question header -->
                     <div class="rounded-2xl border border-border bg-card p-6">
                         <span
-                            class="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                                class="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
                         >
                             Question {currentQuestion.position}
                         </span>
-                        <h2 class="mt-3 text-xl font-semibold text-[var(--text-heading)]">
+                        <h2 class="mt-3 text-xl font-semibold text-(--text-heading)">
                             {currentQuestion.prompt}
                         </h2>
                     </div>
@@ -783,30 +784,30 @@
                                         totalResp > 0 ? Math.round((count / totalResp) * 100) : 0}
                                     <div>
                                         <div
-                                            class="flex items-center gap-3 rounded-lg border border-border bg-background p-4"
+                                                class="flex items-center gap-3 rounded-lg border border-border bg-background p-4"
                                         >
                                             <span
-                                                class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+                                                    class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
                                             >
                                                 {String.fromCharCode(65 + i)}
                                             </span>
                                             <span class="flex-1 text-sm">{option}</span>
                                             {#if mc.allow_multiple}
                                                 <span class="text-xs text-muted-foreground"
-                                                    >(multiple)</span
+                                                >(multiple)</span
                                                 >
                                             {/if}
                                             {#if totalResp > 0}
                                                 <span class="tabular-nums text-sm font-semibold"
-                                                    >{count}</span
+                                                >{count}</span
                                                 >
                                             {/if}
                                         </div>
                                         {#if totalResp > 0}
                                             <div class="mt-1 h-1.5 rounded-full bg-muted">
                                                 <div
-                                                    class="h-full rounded-full bg-primary transition-all duration-300"
-                                                    style="width: {pct}%"
+                                                        class="h-full rounded-full bg-primary transition-all duration-300"
+                                                        style="width: {pct}%"
                                                 ></div>
                                             </div>
                                         {/if}
@@ -820,14 +821,14 @@
                                     {#each Array(rs.max - rs.min + 1) as _, i}
                                         {@const val = rs.min + i}
                                         <div
-                                            class="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground"
+                                                class="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground"
                                         >
                                             {val}
                                         </div>
                                     {/each}
                                 </div>
                                 <div
-                                    class="flex w-full justify-between text-xs text-muted-foreground"
+                                        class="flex w-full justify-between text-xs text-muted-foreground"
                                 >
                                     <span>{rs.min}</span>
                                     <span>{rs.max}</span>
@@ -835,15 +836,15 @@
                                 {#if ratingAvg !== null}
                                     <p class="text-sm font-medium">
                                         Average: <span class="tabular-nums text-primary"
-                                            >{ratingAvg}</span
-                                        >
+                                    >{ratingAvg}</span
+                                    >
                                     </p>
                                 {/if}
                             </div>
                         {:else if currentQuestion.type === 'yes_no'}
                             <div class="flex gap-4">
                                 <div
-                                    class="flex-1 rounded-xl border-2 border-green-500/20 bg-green-500/5 p-6 text-center"
+                                        class="flex-1 rounded-xl border-2 border-green-500/20 bg-green-500/5 p-6 text-center"
                                 >
                                     <span class="text-3xl font-bold text-green-500">&#10003;</span>
                                     <p class="mt-1 text-sm font-medium text-foreground">Yes</p>
@@ -854,7 +855,7 @@
                                     {/if}
                                 </div>
                                 <div
-                                    class="flex-1 rounded-xl border-2 border-red-500/20 bg-red-500/5 p-6 text-center"
+                                        class="flex-1 rounded-xl border-2 border-red-500/20 bg-red-500/5 p-6 text-center"
                                 >
                                     <span class="text-3xl font-bold text-red-500">&#10007;</span>
                                     <p class="mt-1 text-sm font-medium text-foreground">No</p>
@@ -874,17 +875,17 @@
                                 {#each items as item, i}
                                     {@const count = rankedFirst[i] ?? 0}
                                     <div
-                                        class="flex items-center gap-3 rounded-lg border border-border bg-background p-4"
+                                            class="flex items-center gap-3 rounded-lg border border-border bg-background p-4"
                                     >
                                         <span
-                                            class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+                                                class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
                                         >
                                             {i + 1}
                                         </span>
                                         <span class="flex-1 text-sm">{item}</span>
                                         {#if totalResp > 0}
                                             <span class="tabular-nums text-xs text-muted-foreground"
-                                                >#1 votes: {count}</span
+                                            >#1 votes: {count}</span
                                             >
                                         {/if}
                                     </div>
@@ -895,7 +896,7 @@
                                 <div class="max-h-64 space-y-2 overflow-y-auto">
                                     {#each longAnswers as answer}
                                         <div
-                                            class="rounded-lg border border-border bg-muted/30 p-3 text-sm"
+                                                class="rounded-lg border border-border bg-muted/30 p-3 text-sm"
                                         >
                                             {answer}
                                         </div>
@@ -903,7 +904,7 @@
                                 </div>
                             {:else}
                                 <div
-                                    class="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center"
+                                        class="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center"
                                 >
                                     <p class="text-sm text-muted-foreground">No responses yet.</p>
                                 </div>
@@ -912,31 +913,31 @@
 
                         <p class="mt-4 text-center text-xs text-muted-foreground">
                             {revealedResponses.length} response{revealedResponses.length !== 1
-                                ? 's'
-                                : ''}
+                            ? 's'
+                            : ''}
                         </p>
                     </div>
                 </div>
             {:else if phase === 'host_disconnected'}
                 <div class="flex flex-col items-center py-20 text-center">
                     <div
-                        class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/10"
+                            class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/10"
                     >
                         <svg
-                            class="h-10 w-10 text-amber-500"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
+                                class="h-10 w-10 text-amber-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="2"
                         >
                             <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M12 9v2m0 4h.01M12 3l9.66 16.5H2.34L12 3z"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M12 9v2m0 4h.01M12 3l9.66 16.5H2.34L12 3z"
                             />
                         </svg>
                     </div>
-                    <h2 class="mb-2 text-xl font-semibold text-[var(--text-heading)]">
+                    <h2 class="mb-2 text-xl font-semibold text-(--text-heading)">
                         Host Disconnected
                     </h2>
                     <p class="text-sm text-muted-foreground">
@@ -947,31 +948,31 @@
             {:else if phase === 'ended'}
                 <div class="flex flex-col items-center py-20 text-center">
                     <div
-                        class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted"
+                            class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted"
                     >
                         <svg
-                            class="h-10 w-10 text-muted-foreground"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
+                                class="h-10 w-10 text-muted-foreground"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="2"
                         >
                             <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M5 13l4 4L19 7"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M5 13l4 4L19 7"
                             />
                         </svg>
                     </div>
-                    <h2 class="mb-2 text-xl font-semibold text-[var(--text-heading)]">
+                    <h2 class="mb-2 text-xl font-semibold text-(--text-heading)">
                         Meeting Ended
                     </h2>
                     <p class="mb-6 text-sm text-muted-foreground">
                         Thanks for participating! The meeting has now concluded.
                     </p>
                     <button
-                        onclick={() => goto('/')}
-                        class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+                            onclick={() => goto('/')}
+                            class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
                     >
                         Go Home
                     </button>
@@ -983,18 +984,18 @@
     <!-- Sidebar: Participants + Chat (desktop only) -->
     <div class="hidden lg:flex flex-col border-l border-border">
         <div class="flex-1 min-h-0 border-b border-border">
-            <HostParticipants variant="inline" {participants} />
+            <HostParticipants variant="inline" {participants}/>
         </div>
         <div class="flex-1 min-h-0">
-            <ChatBar variant="inline" {chats} onsend={handleChatSend} />
+            <ChatBar variant="inline" {chats} onsend={handleChatSend}/>
         </div>
     </div>
 </div>
 
 <!-- Mobile: Participants modal -->
 <HostParticipants
-    variant="modal"
-    bind:open={participantsOpen}
-    onclose={() => (participantsOpen = false)}
-    {participants}
+        variant="modal"
+        bind:open={participantsOpen}
+        onclose={() => (participantsOpen = false)}
+        {participants}
 />
