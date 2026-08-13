@@ -2,7 +2,7 @@ import logging
 import uuid
 from pathlib import Path
 
-from src.summary.exceptions import PdfGenerationError
+from src.summary.exceptions import CSVGenerationError, PdfGenerationError
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
 STORAGE_DIR = _BACKEND_ROOT / "storage"
 PDF_DIR = STORAGE_DIR / "pdfs"
+
+# Path : backend/storage/csvs/{meeting_id}.csv
+CSV_DIR = STORAGE_DIR / "csvs"
 
 
 def save_pdf(meeting_id: uuid.UUID, pdf_bytes: bytes) -> Path:
@@ -38,4 +41,20 @@ def save_pdf(meeting_id: uuid.UUID, pdf_bytes: bytes) -> Path:
     except OSError as e:
         logger.exception("failed to write PDF to %s: %s", filepath, e)
         raise PdfGenerationError from e
+    return filepath
+
+
+def get_csv_path(meeting_id: uuid.UUID) -> Path:
+    """
+    Retrieve the path to create a CSV storage directory for a given meeting.
+    :param meeting_id: Meeting UUID used as the filename (``{meeting_id}.csv``).
+    :return: ``Path`` to the saved file.
+    :raises OSError: if the directory or file cannot be created.
+    """
+    try:
+        CSV_DIR.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        logger.exception("failed to create CSV storage directory %s: %s", CSV_DIR, e)
+        raise CSVGenerationError from e
+    filepath = CSV_DIR / f"{meeting_id}.csv"
     return filepath

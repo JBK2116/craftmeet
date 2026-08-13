@@ -12,10 +12,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 
+
+class ExportTypes(StrEnum):
+    """Available export types"""
+
+    PDF = "pdf"
+    CSV = "csv"
+
+
 MEETING_ID = Annotated[uuid.UUID, Path()]
 DB = Annotated[AsyncSession, Depends(get_db)]
 LIMIT = Annotated[int, Query(ge=1, le=100)]
 OFFSET = Annotated[int, Query(ge=0, le=1000)]
+EXPORT_TYPE = Annotated[ExportTypes, Query(max_length=3)]
 ACCESS_TOKEN = Annotated[str | None, Cookie()]
 REFRESH_TOKEN = Annotated[str | None, Cookie()]
 
@@ -42,8 +51,8 @@ class ErrorTypes(Enum):
     )
     SERVER = ("server", "An unexpected server error occurred.")
 
-    def __init__(self, type: str, message: str):
-        self.type = type
+    def __init__(self, error_type: str, message: str):
+        self.type = error_type
         self.message = message
 
 

@@ -23,3 +23,10 @@ class PdfGenerationError(BaseError):
 
     def __init__(self):
         super().__init__("error generating pdf summary for meeting")
+
+
+class CSVGenerationError(BaseError):
+    """Error during CSV generation"""
+
+    def __init__(self):
+        super().__init__("error generating csv summary for meeting")
