@@ -493,50 +493,80 @@
     }
 </script>
 
-<div class="flex h-[calc(100vh-56px)] flex-col">
-    <!-- Persistent header -->
-    <div class="shrink-0 px-6 py-4 border-b border-border">
-        <div class="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3">
-            <div class="min-w-0">
-                <h1 class="truncate text-lg font-semibold text-(--text-heading)">
-                    {meeting.title}
-                </h1>
-                {#if meeting.description}
-                    <p class="truncate text-sm text-muted-foreground">{meeting.description}</p>
-                {/if}
-            </div>
-            <div class="flex items-center gap-4 text-sm text-muted-foreground">
-                <button
-                        class="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-mono font-medium text-primary cursor-pointer select-all"
-                        title="Click to copy"
-                        onclick={() => {
-                        navigator.clipboard.writeText(meeting.room_code);
-                        toast.success('Code copied');
-                    }}
-                >
-                    {meeting.room_code}
-                </button>
-                <span class="hidden h-4 w-px bg-border sm:block"></span>
-                <span>{hostUsername}</span>
+<div class="flex h-[calc(100vh-56px)]">
+    <!-- Left sidebar: meeting info (desktop only) -->
+    <aside class="hidden w-64 shrink-0 flex-col border-r border-border lg:flex">
+        <div class="border-b border-border px-5 py-4">
+            <h1 class="wrap-break-word text-lg font-semibold text-(--text-heading)">
+                {meeting.title}
+            </h1>
+            {#if meeting.description}
+                <p class="mt-1 wrap-break-word text-sm text-muted-foreground">{meeting.description}</p>
+            {/if}
+        </div>
+        <div class="flex flex-col gap-2 px-5 py-4 text-sm text-muted-foreground">
+            <div class="flex flex-col gap-2">
+                <div>
+                    <span class="block text-xs uppercase tracking-wide text-muted-foreground/70">Code</span>
+                    <button
+                            class="mt-0.5 inline-flex w-fit items-center gap-1 font-mono font-medium text-primary cursor-pointer select-all hover:underline"
+                            title="Click to copy"
+                            onclick={() => {
+                            navigator.clipboard.writeText(meeting.room_code);
+                            toast.success('Code copied');
+                        }}
+                    >
+                        {meeting.room_code}
+                    </button>
+                </div>
+                <div>
+                    <span class="block text-xs uppercase tracking-wide text-muted-foreground/70">Host</span>
+                    <span class="text-foreground">{hostUsername}</span>
+                </div>
                 {#if endTimeDisplay}
-                    <span class="hidden h-4 w-px bg-border sm:block"></span>
-                    <span class="hidden sm:inline">Ends at {endTimeDisplay}</span>
+                    <div>
+                        <span class="block text-xs uppercase tracking-wide text-muted-foreground/70">Ends at</span>
+                        <span class="text-foreground">{endTimeDisplay}</span>
+                    </div>
                 {/if}
-                <span class="hidden h-4 w-px bg-border sm:block"></span>
-                <span class="hidden sm:inline">{today}</span>
-
-                <!-- Mobile: Participants + Chat icon buttons -->
-                <div class="flex lg:hidden items-center gap-2">
-                    <Button variant="ghost" size="icon" onclick={() => (participantsOpen = true)}>
-                        <Users class="size-5"/>
-                    </Button>
-                    <ChatBar variant="sheet" bind:open={chatOpen} {chats} onsend={handleChatSend}/>
+                <div>
+                    <span class="block text-xs uppercase tracking-wide text-muted-foreground/70">Date</span>
+                    <span class="text-foreground">{today}</span>
                 </div>
             </div>
         </div>
-    </div>
+    </aside>
 
     <!-- Grid layout: main content + sidebar -->
+    <div class="flex min-w-0 flex-1 flex-col">
+    <!-- Mobile: slim header (title + room code + participants/chat) -->
+    <div class="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-2.5 lg:hidden">
+        <div class="min-w-0">
+            <h1 class="truncate text-sm font-semibold text-(--text-heading)">
+                {meeting.title}
+            </h1>
+            {#if meeting.description}
+                <p class="truncate text-xs text-muted-foreground">{meeting.description}</p>
+            {/if}
+        </div>
+        <div class="flex shrink-0 items-center gap-2">
+            <button
+                    class="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-mono font-medium text-primary cursor-pointer select-all"
+                    title="Click to copy"
+                    onclick={() => {
+                    navigator.clipboard.writeText(meeting.room_code);
+                    toast.success('Code copied');
+                }}
+            >
+                {meeting.room_code}
+            </button>
+            <Button variant="ghost" size="icon" onclick={() => (participantsOpen = true)}>
+                <Users class="size-5"/>
+            </Button>
+            <ChatBar variant="sheet" bind:open={chatOpen} {chats} onsend={handleChatSend}/>
+        </div>
+    </div>
+
     <div class="grid lg:grid-cols-[1fr_360px] flex-1 min-h-0 overflow-hidden">
         <!-- Main content area -->
         <div class="overflow-y-auto">
@@ -614,6 +644,7 @@
             <div class="flex-1 min-h-0">
                 <ChatBar variant="inline" {chats} onsend={handleChatSend}/>
             </div>
+        </div>
         </div>
     </div>
 </div>
