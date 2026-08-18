@@ -1,15 +1,15 @@
 <script lang="ts">
-    import { goto } from '$app/navigation';
-    import { apiFetch } from '$lib/api/auth';
-    import { meetings } from '$lib/stores/stores';
-    import { AuthError, ErrorTypes, RateLimitedError } from '$lib/types/errors';
-    import type { MeetingIn, MeetingOut } from '$lib/types/meeting';
-    import type { QuestionTypes } from '$lib/types/question';
-    import type { QuestionOut } from '$lib/types/question';
-    import { MAX_QUESTION_CAP } from '$lib/utils/constants';
-    import { ChevronDown, CircleAlert, Plus } from '@lucide/svelte';
-    import { AlignStartVertical, ChartBar, ListChecks, Star, ToggleLeft } from '@lucide/svelte';
-    import { toast } from 'svelte-sonner';
+    import {goto} from '$app/navigation';
+    import {apiFetch} from '$lib/api/auth';
+    import {meetings} from '$lib/stores/stores';
+    import {AuthError, ErrorTypes, RateLimitedError} from '$lib/types/errors';
+    import type {MeetingIn, MeetingOut} from '$lib/types/meeting';
+    import type {QuestionTypes} from '$lib/types/question';
+    import type {QuestionOut} from '$lib/types/question';
+    import {MAX_QUESTION_CAP} from '$lib/utils/constants';
+    import {ChevronDown, CircleAlert, Plus} from '@lucide/svelte';
+    import {AlignStartVertical, ChartBar, ListChecks, Star, ToggleLeft} from '@lucide/svelte';
+    import {toast} from 'svelte-sonner';
 
     import MeetingSetup from './MeetingSetup.svelte';
     import QuestionCard from './QuestionCard.svelte';
@@ -21,7 +21,7 @@
             label: 'Multiple Choice',
             description: 'Pick from defined options',
         },
-        { type: 'long_answer', label: 'Long Answer', description: 'Open text response' },
+        {type: 'long_answer', label: 'Long Answer', description: 'Open text response'},
         {
             type: 'ranked_voting',
             label: 'Ranked Voting',
@@ -32,7 +32,7 @@
             label: 'Rating Scale',
             description: 'Numeric score within a range',
         },
-        { type: 'yes_no', label: 'Yes / No', description: 'Simple binary vote' },
+        {type: 'yes_no', label: 'Yes / No', description: 'Simple binary vote'},
     ];
 
     // question icons for display
@@ -66,7 +66,7 @@
             toast.info(`Meetings cannot contain more than ${MAX_QUESTION_CAP} questions.`);
             return;
         }
-        questions.push({ id: uid(), type });
+        questions.push({id: uid(), type});
         showTypeMenu = false;
     }
 
@@ -91,6 +91,7 @@
             questionRefs[index],
         ];
     }
+
     // Close type menu on click-outside & Escape
     $effect(() => {
         if (!showTypeMenu) {
@@ -114,7 +115,7 @@
     async function handleCreate() {
         // validate the meeting setup component
         const setupValid = meetingSetupRef?.validate() ?? false;
-        // valiate each question component individually
+        // validate each question component individually
         const questionsValid = questionRefs.every((ref) => ref.validate());
 
         // ensure that both data sets are valid
@@ -138,7 +139,7 @@
         const url = `/api/v1/meetings`;
         const opts: RequestInit = {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             credentials: 'include',
             body: JSON.stringify(payload),
         };
@@ -157,12 +158,11 @@
             }
             const newMeeting = body as MeetingIn;
             meetings.update((current) => [...current, newMeeting]);
-            toast.success('Meeting successfully created! Redirecting to dashboard...', {
+            const des = `/meetings/${newMeeting.id}/`
+            toast.success('Meeting successfully created!', {
                 duration: 2000,
             });
-            setTimeout(() => {
-                goto('/dashboard');
-            }, 2000);
+            await goto(des)
         } catch (err) {
             if (err instanceof AuthError) {
                 return;
@@ -178,14 +178,14 @@
 </script>
 
 <form
-    onsubmit={(e) => {
+        onsubmit={(e) => {
         e.preventDefault();
         handleCreate();
     }}
-    class="mx-auto max-w-2xl px-4 py-10"
+        class="mx-auto max-w-2xl px-4 py-10"
 >
     <div class="mb-8">
-        <h1 class="text-[var(--text-heading)] font-bold leading-tight tracking-tight">
+        <h1 class="text-(--text-heading) font-bold leading-tight tracking-tight">
             Create Meeting
         </h1>
         <p class="text-meta mt-1">Build your question set, then launch when ready.</p>
@@ -193,21 +193,21 @@
 
     {#if backendError}
         <div
-            class="mb-6 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive flex items-start gap-3"
+                class="mb-6 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive flex items-start gap-3"
         >
-            <CircleAlert class="h-5 w-5 shrink-0 mt-0.5" />
+            <CircleAlert class="h-5 w-5 shrink-0 mt-0.5"/>
             <div class="flex-1 text-sm font-medium leading-relaxed">{backendError}</div>
         </div>
     {/if}
 
-    <MeetingSetup bind:this={meetingSetupRef} />
+    <MeetingSetup bind:this={meetingSetupRef}/>
 
     <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-[var(--text-subheading)] font-semibold">
+        <h2 class="text-(--text-subheading) font-semibold">
             Questions
             {#if questionCount > 0}
                 <span
-                    class="ml-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                        class="ml-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
                 >
                     {questionCount}
                 </span>
@@ -217,45 +217,45 @@
 
     {#each questions as q, i (q.id)}
         <QuestionCard
-            bind:this={questionRefs[i]}
-            type={q.type}
-            position={i + 1}
-            isFirst={i === 0}
-            isLast={i === questions.length - 1}
-            onremove={() => removeQuestion(q.id)}
-            onmove={(direction) => moveQuestion(i, direction)}
+                bind:this={questionRefs[i]}
+                type={q.type}
+                position={i + 1}
+                isFirst={i === 0}
+                isLast={i === questions.length - 1}
+                onremove={() => removeQuestion(q.id)}
+                onmove={(direction) => moveQuestion(i, direction)}
         />
     {/each}
 
     <div class="relative mb-8">
         <button
-            type="button"
-            onclick={() => (showTypeMenu = !showTypeMenu)}
-            class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card py-3.5 text-sm font-medium text-muted-foreground transition hover:border-primary/50 hover:bg-accent hover:text-accent-foreground"
+                type="button"
+                onclick={() => (showTypeMenu = !showTypeMenu)}
+                class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card py-3.5 text-sm font-medium text-muted-foreground transition hover:border-primary/50 hover:bg-accent hover:text-accent-foreground"
         >
-            <Plus class="h-4 w-4" />
+            <Plus class="h-4 w-4"/>
             Add question
             <ChevronDown
-                class="h-4 w-4 transition-transform"
-                style={showTypeMenu ? 'transform: rotate(180deg)' : ''}
+                    class="h-4 w-4 transition-transform"
+                    style={showTypeMenu ? 'transform: rotate(180deg)' : ''}
             />
         </button>
 
         {#if showTypeMenu}
             <div
-                class="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-border bg-card shadow-overlay"
+                    class="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-border bg-card shadow-overlay"
             >
                 {#each QUESTION_TYPES as qt}
                     {@const Icon = TYPE_ICONS[qt.type]}
                     <button
-                        type="button"
-                        onclick={() => addQuestion(qt.type)}
-                        class="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-accent"
+                            type="button"
+                            onclick={() => addQuestion(qt.type)}
+                            class="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-accent"
                     >
                         <div
-                            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10"
+                                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10"
                         >
-                            <Icon class="h-4 w-4 text-primary" />
+                            <Icon class="h-4 w-4 text-primary"/>
                         </div>
                         <div>
                             <p class="text-sm font-medium text-foreground">{qt.label}</p>
@@ -269,8 +269,8 @@
 
     <div class="flex justify-end pt-4 border-t border-border">
         <button
-            type="submit"
-            class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+                type="submit"
+                class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
         >
             Create Meeting
         </button>
