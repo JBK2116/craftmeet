@@ -32,12 +32,6 @@ export enum MessageTypes {
     CHAT_STATE = 'chat_state',
 }
 
-/** Payload for when a participant connects. */
-export interface ParticipantConnectedPayload {
-    /** The username of the joining participant */
-    username: string;
-}
-
 /** Payload for when a participant disconnects */
 export interface ParticipantDisconnectedPayload {
     /** The id of the disconnecting participant */
