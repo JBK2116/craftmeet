@@ -143,6 +143,13 @@
     let ws = $state<WebSocket | null>(null);
     let wsConnected = $state(false);
     let destroyed = false;
+    let reconnectAttempts = 0;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+    let missedPongs = 0;
+    const MAX_RECONNECT_ATTEMPTS = 8;
+    const HEARTBEAT_INTERVAL_MS = 20_000;
+    const MAX_MISSED_PONGS = 2;
 
     /** Build the WebSocket URL for the participant connection to this meeting. */
     function getWsUrl(): string {
@@ -266,6 +273,11 @@
                 const payload = msg.payload as CurrentQuestionPayload;
                 currentQuestion = payload.question;
                 highestPosition = Math.max(highestPosition, payload.question.position);
+                // On (re)connect the server snapshot is authoritative: drop any stale
+                // reveal data from before the disconnect. If the host had already
+                // revealed, the backend follows CURRENT_QUESTION with a fresh REVEAL,
+                // so revealedResponses is repopulated right after (not lost).
+                revealedResponses = [];
                 // Don't reset answer state — CURRENT_QUESTION is only sent on
                 // connect/reconnect (not a new question). PARTICIPANT_STATE
                 // (sent alongside) provides the authoritative has_answered value.
@@ -318,6 +330,9 @@
                 toast.info('The meeting has ended.');
                 leaveMeeting();
                 break;
+            case MessageTypes.PONG:
+                missedPongs = 0;
+                break;
             default:
                 console.warn('[ws] unknown message type:', msg.type);
         }
@@ -345,16 +360,17 @@
         if (!participantId || username.length === 0) {
             return; // participant will have to wait to receive their id and a proper username first
         }
-        if (ws) {
-            const chatMessage = {
-                name: username,
-                u_id: participantId,
-                message: message,
-                is_host: false,
-            } as ChatMessage;
-            const payload = {type: MessageTypes.CHAT_RECEIVED, payload: {chat: chatMessage}};
-            ws.send(JSON.stringify(payload));
+        if (!wsConnected || !ws || ws.readyState !== WebSocket.OPEN) {
+            return;
         }
+        const chatMessage = {
+            name: username,
+            u_id: participantId,
+            message: message,
+            is_host: false,
+        } as ChatMessage;
+        const payload = {type: MessageTypes.CHAT_RECEIVED, payload: {chat: chatMessage}};
+        ws.send(JSON.stringify(payload));
     }
 
     /**
@@ -391,17 +407,51 @@
         return;
     }
 
+    /** Stop and detach the heartbeat interval, if one is running. */
+    function clearHeartbeat() {
+        if (heartbeatInterval !== null) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+        }
+        missedPongs = 0;
+    }
+
+    /** Schedule a reconnect with exponential backoff + jitter, or give up after max attempts. */
+    function scheduleReconnect() {
+        if (reconnectTimer !== null) return;
+
+        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            console.warn('[ws] giving up after reconnection attempts');
+            toast.error('Unable to reconnect. Please refresh the page to rejoin.', {
+                duration: Infinity,
+            });
+            return;
+        }
+
+        const delay = Math.min(1000 * 2 ** reconnectAttempts, 15_000) + Math.random() * 1000;
+        reconnectAttempts++;
+
+        reconnectTimer = setTimeout(() => {
+            reconnectTimer = null;
+            // Guard against unmount during the wait — don't reconnect after teardown.
+            if (!destroyed && browser && phase !== 'ended') {
+                void connectWs();
+            }
+        }, delay);
+    }
+
     /**
      * Handles WebSocket disconnection events.
      *
      * If the disconnection is due to a duplicate tab or invalid/expired token,
      * it displays an error toast and does not attempt to reconnect.
      * Otherwise, it shows a warning toast and schedules a reconnection attempt
-     * after 3 seconds, provided the meeting has not ended.
+     * with exponential backoff, provided the meeting has not ended.
      *
      * @param event - The CloseEvent containing the disconnection code and reason.
      */
     function handleWsDisconnect(event: CloseEvent) {
+        clearHeartbeat();
         if (destroyed) return;
         if (event.code === CloseCode.PARTICIPANT_RECONNECTED_ELSEWHERE) {
             toast.error(
@@ -415,22 +465,18 @@
             goto('/', {replaceState: true});
             return;
         }
-        console.warn('[ws] participant disconnected, attempting reconnect in 3s…');
         if (phase !== 'ended') {
             toast.warning('Connection lost. Reconnecting…');
         }
-        setTimeout(() => {
-            if (browser && phase !== 'ended') {
-                void connectWs();
-            }
-        }, 3000);
+        scheduleReconnect();
     }
 
     /**
      * Establish (or re-establish) the WebSocket connection to the meeting.
      *
      * Skips if not in a browser environment or if a connection is already open.
-     * On open, sends a `participant_connected` message to register with the server.
+     * On open, sends a `participant_connected` message to register with the server
+     * and starts the heartbeat interval.
      */
     async function connectWs() {
         if (!browser) return;
@@ -441,10 +487,27 @@
 
         socket.onopen = () => {
             wsConnected = true;
+            reconnectAttempts = 0;
             // send participant_connected message with the username
             socket.send(
                 JSON.stringify({type: MessageTypes.PARTICIPANT_CONNECTED, payload: {username}}),
             );
+
+            // Start the heartbeat: ping every ~20s, force-close if pongs are missed.
+            // NOTE: this requires the backend to echo PING messages back as PONG.
+            //       The server side of this handshake is intentionally not implemented here.
+            clearHeartbeat();
+            missedPongs = 0;
+            heartbeatInterval = setInterval(() => {
+                if (socket.readyState !== WebSocket.OPEN) return;
+                missedPongs++;
+                if (missedPongs > MAX_MISSED_PONGS) {
+                    console.warn('[ws] missed too many pongs, forcing reconnect');
+                    socket.close();
+                    return;
+                }
+                socket.send(JSON.stringify({type: MessageTypes.PING}));
+            }, HEARTBEAT_INTERVAL_MS);
         };
 
         socket.onmessage = (event: MessageEvent) => {
@@ -458,6 +521,7 @@
 
         socket.onclose = (event: CloseEvent) => {
             wsConnected = false;
+            clearHeartbeat();
             handleWsDisconnect(event);
         };
 
@@ -474,10 +538,33 @@
             username = nameParam;
         }
 
+        // Reconnect when the tab becomes visible again or the network returns.
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                if (ws?.readyState !== WebSocket.OPEN && !destroyed) {
+                    void connectWs();
+                }
+            }
+        };
+        const handleOnline = () => {
+            if (ws?.readyState !== WebSocket.OPEN && !destroyed) {
+                void connectWs();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('online', handleOnline);
+
         void connectWs();
 
         return () => {
             destroyed = true;
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('online', handleOnline);
+            if (reconnectTimer !== null) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+            clearHeartbeat();
             ws?.close();
             wsConnected = false;
         };

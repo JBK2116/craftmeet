@@ -10,7 +10,7 @@ from src.live.schemas import (
     ParticipantDisconnectedPayload,
     WebIn,
 )
-from src.live.types import CloseCode, InboundMessageTypes
+from src.live.types import CloseCode, InboundMessageTypes, OutboundMessageTypes
 from src.utils import set_timeout
 
 logger = logging.getLogger(__name__)
@@ -71,6 +71,10 @@ class LiveManager:
                 if room is None:
                     return
                 await room.chat_received(payload=message.payload)
+            case InboundMessageTypes.PING:
+                # Heartbeat reply: echo a pong straight back to keep the client's
+                # keep-alive detection (missed-pong counter) from force-closing.
+                await ws.send_json({"type": OutboundMessageTypes.PONG})
 
     async def handle_host_connect(
         self, meeting_id: uuid.UUID, websocket: WebSocket, lock: asyncio.Lock

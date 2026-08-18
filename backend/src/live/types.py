@@ -40,6 +40,7 @@ class InboundMessageTypes(Enum):
     REVEAL = "reveal"  # sent from host
     PARTICIPANT_CONNECTED = "participant_connected"  # sent from participants
     CHAT_RECEIVED = "chat_received"  # sent from host or participant
+    PING = "ping"  # sent from participants (heartbeat)
 
 
 class OutboundMessageTypes(StrEnum):
@@ -62,3 +63,4 @@ class OutboundMessageTypes(StrEnum):
     PARTICIPANTS_STATE = "participants_state"  # sent to participants
     CHAT_RECEIVED = "chat_received"  # sent to host or participant
     CHAT_STATE = "chat_state"  # sent to host or participant
+    PONG = "pong"  # sent to participants (heartbeat reply)

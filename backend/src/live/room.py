@@ -64,6 +64,7 @@ class LiveRoom:
         )
         self._on_destroy = on_destroy
         self._ended = False
+        self._revealed = False  # whether the current question's responses have been revealed
 
     async def reconnect_host(self, ws: WebSocket) -> None:
         """Reconnect the host to the current meeting"""
@@ -116,6 +117,7 @@ class LiveRoom:
         self.service.current_question = payload.question
         self.service.asked_questions_id.add(payload.question.id)
         self.service.total_questions_asked += 1
+        self._revealed = False
         await self.service.start_meeting()
         await self.start_meeting_timer()
         logger.debug(
@@ -138,6 +140,7 @@ class LiveRoom:
         self.service.current_question = payload.question
         self.service.asked_questions_id.add(payload.question.id)
         self.service.total_questions_asked += 1
+        self._revealed = False
         for p in self.participants.values():
             p.participant.has_answered = False
         logger.debug(
@@ -280,6 +283,19 @@ class LiveRoom:
                     }
                 )
             )
+        # Replaying/rejoining after the host already revealed: push the reveal
+        # snapshot so they aren't left with a blank result view.
+        if self._revealed and self.service.current_question is not None:
+            asyncio.create_task(
+                ws.send_json(
+                    {
+                        "type": OutboundMessageTypes.REVEAL,
+                        "payload": RevealMeetingPayload(
+                            responses=self.service.get_current_responses()
+                        ).model_dump(mode="json"),
+                    }
+                )
+            )
         if len(self.participants) > 0:
             asyncio.create_task(
                 ws.send_json(
@@ -396,6 +412,7 @@ class LiveRoom:
 
     async def reveal(self) -> None:
         """Reveal the current responses to all connected participants"""
+        self._revealed = True
         current_responses = self.service.get_current_responses()
         payload = RevealMeetingPayload(responses=current_responses)
         logger.debug(

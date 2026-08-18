@@ -39,6 +39,9 @@ export enum MessageTypes {
     // chat state
     CHAT_RECEIVED = 'chat_received',
     CHAT_STATE = 'chat_state',
+    // heartbeat
+    PING = 'ping',
+    PONG = 'pong',
 }
 
 /** Payload for when requesting to add a new question to a live meeting */
@@ -159,6 +162,7 @@ interface PayloadMap {
     [MessageTypes.HOST_DISCONNECTED]: undefined;
     [MessageTypes.HOST_RECONNECTED]: undefined;
     [MessageTypes.MEETING_ENDED]: undefined;
+    [MessageTypes.PONG]: undefined;
 }
 
 // NOTE: Map extra MessageTypes to their corresponding payload shape in here
@@ -192,4 +196,5 @@ export type WebIn =
     | WebInMessage<MessageTypes.REVEAL>
     | WebInMessage<MessageTypes.MEETING_ENDED>
     | WebInMessage<MessageTypes.HOST_DISCONNECTED>
-    | WebInMessage<MessageTypes.HOST_RECONNECTED>;
+    | WebInMessage<MessageTypes.HOST_RECONNECTED>
+    | WebInMessage<MessageTypes.PONG>;
