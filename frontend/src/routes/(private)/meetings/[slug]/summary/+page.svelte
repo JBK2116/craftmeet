@@ -367,7 +367,7 @@
             Back to Dashboard
         </button>
         <button
-                onclick={() => goto(`/meetings/${meeting.id}`)}
+                onclick={() => (showDeleteConfirm = true)}
                 class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 focus:outline-none focus:ring-2 focus:ring-ring"
         >
             <CheckCheck class="mr-1.5 h-4 w-4"/>
