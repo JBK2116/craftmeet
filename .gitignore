@@ -176,7 +176,6 @@ activemq-data/
 *.sage.py
 
 # Environments
-.env
 .envrc
 .venv
 env/
@@ -342,3 +341,5 @@ storage
 
 # k6 load test artifacts
 k6/test-data.json
+# More Intellij
+/.idea/.gitignore
