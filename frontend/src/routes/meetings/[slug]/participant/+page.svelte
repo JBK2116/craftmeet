@@ -65,6 +65,8 @@
     let revealedResponses = $state<ResponseOut[]>([]);
     let hasAnswered = $state(false);
     let hasLeft = false;
+    // Highest question position seen so far, used to render a progress bar.
+    let highestPosition = $state(0);
 
     /** Call the leave endpoint once to clear the participant cookie. */
     function leaveMeeting() {
@@ -263,6 +265,7 @@
             case MessageTypes.CURRENT_QUESTION: {
                 const payload = msg.payload as CurrentQuestionPayload;
                 currentQuestion = payload.question;
+                highestPosition = Math.max(highestPosition, payload.question.position);
                 // Don't reset answer state — CURRENT_QUESTION is only sent on
                 // connect/reconnect (not a new question). PARTICIPANT_STATE
                 // (sent alongside) provides the authoritative has_answered value.
@@ -272,6 +275,7 @@
             case MessageTypes.MEETING_STARTED: {
                 const payload = msg.payload as MeetingStartedPayload;
                 currentQuestion = payload.question;
+                highestPosition = Math.max(highestPosition, payload.question.position);
                 resetAnswerState();
                 phase = 'question';
                 break;
@@ -279,6 +283,7 @@
             case MessageTypes.NEXT_QUESTION: {
                 const payload = msg.payload as NextQuestionPayload;
                 currentQuestion = payload.question;
+                highestPosition = Math.max(highestPosition, payload.question.position);
                 resetAnswerState();
                 phase = 'question';
                 break;
@@ -519,6 +524,12 @@
                         Joined as <span class="font-medium text-foreground">{username}</span>.
                         Waiting for the host to start the meeting…
                     </p>
+                    <div
+                            class="mt-6 flex items-center gap-3 rounded-full border border-border bg-card px-4 py-1.5 text-xs text-muted-foreground"
+                    >
+                        <Users class="h-3.5 w-3.5"/>
+                        <span>{participants.length} waiting</span>
+                    </div>
                 </div>
             {:else if phase === 'question' && currentQuestion}
                 <div class="space-y-6">
@@ -532,8 +543,20 @@
                         <h2 class="mt-3 text-xl font-semibold text-(--text-heading)">
                             {currentQuestion.prompt}
                         </h2>
+                        {#if highestPosition > 1}
+                            <div class="mt-4 flex items-center gap-1.5">
+                                {#each Array.from({length: highestPosition}) as _, i}
+                                    {@const pos = i + 1}
+                                    <span
+                                            class="h-1.5 flex-1 rounded-full transition-colors {pos <=
+                                    currentQuestion.position
+                                        ? 'bg-primary'
+                                        : 'bg-muted'}"
+                                    ></span>
+                                {/each}
+                            </div>
+                        {/if}
                     </div>
-
                     <!-- Answer input by type -->
                     <div class="rounded-2xl border border-border bg-card p-6">
                         {#if currentQuestion.type === 'multiple_choice'}
@@ -782,9 +805,12 @@
                                     {@const count = mcCounts[i + 1] ?? 0}
                                     {@const pct =
                                         totalResp > 0 ? Math.round((count / totalResp) * 100) : 0}
+                                    {@const isMine = mcSelected.includes(i + 1)}
                                     <div>
                                         <div
-                                                class="flex items-center gap-3 rounded-lg border border-border bg-background p-4"
+                                                class="flex items-center gap-3 rounded-lg border bg-background p-4 {isMine
+                                        ? 'border-primary ring-1 ring-primary/30'
+                                        : 'border-border'}"
                                         >
                                             <span
                                                     class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
@@ -792,6 +818,11 @@
                                                 {String.fromCharCode(65 + i)}
                                             </span>
                                             <span class="flex-1 text-sm">{option}</span>
+                                            {#if isMine}
+                                                <span class="text-xs font-medium text-primary"
+                                                >Your answer</span
+                                                >
+                                            {/if}
                                             {#if mc.allow_multiple}
                                                 <span class="text-xs text-muted-foreground"
                                                 >(multiple)</span
@@ -821,7 +852,10 @@
                                     {#each Array(rs.max - rs.min + 1) as _, i}
                                         {@const val = rs.min + i}
                                         <div
-                                                class="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground"
+                                                class="flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium {val ===
+                                        ratingValue
+                                            ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
+                                            : 'bg-muted text-foreground'}"
                                         >
                                             {val}
                                         </div>
@@ -833,6 +867,13 @@
                                     <span>{rs.min}</span>
                                     <span>{rs.max}</span>
                                 </div>
+                                {#if ratingValue > 0}
+                                    <p class="text-xs font-medium text-muted-foreground">
+                                        Your rating: <span
+                                    >{ratingValue}</span
+                                    >
+                                    </p>
+                                {/if}
                                 {#if ratingAvg !== null}
                                     <p class="text-sm font-medium">
                                         Average: <span class="tabular-nums text-primary"
@@ -844,10 +885,18 @@
                         {:else if currentQuestion.type === 'yes_no'}
                             <div class="flex gap-4">
                                 <div
-                                        class="flex-1 rounded-xl border-2 border-green-500/20 bg-green-500/5 p-6 text-center"
+                                        class="flex-1 rounded-xl border-2 p-6 text-center {yesNoValue ===
+                                    true
+                                        ? 'border-green-500 bg-green-500/10'
+                                        : 'border-green-500/20 bg-green-500/5'}"
                                 >
                                     <span class="text-3xl font-bold text-green-500">&#10003;</span>
                                     <p class="mt-1 text-sm font-medium text-foreground">Yes</p>
+                                    {#if yesNoValue === true}
+                                        <p class="mt-1 text-xs font-medium text-green-500"
+                                        >Your answer</p
+                                        >
+                                    {/if}
                                     {#if yesNoCounts !== null}
                                         <p class="mt-1 text-lg font-bold tabular-nums">
                                             {yesNoCounts.yes}
@@ -855,10 +904,18 @@
                                     {/if}
                                 </div>
                                 <div
-                                        class="flex-1 rounded-xl border-2 border-red-500/20 bg-red-500/5 p-6 text-center"
+                                        class="flex-1 rounded-xl border-2 p-6 text-center {yesNoValue ===
+                                    false
+                                        ? 'border-red-500 bg-red-500/10'
+                                        : 'border-red-500/20 bg-red-500/5'}"
                                 >
                                     <span class="text-3xl font-bold text-red-500">&#10007;</span>
                                     <p class="mt-1 text-sm font-medium text-foreground">No</p>
+                                    {#if yesNoValue === false}
+                                        <p class="mt-1 text-xs font-medium text-red-500"
+                                        >Your answer</p
+                                        >
+                                    {/if}
                                     {#if yesNoCounts !== null}
                                         <p class="mt-1 text-lg font-bold tabular-nums">
                                             {yesNoCounts.no}
@@ -896,9 +953,17 @@
                                 <div class="max-h-64 space-y-2 overflow-y-auto">
                                     {#each longAnswers as answer}
                                         <div
-                                                class="rounded-lg border border-border bg-muted/30 p-3 text-sm"
+                                                class="rounded-lg border p-3 text-sm {answer ===
+                                        longAnswerText.trim()
+                                            ? 'border-primary bg-primary/5'
+                                            : 'border-border bg-muted/30'}"
                                         >
                                             {answer}
+                                            {#if answer === longAnswerText.trim()}
+                                                <span class="ml-2 text-xs font-medium text-primary"
+                                                >Your answer</span
+                                                >
+                                            {/if}
                                         </div>
                                     {/each}
                                 </div>
