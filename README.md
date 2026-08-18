@@ -21,7 +21,7 @@ PDF summary of every response.
 ## Tech Stack
 
 | Layer      | Technology             |
-| ---------- | ---------------------- |
+|------------|------------------------|
 | Frontend   | SvelteKit (SPA)        |
 | Backend    | FastAPI (async)        |
 | Database   | PostgreSQL via asyncpg |
