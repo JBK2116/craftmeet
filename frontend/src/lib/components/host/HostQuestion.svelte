@@ -23,6 +23,7 @@
         Clock,
         Eye,
         ListChecks,
+        Plus,
         Star,
         ToggleLeft,
         Users,
@@ -39,6 +40,8 @@
         questionStates,
         responses,
         isRevealed = false,
+        canAdd = true,
+        onaddquestion,
         onreveal,
         onnext,
         onend,
@@ -53,6 +56,8 @@
         questionStates: { status: 'pending' | 'open' | 'closed' }[];
         responses: ResponseOut[];
         isRevealed?: boolean;
+        canAdd?: boolean;
+        onaddquestion: () => void;
         onreveal: () => void;
         onnext: () => void;
         onend: () => void;
@@ -136,6 +141,16 @@
             <span class="rounded-full bg-muted px-3 py-1 text-xs font-medium">
                 Question {questionIndex + 1} of {totalQuestions}
             </span>
+            <button
+                type="button"
+                onclick={onaddquestion}
+                disabled={!canAdd}
+                title="Add question"
+                aria-label="Add question"
+                class="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+            >
+                <Plus class="h-4 w-4" />
+            </button>
         </div>
         <div class="flex items-center gap-3">
             <div class="flex items-center gap-1.5 text-muted-foreground">

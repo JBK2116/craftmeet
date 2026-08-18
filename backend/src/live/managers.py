@@ -46,6 +46,8 @@ class LiveManager:
                 await self.__destroy_room(meeting_id)
             case InboundMessageTypes.NEXT_QUESTION:
                 await room.next_question(payload=message.payload)
+            case InboundMessageTypes.ADD_QUESTION:
+                await room.add_question(payload=message.payload)
             case InboundMessageTypes.REVEAL:
                 await room.reveal()
             case InboundMessageTypes.CHAT_RECEIVED:

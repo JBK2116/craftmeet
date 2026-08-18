@@ -6,7 +6,37 @@ from pydantic import BaseModel, Field, model_validator
 
 from src.constants import MAX_CHAT_LENGTH, MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH
 from src.live.types import InboundMessageTypes
-from src.meeting.schemas import QuestionOut, ResponseIn
+from src.meeting.schemas import QuestionIn, QuestionOut, ResponseIn
+
+
+class AddQuestionPayload(BaseModel):
+    """Represents a add question request sent by the host during a live meeting
+
+    Attributes:
+        question: The question to be added
+    """
+
+    question: QuestionIn
+
+
+class AddQuestionSuccessPayload(BaseModel):
+    """Represents a success response from an add question request
+
+    Attributes:
+        question: The question that has been added
+    """
+
+    question: QuestionOut
+
+
+class AddQuestionFailed(BaseModel):
+    """Represents a failure response from an add question request
+
+    Attributes:
+        detail: The reason for the failure
+    """
+
+    detail: str
 
 
 class Participant(BaseModel):
@@ -184,6 +214,7 @@ class RevealMeetingPayload(BaseModel):
 
 
 INBOUND_PAYLOAD_MODELS: dict[InboundMessageTypes, type[BaseModel]] = {
+    InboundMessageTypes.ADD_QUESTION: AddQuestionPayload,
     InboundMessageTypes.PARTICIPANT_CONNECTED: ParticipantConnectedPayload,
     InboundMessageTypes.MEETING_STARTED: MeetingStartedPayload,
     InboundMessageTypes.NEXT_QUESTION: NextQuestionPayload,

@@ -7,15 +7,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.repository import get_user, update_user
 from src.constants import MAX_PARTICIPANT_CAP
 from src.database import AsyncSessionLocal
+from src.live.schemas import AddQuestionPayload
 from src.meeting.repository import (
     get_meeting_duration,
     get_meeting_lazy,
     get_meeting_participant_cap,
     get_stat,
+    insert_question,
+    insert_sub_question,
     update_meeting,
     update_question,
 )
 from src.meeting.schemas import QuestionOut, ResponseIn
+from src.meeting.utils import (
+    build_question_out,
+    generate_question_model,
+    generate_sub_question,
+)
 from src.models import (
     LongAnswerResponse,
     MultipleChoiceResponse,
@@ -141,6 +149,38 @@ class LiveService:
                 "type": response.type.value,
             },
         )
+
+    async def add_question(self, payload: AddQuestionPayload) -> QuestionOut | str:
+        """
+        Adds a new question to the meeting
+        :param payload: Payload data containing the question
+        :return: The question if created, else the details describing the reason for the failure.
+        """
+        question_model = generate_question_model(
+            meeting_id=self.meeting_id, question=payload.question
+        )
+        async with AsyncSessionLocal() as db:
+            try:
+                async with db.begin():
+                    question_model_database = await insert_question(
+                        db=db, question=question_model
+                    )
+                    sub_question = generate_sub_question(
+                        question_id=question_model_database.id,
+                        type=question_model_database.type,
+                        question=payload.question.sub_question,
+                    )
+                    sub_question_model_database = await insert_sub_question(
+                        db=db, question=sub_question
+                    )
+                    sub_question_model_database.__dict__["responses"] = []
+                    question_out = build_question_out(
+                        question=question_model_database,
+                        sub_question=sub_question_model_database,
+                    )
+            except Exception:
+                return "Failed to add question"
+        return question_out
 
     def get_current_responses(self) -> list[ResponseIn]:
         """returns the responses received for the current question"""

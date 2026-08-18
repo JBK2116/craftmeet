@@ -8,6 +8,9 @@ from typing import Any
 from fastapi import WebSocket, status
 
 from src.live.schemas import (
+    AddQuestionFailed,
+    AddQuestionPayload,
+    AddQuestionSuccessPayload,
     ChatMessage,
     ChatReceivedPayload,
     ChatStatePayload,
@@ -24,6 +27,7 @@ from src.live.schemas import (
 )
 from src.live.service import LiveService
 from src.live.types import CloseCode, OutboundMessageTypes
+from src.meeting.schemas import QuestionOut
 from src.utils import set_timeout
 
 logger = logging.getLogger(__name__)
@@ -150,6 +154,29 @@ class LiveRoom:
                 "payload": payload.model_dump(mode="json"),
             },
         )
+
+    async def add_question(self, payload: AddQuestionPayload) -> None:
+        """Adds a new question to the live meeting"""
+        result = await self.service.add_question(payload=payload)
+        if isinstance(result, QuestionOut):
+            out = AddQuestionSuccessPayload(question=result)
+            if self.host:
+                await self.host.send_json(
+                    data={
+                        "type": OutboundMessageTypes.ADD_QUESTION_SUCCESS,
+                        "payload": out.model_dump(mode="json"),
+                    }
+                )
+        else:
+            out = AddQuestionFailed(detail=result)
+            if self.host:
+                await self.host.send_json(
+                    {
+                        "type": OutboundMessageTypes.ADD_QUESTION_FAILED,
+                        "payload": out.model_dump(mode="json"),
+                    }
+                )
+        return
 
     async def end_stale_meeting(self) -> None:
         """End a stale meeting and close all connected participant websockets."""
@@ -337,7 +364,7 @@ class LiveRoom:
         participant = self.participants.get(payload.response.participant_id)
         if participant is None:
             return
-        if participant.participant.has_answered is True:
+        if participant.participant.has_answered:
             return
         self.service.add_response(response=payload.response)
         participant.participant.has_answered = True

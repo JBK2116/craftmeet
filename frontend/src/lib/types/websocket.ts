@@ -1,5 +1,5 @@
 import type { Participant } from './participant';
-import type { QuestionIn } from './question';
+import type { QuestionIn, QuestionOut } from './question';
 import type { ResponseOut } from './response';
 
 /** WebSocket close codes used by the application. */
@@ -14,22 +14,49 @@ export enum CloseCode {
 
 /** Types of messages that can be sent in the meeting system. */
 export enum MessageTypes {
+    // add question feature
+    ADD_QUESTION = 'add_question',
+    ADD_QUESTION_SUCCESS = 'add_question_success',
+    ADD_QUESTION_FAILED = 'add_question_failed',
     // meeting state
     MEETING_STATE = 'meeting_state',
     MEETING_STARTED = 'meeting_started',
     MEETING_ENDED = 'meeting_ended',
+    // question state
     NEXT_QUESTION = 'next_question',
     CURRENT_QUESTION = 'current_question',
+    // response handling
     RESPONSE_RECEIVED = 'response_received',
     REVEAL = 'reveal',
+    // host connection
     HOST_DISCONNECTED = 'host_disconnected',
     HOST_RECONNECTED = 'host_reconnected',
+    // participant connection
     PARTICIPANT_CONNECTED = 'participant_connected',
     PARTICIPANT_DISCONNECTED = 'participant_disconnected',
     PARTICIPANT_STATE = 'participant_state',
     PARTICIPANTS_STATE = 'participants_state',
+    // chat state
     CHAT_RECEIVED = 'chat_received',
     CHAT_STATE = 'chat_state',
+}
+
+/** Payload for when requesting to add a new question to a live meeting */
+export interface AddQuestionPayload {
+    /** The question to add */
+    question: QuestionOut;
+}
+
+/** Payload for when an add question request succeeds */
+export interface AddQuestionSuccessPayload {
+    /** The question to add */
+    question: QuestionIn;
+}
+
+/** Payload for when an add question request fails */
+export interface AddQuestionFailedPayload {
+    /** The reason for the failure */
+    detail: string;
 }
 
 /** Payload for when a participant disconnects */
@@ -114,6 +141,9 @@ export interface RevealMeetingPayload {
 
 /** Maps each MessageType to its corresponding payload shape. */
 interface PayloadMap {
+    [MessageTypes.ADD_QUESTION]: AddQuestionPayload;
+    [MessageTypes.ADD_QUESTION_SUCCESS]: AddQuestionSuccessPayload;
+    [MessageTypes.ADD_QUESTION_FAILED]: AddQuestionFailedPayload;
     [MessageTypes.MEETING_STATE]: MeetingStatePayload;
     [MessageTypes.MEETING_STARTED]: MeetingStartedPayload;
     [MessageTypes.NEXT_QUESTION]: NextQuestionPayload;
@@ -146,6 +176,8 @@ type WebInMessage<T extends MessageTypes> = { type: T; payload: WebInPayload<T> 
 
 /** Union of all possible incoming WebSocket messages. */
 export type WebIn =
+    | WebInMessage<MessageTypes.ADD_QUESTION_SUCCESS>
+    | WebInMessage<MessageTypes.ADD_QUESTION_FAILED>
     | WebInMessage<MessageTypes.MEETING_STATE>
     | WebInMessage<MessageTypes.MEETING_STARTED>
     | WebInMessage<MessageTypes.NEXT_QUESTION>

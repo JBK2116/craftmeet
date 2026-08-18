@@ -32,6 +32,7 @@ class CloseCode(Enum):
 class InboundMessageTypes(Enum):
     """Enumeration of websocket messages sent from client side"""
 
+    ADD_QUESTION = "add_question" # sent from host
     MEETING_STARTED = "meeting_started"  # sent from host
     MEETING_ENDED = "meeting_ended"  # sent from host
     NEXT_QUESTION = "next_question"  # sent from host
@@ -44,6 +45,8 @@ class InboundMessageTypes(Enum):
 class OutboundMessageTypes(StrEnum):
     """Enumeration of websocket messages sent from server side"""
 
+    ADD_QUESTION_SUCCESS = "add_question_success" # sent to host
+    ADD_QUESTION_FAILED = "add_question_failed" # sent to host
     MEETING_STATE = "meeting_state"  # sent to host
     MEETING_STARTED = "meeting_started"  # sent to participants
     MEETING_ENDED = "meeting_ended"  # sent to participants
