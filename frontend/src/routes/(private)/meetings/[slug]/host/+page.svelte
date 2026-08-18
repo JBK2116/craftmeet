@@ -211,11 +211,7 @@
         endingMeeting = true;
         const payload = JSON.stringify({type: MessageTypes.MEETING_ENDED});
         ws?.send(payload);
-        // small delay to let the backend finish post-meeting processing
-        // (DB status update, user state, room cleanup) before navigating.
-        endTimeout = setTimeout(() => {
-            goto(`/meetings/${page.params.slug}`, {replaceState: true});
-        }, 3000);
+        goto(`/meetings/${page.params.slug}`, {replaceState: true});
     }
 
     function cancelEndMeeting() {
@@ -269,7 +265,7 @@
                 break;
             case MessageTypes.MEETING_ENDED:
                 meetingStatus = 'ended';
-                toast.info('Meeting time has expired.');
+                toast.info('Meeting has ended.');
                 break;
             // NOTE: add more message types as needed
             default:
