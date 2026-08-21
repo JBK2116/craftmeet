@@ -64,7 +64,9 @@ class LiveRoom:
         )
         self._on_destroy = on_destroy
         self._ended = False
-        self._revealed = False  # whether the current question's responses have been revealed
+        self._revealed = (
+            False  # whether the current question's responses have been revealed
+        )
 
     async def reconnect_host(self, ws: WebSocket) -> None:
         """Reconnect the host to the current meeting"""
@@ -190,7 +192,9 @@ class LiveRoom:
             "stale meeting ended in room",
             extra={"room_id": str(self.room_id)},
         )
-        await self._broadcast(task=_send_close)
+        await self._broadcast(
+            task=_send_message, message={"type": OutboundMessageTypes.MEETING_ENDED}
+        )
 
     async def end_meeting(self) -> None:
         """End a meeting and close all connected participant websockets"""
