@@ -8,9 +8,10 @@
     import HostLobby from '$lib/components/host/HostLobby.svelte';
     import HostParticipants from '$lib/components/host/HostParticipants.svelte';
     import HostQuestion from '$lib/components/host/HostQuestion.svelte';
+    import HostSnapshot from '$lib/components/host/HostSnapshot.svelte';
     import {Button} from '$lib/components/ui/button';
     import {user} from '$lib/stores/stores';
-    import type {LiveMeetingStatus} from '$lib/types/meeting';
+    import type {LiveMeetingStatus, MeetingSnapshot} from '$lib/types/meeting';
     import type {Participant} from '$lib/types/participant';
     import type {QuestionIn, QuestionOut, QuestionStatus} from '$lib/types/question';
     import type {ResponseOut} from '$lib/types/response';
@@ -23,6 +24,9 @@
         type ChatReceivedPayload,
         type ChatStatePayload,
         CloseCode,
+        type GetSnapshotFailedPayload,
+        type GetSnapshotPayload,
+        type GetSnapshotSuccessPayload,
         type MeetingStartedPayload,
         type MeetingStatePayload,
         MessageTypes,
@@ -67,6 +71,10 @@
     let chats = $state<ChatMessage[]>([]);
     let chatUnread = $state(0);
     let chatOpen = $state(false);
+
+    // snapshot
+    let snapshot = $state<MeetingSnapshot | null>(null);
+    let snapshotLoading = $state(false);
 
     // participants sheet
     let participantsOpen = $state(false);
@@ -245,6 +253,12 @@
             case MessageTypes.ADD_QUESTION_FAILED:
                 handleAddQuestionFailed(msg.payload as AddQuestionFailedPayload);
                 break;
+            case MessageTypes.GET_SNAPSHOT_SUCCESS:
+                handleSnapshotSuccess(msg.payload as GetSnapshotSuccessPayload);
+                break;
+            case MessageTypes.GET_SNAPSHOT_FAILED:
+                handleSnapshotFailed(msg.payload as GetSnapshotFailedPayload);
+                break;
             case MessageTypes.PARTICIPANT_CONNECTED:
                 handleParticipantConnected(msg.payload as Participant);
                 break;
@@ -404,6 +418,29 @@
         toast.success('Question has been added.', {duration: Infinity});
     }
 
+    /** Send a generate-snapshot request to the backend over the live WebSocket. */
+    function handleGenerateSnapshot() {
+        if (!wsConnected || !ws) return;
+        snapshotLoading = true;
+        const payload = JSON.stringify({
+            type: MessageTypes.GET_SNAPSHOT,
+            payload: {meeting_id: page.params.slug} as GetSnapshotPayload,
+        });
+        ws.send(payload);
+    }
+
+    /** Handle a successful snapshot by storing it for display. */
+    function handleSnapshotSuccess(payload: GetSnapshotSuccessPayload) {
+        snapshotLoading = false;
+        snapshot = payload.snapshot;
+    }
+
+    /** Handle a failed snapshot by surfacing the backend's reason as a toast. */
+    function handleSnapshotFailed(payload: GetSnapshotFailedPayload) {
+        snapshotLoading = false;
+        toast.error(payload.detail, {duration: Infinity});
+    }
+
     /**
      * Handle a participant connecting to the meeting.
      * Adds the participant to the list if new, or updates existing participant data.
@@ -530,6 +567,13 @@
                     <span class="text-foreground">{today}</span>
                 </div>
             </div>
+        </div>
+        <div class="border-t border-border p-4">
+            <HostSnapshot
+                {snapshot}
+                loading={snapshotLoading}
+                ongenerate={handleGenerateSnapshot}
+            />
         </div>
     </aside>
 
