@@ -1,12 +1,61 @@
 import datetime
 import uuid
+from dataclasses import dataclass
 from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
+from starlette.websockets import WebSocket
 
 from src.constants import MAX_CHAT_LENGTH, MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH
-from src.live.types import InboundMessageTypes
+from src.live.types import InboundMessageTypes, Mood
 from src.meeting.schemas import QuestionIn, QuestionOut, ResponseIn
+
+
+class MeetingSnapshot(BaseModel):
+    """Current snapshot of a live meeting
+
+    Attributes:
+        mood: Mood of the live meeting
+        attention_flag: Things that need attention
+        suggested_question_prompt: Next suggested question prompt
+        created_at: Snapshots created at time
+
+    """
+
+    mood: Mood
+    attention_flag: str
+    suggested_question_prompt: str
+    created_at: datetime.datetime
+
+
+class GetSnapshotPayload(BaseModel):
+    """Represents a payload for when requesting a snapshot of a live meeting
+
+    Attributes:
+        meeting_id: The meeting to create the snapshot for
+    """
+
+    meeting_id: uuid.UUID
+
+
+class GetSnapshotFailedPayload(BaseModel):
+    """Represents a payload for when requesting a snapshot of a live meeting fails
+
+    Attributes:
+        detail: The reason for the failure
+    """
+
+    detail: str
+
+
+class GetSnapshotSuccessPayload(BaseModel):
+    """Represents a payload for when requesting a snapshot of a live meeting succeeds
+
+    Attributes:
+        snapshot: The details of the current snapshot
+    """
+
+    snapshot: MeetingSnapshot
 
 
 class AddQuestionPayload(BaseModel):
@@ -53,6 +102,14 @@ class Participant(BaseModel):
     username: str
     connected: bool
     has_answered: bool
+
+
+@dataclass
+class ParticipantEntry:
+    """Represents a singular participant entry tracked in a live meeting session server-side."""
+
+    participant: Participant
+    ws: WebSocket | None = None
 
 
 class ParticipantConnectedPayload(BaseModel):
@@ -214,6 +271,7 @@ class RevealMeetingPayload(BaseModel):
 
 
 INBOUND_PAYLOAD_MODELS: dict[InboundMessageTypes, type[BaseModel]] = {
+    InboundMessageTypes.GET_SNAPSHOT: GetSnapshotPayload,
     InboundMessageTypes.ADD_QUESTION: AddQuestionPayload,
     InboundMessageTypes.PARTICIPANT_CONNECTED: ParticipantConnectedPayload,
     InboundMessageTypes.MEETING_STARTED: MeetingStartedPayload,

@@ -1,13 +1,26 @@
 import datetime
+import json
 import logging
 import uuid
 
+from openai import AsyncOpenAI
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.repository import get_user, update_user
+from src.config import get_settings
 from src.constants import MAX_PARTICIPANT_CAP
 from src.database import AsyncSessionLocal
-from src.live.schemas import AddQuestionPayload
+from src.live.prompt import generate_snapshot_prompt
+from src.live.schemas import (
+    AddQuestionPayload,
+    ChatMessage,
+    GetSnapshotFailedPayload,
+    GetSnapshotPayload,
+    GetSnapshotSuccessPayload,
+    MeetingSnapshot,
+    ParticipantEntry,
+)
 from src.meeting.repository import (
     get_meeting_duration,
     get_meeting_lazy,
@@ -34,23 +47,29 @@ from src.models import (
 )
 from src.types import MeetingStatus, QuestionStatus, QuestionType
 
+settings = get_settings()
+
 logger = logging.getLogger(__name__)
+
+client = AsyncOpenAI(api_key=settings.OPENAI_API)
 
 
 class LiveService:
+    _SNAPSHOT_TIMEOUT_SECONDS = 60 * 3  # 3 minutes
+
     def __init__(self, host_id: uuid.UUID, meeting_id: uuid.UUID):
         self.host_id = host_id  # The unique identifier for the host of the meeting
         self.meeting_id = meeting_id  # The unique identifier for the meeting
         self.current_question: QuestionOut | None = (
             None  # The current question being asked, or None if no question
         )
-        self.asked_questions_id: set[uuid.UUID] = (
-            set()
-        )  # The ids of all questions asked to participants
+        self.asked_questions: list[QuestionOut] = []  # The list of all asked questions
         self.responses: dict[
             uuid.UUID, list[ResponseIn]
         ] = {}  # Sub-question ID → list of responses for that question
-        self.total_questions_asked: int = 0
+        self.last_snapshot_at: datetime.datetime | None = (
+            None  # Time of the last snapshot
+        )
 
     async def host_connected(self):
         """Mark the meeting as live when the host first connects (opens the host page)."""
@@ -63,6 +82,14 @@ class LiveService:
             "host connected, meeting set to live",
             extra={"meeting_id": str(self.meeting_id), "host_id": str(self.host_id)},
         )
+
+    def add_asked_question(self, question: QuestionOut) -> None:
+        """
+        Adds a question to the asked questions list
+        :param question: The question to add
+        :return: None
+        """
+        self.asked_questions.append(question)
 
     async def start_meeting(self):
         """Start the meeting — sets the started_at timestamp and begins the timer."""
@@ -182,6 +209,121 @@ class LiveService:
                 return "Failed to add question"
         return question_out
 
+    async def get_snapshot(
+        self,
+        payload: GetSnapshotPayload,
+        participants: list[ParticipantEntry],
+        chats: list[ChatMessage],
+    ) -> GetSnapshotFailedPayload | GetSnapshotSuccessPayload:
+        """Get an AI snapshot of the current meeting."""
+        logger.debug(
+            "snapshot requested",
+            extra={"meeting_id": str(self.meeting_id)},
+        )
+        if payload.meeting_id != self.meeting_id:
+            logger.debug(
+                "snapshot unauthorized", extra={"meeting_id": str(payload.meeting_id)}
+            )
+            return GetSnapshotFailedPayload(
+                detail="Unable to generate snapshot at the current time."
+            )
+        allowed, remaining = self._is_snapshot_allowed()
+        if not allowed:
+            if remaining >= 60:
+                msg = f"Try again in {remaining // 60} minute(s)."
+            else:
+                msg = f"Try again in {remaining} second(s)."
+            logger.debug(
+                "snapshot rate limited",
+                extra={
+                    "meeting_id": str(self.meeting_id),
+                    "remaining_seconds": remaining,
+                },
+            )
+            return GetSnapshotFailedPayload(detail=msg)
+        async with AsyncSessionLocal() as db:
+            try:
+                meeting = await get_meeting_lazy(db=db, m_id=payload.meeting_id)
+                if meeting is None:
+                    logger.warning(
+                        "meeting not found for snapshot",
+                        extra={"meeting_id": str(payload.meeting_id)},
+                    )
+                    return GetSnapshotFailedPayload(
+                        detail="Unable to generate snapshot at the current time."
+                    )
+            except Exception:
+                logger.exception(
+                    "failed to fetch meeting for snapshot",
+                    extra={"meeting_id": str(payload.meeting_id)},
+                )
+                return GetSnapshotFailedPayload(
+                    detail="Unable to generate snapshot at the current time."
+                )
+        prompts = generate_snapshot_prompt(
+            meeting=meeting,
+            asked_questions=self.asked_questions,
+            responses=self.responses,
+            participants=[entry.participant for entry in participants],
+            chat=chats,
+        )
+        summary = await _get_ai_summary(
+            sys_prompt=prompts["system"], user_prompt=prompts["user"]
+        )
+        if summary is None:
+            logger.warning(
+                "failed to generate snapshot",
+                extra={"meeting_id": str(self.meeting_id)},
+            )
+            return GetSnapshotFailedPayload(
+                detail="Unable to generate snapshot at the current time."
+            )
+        try:
+            data = dict(json.loads(summary))
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
+            logger.error(
+                "failed to parse AI snapshot JSON: %s",
+                e,
+                extra={"meeting_id": str(self.meeting_id)},
+            )
+            return GetSnapshotFailedPayload(
+                detail="Unable to generate snapshot at the current time."
+            )
+        try:
+            out = MeetingSnapshot.model_validate(
+                {**data, "created_at": datetime.datetime.now(tz=datetime.UTC)}
+            )
+        except ValidationError as e:
+            logger.error(
+                "failed to validate AI snapshot: %s",
+                e,
+                extra={"meeting_id": str(self.meeting_id)},
+            )
+            return GetSnapshotFailedPayload(
+                detail="Unable to generate snapshot at the current time."
+            )
+        self.last_snapshot_at = datetime.datetime.now(tz=datetime.UTC)
+        success = GetSnapshotSuccessPayload(snapshot=out)
+        return success
+
+    def _is_snapshot_allowed(self) -> tuple[bool, int]:
+        """
+        Checks if enough time has passed since the last snapshot to generate another.
+
+        :return: A tuple of (allowed, remaining_seconds). If allowed is True,
+            remaining_seconds is 0. If allowed is False, remaining_seconds is the
+            number of seconds the caller must wait before the next snapshot is permitted.
+        """
+
+        if self.last_snapshot_at is None:
+            return True, 0
+        now = datetime.datetime.now(tz=datetime.UTC)
+        diff = now - self.last_snapshot_at
+        if diff.total_seconds() < self._SNAPSHOT_TIMEOUT_SECONDS:
+            remaining = int(self._SNAPSHOT_TIMEOUT_SECONDS - diff.total_seconds())
+            return False, remaining
+        return True, 0
+
     def get_current_responses(self) -> list[ResponseIn]:
         """returns the responses received for the current question"""
         if self.current_question is None:
@@ -276,7 +418,7 @@ class LiveService:
         """
         # create and save the meeting stats object
         now = datetime.datetime.now(tz=datetime.UTC)
-        total_questions_asked = self.total_questions_asked
+        total_questions_asked = len(self.asked_questions)
         total_responses_received = sum(len(v) for v in self.responses.values())
         average_response_rate = float(
             total_responses_received / (total_questions_asked * total_participants)
@@ -324,9 +466,9 @@ class LiveService:
         Args:
             db (AsyncSession): The asynchronous database session.
         """
-        logger.info(f"closing {len(self.asked_questions_id)} asked questions.")
-        for q_id in self.asked_questions_id:
-            await update_question(db=db, q_id=q_id, status=QuestionStatus.CLOSED)
+        logger.info(f"closing {len(self.asked_questions)} asked questions.")
+        for question in self.asked_questions:
+            await update_question(db=db, q_id=question.id, status=QuestionStatus.CLOSED)
         logger.info("all asked questions have been closed.")
 
     async def _update_meeting_user(
@@ -405,6 +547,34 @@ class LiveService:
 
         db.add(meeting)
         await db.flush()
+
+
+async def _get_ai_summary(sys_prompt: str, user_prompt: str) -> str | None:
+    """
+    Generates the snapshot ai summary.
+    :param sys_prompt: System prompt to pass into ai
+    :param user_prompt: User prompt to pass into ai
+    :return: AI response, else None if an exception occurred
+    """
+    logger.debug(
+        "fetching AI snapshot with sys_prompt of length %d and user_prompt of length %d",
+        len(sys_prompt),
+        len(user_prompt),
+    )
+    try:
+        response = await client.responses.create(
+            model="gpt-4.1",
+            instructions=sys_prompt,
+            input=user_prompt,
+            text={"format": {"type": "json_object"}},
+        )
+        logger.info(
+            "successfully received AI snapshot of length %d", len(response.output_text)
+        )
+        return response.output_text
+    except Exception as e:
+        logger.exception("failed to get AI snapshot: %s", e)
+        return None
 
 
 def _is_same_month(year: int, month: int) -> bool:

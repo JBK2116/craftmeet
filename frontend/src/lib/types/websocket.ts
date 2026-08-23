@@ -1,3 +1,5 @@
+import type { MeetingSnapshot } from '$lib/types/meeting';
+
 import type { Participant } from './participant';
 import type { QuestionIn, QuestionOut } from './question';
 import type { ResponseOut } from './response';
@@ -14,6 +16,10 @@ export enum CloseCode {
 
 /** Types of messages that can be sent in the meeting system. */
 export enum MessageTypes {
+    // meeting snapshot feature
+    GET_SNAPSHOT = 'get_snapshot',
+    GET_SNAPSHOT_SUCCESS = 'get_snapshot_success',
+    GET_SNAPSHOT_FAILED = 'get_snapshot_failed',
     // add question feature
     ADD_QUESTION = 'add_question',
     ADD_QUESTION_SUCCESS = 'add_question_success',
@@ -42,6 +48,24 @@ export enum MessageTypes {
     // heartbeat
     PING = 'ping',
     PONG = 'pong',
+}
+
+/** Payload for when requesting a snapshot of a live meeting */
+export interface GetSnapshotPayload {
+    /** The id of the meeting */
+    meeting_id: string;
+}
+
+/** Payload for when requesting a snapshot of a live meeting fails */
+export interface GetSnapshotFailedPayload {
+    /** The reason for the failure */
+    detail: string;
+}
+
+/** Payload for when requesting a snapshot of a live meeting succeeds */
+export interface GetSnapshotSuccessPayload {
+    /** The details of the current snapshot */
+    snapshot: MeetingSnapshot;
 }
 
 /** Payload for when requesting to add a new question to a live meeting */
@@ -144,6 +168,8 @@ export interface RevealMeetingPayload {
 
 /** Maps each MessageType to its corresponding payload shape. */
 interface PayloadMap {
+    [MessageTypes.GET_SNAPSHOT_SUCCESS]: GetSnapshotSuccessPayload;
+    [MessageTypes.GET_SNAPSHOT_FAILED]: GetSnapshotFailedPayload;
     [MessageTypes.ADD_QUESTION]: AddQuestionPayload;
     [MessageTypes.ADD_QUESTION_SUCCESS]: AddQuestionSuccessPayload;
     [MessageTypes.ADD_QUESTION_FAILED]: AddQuestionFailedPayload;
@@ -180,6 +206,8 @@ type WebInMessage<T extends MessageTypes> = { type: T; payload: WebInPayload<T> 
 
 /** Union of all possible incoming WebSocket messages. */
 export type WebIn =
+    | WebInMessage<MessageTypes.GET_SNAPSHOT_SUCCESS>
+    | WebInMessage<MessageTypes.GET_SNAPSHOT_FAILED>
     | WebInMessage<MessageTypes.ADD_QUESTION_SUCCESS>
     | WebInMessage<MessageTypes.ADD_QUESTION_FAILED>
     | WebInMessage<MessageTypes.MEETING_STATE>

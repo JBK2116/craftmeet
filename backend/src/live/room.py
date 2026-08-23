@@ -2,7 +2,6 @@ import asyncio
 import logging
 import uuid
 from collections.abc import Callable, Coroutine
-from dataclasses import dataclass
 from typing import Any
 
 from fastapi import WebSocket, status
@@ -15,12 +14,15 @@ from src.live.schemas import (
     ChatReceivedPayload,
     ChatStatePayload,
     CurrentQuestionPayload,
+    GetSnapshotPayload,
+    GetSnapshotSuccessPayload,
     MeetingStartedPayload,
     MeetingStatePayload,
     NextQuestionPayload,
     Participant,
     ParticipantConnectedPayload,
     ParticipantDisconnectedPayload,
+    ParticipantEntry,
     ParticipantsStatePayload,
     ResponseReceivedPayload,
     RevealMeetingPayload,
@@ -31,12 +33,6 @@ from src.meeting.schemas import QuestionOut
 from src.utils import set_timeout
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class ParticipantEntry:
-    participant: Participant
-    ws: WebSocket | None = None
 
 
 class LiveRoom:
@@ -117,8 +113,7 @@ class LiveRoom:
     async def start_meeting(self, payload: MeetingStartedPayload) -> None:
         """Send the start meeting signal to all connected participants."""
         self.service.current_question = payload.question
-        self.service.asked_questions_id.add(payload.question.id)
-        self.service.total_questions_asked += 1
+        self.service.add_asked_question(question=payload.question)
         self._revealed = False
         await self.service.start_meeting()
         await self.start_meeting_timer()
@@ -140,8 +135,7 @@ class LiveRoom:
     async def next_question(self, payload: NextQuestionPayload) -> None:
         """Send the next meeting question to all connected participants."""
         self.service.current_question = payload.question
-        self.service.asked_questions_id.add(payload.question.id)
-        self.service.total_questions_asked += 1
+        self.service.add_asked_question(question=payload.question)
         self._revealed = False
         for p in self.participants.values():
             p.participant.has_answered = False
@@ -179,6 +173,30 @@ class LiveRoom:
                     {
                         "type": OutboundMessageTypes.ADD_QUESTION_FAILED,
                         "payload": out.model_dump(mode="json"),
+                    }
+                )
+        return
+
+    async def get_snapshot(self, payload: GetSnapshotPayload) -> None:
+        """Get an AI snapshot of the current meeting."""
+        response = await self.service.get_snapshot(
+            payload=payload,
+            participants=list(self.participants.values()),
+            chats=self.chat,
+        )
+        if self.host:
+            if isinstance(response, GetSnapshotSuccessPayload):
+                await self.host.send_json(
+                    {
+                        "type": OutboundMessageTypes.GET_SNAPSHOT_SUCCESS,
+                        "payload": response.model_dump(mode="json"),
+                    }
+                )
+            else:
+                await self.host.send_json(
+                    {
+                        "type": OutboundMessageTypes.GET_SNAPSHOT_FAILED,
+                        "payload": response.model_dump(mode="json"),
                     }
                 )
         return

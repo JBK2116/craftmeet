@@ -9,6 +9,21 @@ export type LiveMeetingStatus = 'lobby' | 'question' | 'ended';
 /** Subscription plan types. */
 export type MeetingPlan = 'free' | 'pro' | 'team';
 
+/** Current mood of a live meeting */
+export type Mood = 'positive' | 'neutral' | 'negative' | 'mixed' | 'disengaged';
+
+/** Current snapshot of the live meeting */
+export type MeetingSnapshot = {
+    /** Mood of the live meeting */
+    mood: Mood;
+    /** Things that need attention */
+    attention_flag: string;
+    /** Next suggested question prompt */
+    suggested_question_prompt: string;
+    /** Snapshots created at time (ISO8601) */
+    created_at: string;
+};
+
 /** A single meeting session created by a host and received from backend. */
 export type MeetingIn = {
     // IDs
