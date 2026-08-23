@@ -1,19 +1,19 @@
 # Craftmeet
 
-A privacy focused, real time meeting webapp for running structured sessions
-and extracting the best ideas from your group.
+A privacy focused, real time meeting webapp for running structured sessions and extracting the best ideas from your
+group.
 
-Craftmeet lets hosts build meetings with a flexible set of question types,
-run them live with participants, and walk away with a detailed AI generated
-PDF summary of every response.
+Craftmeet lets hosts build meetings with a flexible set of question types, run them live with participants, and walk
+away with a detailed AI generated PDF summary of every response.
 
 ## Features
 
-- Five question formats: multiple choice, long answer, ranked voting,
-  rating scale, and yes/no
+- Five question formats: multiple choice, long answer, ranked voting, rating scale, and yes/no
 - Live meeting rooms via WebSockets
 - AI powered PDF summaries using OpenAI
 - Real time response streaming for hosts
+- Live AI meeting snapshots (mood, attention flags, suggested next questions)
+- Hosts can add questions on the fly during a live meeting
 - No account required for participants
 - Privacy focused: no tracking, ads or data selling
 - Free and open source
@@ -40,7 +40,8 @@ pytest
 
 ## Deployment
 
-The frontend is built locally and rsynced to the server to provide fast deployments and updates. Backend and other services run in Docker.
+The frontend is built locally and rsynced to the server to provide fast deployments and updates. Backend and other
+services run in Docker.
 
 ### Prerequisites
 
