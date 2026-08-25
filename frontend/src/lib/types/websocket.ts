@@ -106,6 +106,8 @@ export interface MeetingStatePayload {
     responses: ResponseOut[];
     /** List of participants in the meeting */
     participants: Participant[];
+    /** The start time of the meeting, or null if the meeting has not started yet. */
+    started_at: string | null;
 }
 
 /** Payload for when a meeting has started */

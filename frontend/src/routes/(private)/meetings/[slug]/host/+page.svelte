@@ -86,9 +86,7 @@
     // timer logic
     let start = $state<number | null>(null);
     let meetingEndTime = $state<Date | null>(null);
-    let questionStart = $state<number | null>(null);
     let elapsedSeconds = $state<number>(0);
-    let questionElapsed = $state<number>(0);
 
     // websocket logic
     let ws = $state<WebSocket | null>(null);
@@ -126,9 +124,6 @@
             if (start !== null) {
                 elapsedSeconds = Math.floor((Date.now() - start) / 1000);
             }
-            if (questionStart !== null) {
-                questionElapsed = Math.floor((Date.now() - questionStart) / 1000);
-            }
         }, 1000);
         return () => clearInterval(timer);
     });
@@ -145,7 +140,6 @@
         // Auto-open the first question
         if (question) {
             question.status = 'open';
-            questionStart = Date.now();
         }
         isRevealed = false;
         const payload = JSON.stringify({
@@ -164,7 +158,6 @@
         // Auto-open the new current question
         if (currQuestion) {
             currQuestion.status = 'open';
-            questionStart = Date.now();
         }
         const payload = JSON.stringify({
             type: MessageTypes.NEXT_QUESTION,
@@ -500,6 +493,16 @@
             responses[payload.question.id] = payload.responses;
         }
         participants = payload.participants;
+        // Recalibrate the clock from the server-recorded start time so the host
+        // sees the correct elapsed time and end-time display after a reconnect.
+        if (payload.started_at) {
+            const startedTimestamp = new Date(payload.started_at).getTime();
+            start = startedTimestamp;
+            meetingEndTime = new Date(startedTimestamp + meeting.duration * 60 * 1000);
+        } else {
+            start = null;
+            meetingEndTime = null;
+        }
         if (!payload.question) {
             return;
         }
@@ -511,17 +514,6 @@
         // Meeting is already in progress — transition from lobby to question
         if (meetingStatus === 'lobby') {
             meetingStatus = 'question';
-            // Recalculate timing from the DB-persisted started_at so the host
-            // sees the correct elapsed time and end-time display on reconnect.
-            if (meeting.started_at) {
-                const startedTimestamp = new Date(meeting.started_at).getTime();
-                start = startedTimestamp;
-                meetingEndTime = new Date(startedTimestamp + meeting.duration * 60 * 1000);
-            } else {
-                start = Date.now();
-                meetingEndTime = new Date(Date.now() + meeting.duration * 60 * 1000);
-            }
-            questionStart = Date.now();
         }
     }
 </script>
@@ -618,11 +610,11 @@
                         onstart={handleStartMeeting}
                 />
             {:else if meetingStatus === 'question'}
-                <HostQuestion
-                        {meeting}
-                        questionIndex={currQuestionIndex}
-                        {questionElapsed}
-                        questionState={currQuestionState}
+                    <HostQuestion
+                            {meeting}
+                            questionIndex={currQuestionIndex}
+                            {elapsedSeconds}
+                            questionState={currQuestionState}
                         isLast={questionIsLast}
                         totalQuestions={meeting.questions.length}
                         participantCount={participants.length}

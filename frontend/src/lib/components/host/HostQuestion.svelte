@@ -33,7 +33,7 @@
     let {
         meeting,
         questionIndex,
-        questionElapsed,
+        elapsedSeconds,
         isLast,
         totalQuestions,
         participantCount,
@@ -48,7 +48,7 @@
     }: {
         meeting: MeetingIn;
         questionIndex: number;
-        questionElapsed: number;
+        elapsedSeconds: number;
         questionState: 'pending' | 'open' | 'closed';
         isLast: boolean;
         totalQuestions: number;
@@ -88,7 +88,9 @@
         return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
 
-    let elapsedDisplay = $derived(formatTimer(questionElapsed));
+    let maxDurationSeconds = $derived(meeting.duration * 60);
+    let elapsedDisplay = $derived(formatTimer(elapsedSeconds));
+    let maxDurationDisplay = $derived(formatTimer(maxDurationSeconds));
 
     // response aggregation
     let totalResp = $derived(responses.length);
@@ -159,7 +161,7 @@
             </div>
             <div class="flex items-center gap-1.5 font-mono tabular-nums text-foreground">
                 <Clock class="h-4 w-4 text-muted-foreground" />
-                <span>{elapsedDisplay}</span>
+                <span>{elapsedDisplay}/{maxDurationDisplay}</span>
             </div>
         </div>
     </div>

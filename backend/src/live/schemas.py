@@ -163,11 +163,13 @@ class MeetingStatePayload(BaseModel):
         question: The current question being discussed or None if the meeting has not started
         responses: List of responses received so far.
         participants: List of participants in the meeting.
+        started_at: The start time of the current meeting.
     """
 
     question: QuestionOut | None
     responses: list[ResponseIn]
     participants: list[Participant]
+    started_at: datetime.datetime
 
 
 class ParticipantsStatePayload(BaseModel):

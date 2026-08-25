@@ -70,6 +70,9 @@ class LiveService:
         self.last_snapshot_at: datetime.datetime | None = (
             None  # Time of the last snapshot
         )
+        self.started_at: datetime.datetime | None = (
+            None  # The start time of the current meeting
+        )
 
     async def host_connected(self):
         """Mark the meeting as live when the host first connects (opens the host page)."""
@@ -330,6 +333,10 @@ class LiveService:
             return []
         return self.responses.get(self.current_question.sub_question.id, [])
 
+    def get_started_at_time(self) -> datetime.datetime | None:
+        """Return the meeting's start time."""
+        return self.started_at
+
     async def get_meeting_duration(self) -> int:
         """Get the meeting duration from the db"""
         async with AsyncSessionLocal() as db:
@@ -425,6 +432,7 @@ class LiveService:
             if total_participants and total_questions_asked
             else 0.0
         )
+        assert isinstance(self.started_at, datetime.datetime)  # noqa: S101
         duration_seconds = int((now - self.started_at).total_seconds())
         stat = await get_stat(db=db, m_id=self.meeting_id)
         if stat is None:

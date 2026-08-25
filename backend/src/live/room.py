@@ -75,6 +75,7 @@ class LiveRoom:
             question=self.service.current_question,
             responses=self.service.get_current_responses(),
             participants=[p.participant for p in self.participants.values()],
+            started_at=self.service.get_started_at_time(),
         )
         if len(self.chat) > 0:
             await self.host.send_json(
