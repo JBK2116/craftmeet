@@ -23,10 +23,10 @@ from src.meeting.router import meeting_public_router, meeting_router
 from src.middleware.request_logging import RequestLoggingMiddleware
 from src.summary.router import summary_router
 
-# initialise settings
+# initialize settings
 settings = get_settings()
 
-# intialise logger
+# initialize logger
 setup_logging()
 logging.getLogger("python_http_client").setLevel(logging.WARNING)
 logger = get_logger(__name__)
@@ -49,7 +49,7 @@ app = FastAPI(
         "idea-driven sessions. Build meetings with a flexible set of interactive question formats, "
         "launch them live with your group, and walk away with an AI-generated summary of every "
         "idea your room produced. This API serves as the core backend powering session management, "
-        "real-time collaboration, and intelligent summarisation."
+        "real-time collaboration, and intelligent summarization."
     ),
     version="0.0.1",
     openapi_url="/openai.json",
@@ -66,7 +66,7 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty:ignore[invalid-argument-type]
 
 
-# initialise middleware
+# initialize middleware
 if not settings.IS_DEV:
     app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
@@ -99,7 +99,7 @@ async def validation_exception_handler(_: Request, exc: RequestValidationError):
     )
 
 
-# initialise sub routers
+# initialize sub routers
 app.include_router(auth_router)
 app.include_router(websocket_router)
 app.include_router(meeting_router)
