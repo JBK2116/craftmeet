@@ -50,6 +50,11 @@ async def host_websocket(websocket: WebSocket, meeting_id: MEETING_ID) -> None:
     dependencies=[Depends(get_current_participant_websocket)],
 )
 async def participant_websocket(websocket: WebSocket, meeting_id: MEETING_ID) -> None:
+    join_error = getattr(websocket.state, "join_error", None)
+    if join_error is not None:
+        await websocket.accept()
+        await websocket.close(code=join_error.code, reason=join_error.message)
+        return
     p_id: uuid.UUID = websocket.state.participant_id
     m_id: uuid.UUID = websocket.state.meeting_id
     connected = await manager.handle_participant_initial_connect(

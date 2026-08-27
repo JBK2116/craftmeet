@@ -12,6 +12,8 @@ export enum CloseCode {
     INVALID_TOKEN = 1008,
     /** The participant is already connected to another session */
     PARTICIPANT_RECONNECTED_ELSEWHERE = 1008,
+    /** The meeting does not exist or is not joinable. */
+    MEETING_NOT_FOUND = 4001,
 }
 
 /** Types of messages that can be sent in the meeting system. */

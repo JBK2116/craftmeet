@@ -237,6 +237,11 @@ class LiveManager:
                 "no meeting room found for participant",
                 extra={"meeting_id": str(meeting_id), "participant_id": str(p_id)},
             )
+            await ws.accept()
+            await ws.close(
+                code=CloseCode.MEETING_NOT_FOUND.code,
+                reason=CloseCode.MEETING_NOT_FOUND.message,
+            )
             return False
         has_space = await room.check_participant_cap(p_id=p_id)
         if not has_space:

@@ -152,7 +152,7 @@
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
     let missedPongs = 0;
-    const MAX_RECONNECT_ATTEMPTS = 8;
+    const MAX_RECONNECT_ATTEMPTS = 4;
     const HEARTBEAT_INTERVAL_MS = 20_000;
     const MAX_MISSED_PONGS = 2;
 
@@ -460,9 +460,9 @@
 
         if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
             console.warn('[ws] giving up after reconnection attempts');
-            toast.error('Unable to reconnect. Please refresh the page to rejoin.', {
-                duration: Infinity,
-            });
+            leaveMeeting();
+            toast.error('Unable to connect to meeting.', {duration: Infinity});
+            goto('/', {replaceState: true});
             return;
         }
 
@@ -471,7 +471,7 @@
 
         reconnectTimer = setTimeout(() => {
             reconnectTimer = null;
-            // Guard against unmount during the wait — don't reconnect after teardown.
+            // Guard against unmount during the wait - don't reconnect after teardown.
             if (!destroyed && browser && phase !== 'ended') {
                 void connectWs();
             }
@@ -492,6 +492,13 @@
         clearHeartbeat();
         if (destroyed) return;
         joiningRoom = false;
+        if (event.code === CloseCode.MEETING_NOT_FOUND) {
+            toast.error('Unable to join meeting. Please check your link and try again.', {
+                duration: Infinity,
+            });
+            goto('/', {replaceState: true});
+            return;
+        }
         if (event.code === CloseCode.PARTICIPANT_RECONNECTED_ELSEWHERE) {
             toast.error(
                 'You joined this meeting from another tab. This connection is now closed.',

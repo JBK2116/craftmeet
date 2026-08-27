@@ -29,6 +29,7 @@ from src.auth.repository import get_user
 from src.auth.token import decode_access_token, decode_participants_meeting_access_token
 from src.database import AsyncSessionLocal
 from src.exceptions import DatabaseError
+from src.live.types import CloseCode
 from src.models import Meeting, User
 from src.types import DB, MeetingStatus
 from src.utils import generate_participants_meeting_access_token_key
@@ -141,15 +142,14 @@ async def get_current_participant_websocket(
     This dependency extracts the meeting-specific access token from the
     WebSocket's cookies, decodes it, and sets the authenticated
     participant ID on the websocket state alongside the meeting ID.
+    On any failure it records a `join_error` close code on the websocket
+    state instead of raising, so the endpoint can accept the handshake
+    and send a proper close frame with that code.
 
     Args:
         websocket: The active WebSocket connection.
         meeting_id: The unique identifier of the meeting, extracted
             from the path.
-
-    Raises:
-        WebSocketException: If the access token is missing or invalid
-            (HTTP status 1008).
     """
     key = generate_participants_meeting_access_token_key(m_id=str(meeting_id))
     token = websocket.cookies.get(key, None)
@@ -158,9 +158,8 @@ async def get_current_participant_websocket(
             "participant access token missing from websocket cookies",
             extra={"meeting_id": str(meeting_id)},
         )
-        raise WebSocketException(
-            code=status.WS_1008_POLICY_VIOLATION, reason="access token missing"
-        )
+        websocket.state.join_error = CloseCode.MEETING_NOT_FOUND
+        return
     try:
         claims = decode_participants_meeting_access_token(token=token)
         p_id = uuid.UUID(claims["participant_id"])
@@ -180,9 +179,8 @@ async def get_current_participant_websocket(
                 "invalid participant access token: meeting not live or not found",
                 extra={"meeting_id": str(m_id)},
             )
-            raise WebSocketException(
-                code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
-            )
+            websocket.state.join_error = CloseCode.MEETING_NOT_FOUND
+            return
         if m_id != meeting_id:
             logger.warning(
                 "participant access token meeting_id mismatch",
@@ -191,9 +189,8 @@ async def get_current_participant_websocket(
                     "path_meeting_id": str(meeting_id),
                 },
             )
-            raise WebSocketException(
-                code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
-            )
+            websocket.state.join_error = CloseCode.MEETING_NOT_FOUND
+            return
         websocket.state.participant_id = p_id
         websocket.state.meeting_id = m_id
         logger.debug(
@@ -203,22 +200,18 @@ async def get_current_participant_websocket(
                 "participant_id": str(p_id),
             },
         )
-    except AuthInvalidTokenError as e:
+    except AuthInvalidTokenError:
         logger.warning(
             "failed to decode participant access token",
             extra={"meeting_id": str(meeting_id)},
         )
-        raise WebSocketException(
-            code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
-        ) from e
+        websocket.state.join_error = CloseCode.MEETING_NOT_FOUND
     except KeyError as e:
         logger.warning(
             "participant access token missing required claim",
             extra={"meeting_id": str(meeting_id), "missing_key": str(e)},
         )
-        raise WebSocketException(
-            code=status.WS_1008_POLICY_VIOLATION, reason="invalid access token"
-        ) from e
+        websocket.state.join_error = CloseCode.MEETING_NOT_FOUND
 
 
 async def _decode_access_token(token: str, db: AsyncSession) -> User | None:

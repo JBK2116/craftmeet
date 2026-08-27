@@ -23,6 +23,7 @@ class CloseCode(Enum):
         "A participant has reconnected to this meeting on a new websocket",
     )
     INVALID_TOKEN = (status.WS_1008_POLICY_VIOLATION, "invalid access token provided")
+    MEETING_NOT_FOUND = (4001, "meeting not found")
 
     def __init__(self, code: int, message: str):
         self.code = code
