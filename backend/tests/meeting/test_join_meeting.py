@@ -66,26 +66,6 @@ async def test_join_meeting_not_live(
     assert response.json() == "meeting is not live"
 
 
-async def test_join_meeting_short_username(
-    client: AsyncClient,
-    verified_user_meeting: Meeting,
-) -> None:
-    """Username shorter than 3 characters -> 422."""
-    payload = {"username": "ab", "code": verified_user_meeting.room_code}
-    response = await client.post(JOIN_URL, json=payload)
-    assert response.status_code == 422
-
-
-async def test_join_meeting_long_username(
-    client: AsyncClient,
-    verified_user_meeting: Meeting,
-) -> None:
-    """Username longer than 30 characters -> 422."""
-    payload = {"username": "a" * 31, "code": verified_user_meeting.room_code}
-    response = await client.post(JOIN_URL, json=payload)
-    assert response.status_code == 422
-
-
 async def test_join_meeting_short_code(
     client: AsyncClient,
 ) -> None:

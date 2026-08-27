@@ -31,17 +31,22 @@
         MessageTypes,
         type NextQuestionPayload,
         type ParticipantDisconnectedPayload,
+        type ParticipantJoinRoomFailed,
+        type ParticipantJoinRoomSuccess,
         type ParticipantsStatePayload,
         type RevealMeetingPayload,
         type WebIn,
     } from '$lib/types/websocket';
+    import {MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH} from '$lib/utils/constants';
     import {Users} from '@lucide/svelte';
     import {onMount} from 'svelte';
     import {toast} from 'svelte-sonner';
 
-    // Participant state sourced from URL query param and server messages
+    // Participant state sourced from server messages
     let username = $state('');
     let participantId = $state<string | null>(null);
+    let isLobby = $state(false);
+    let joiningRoom = $state(false);
 
     // Chat
     let chats = $state<ChatMessage[]>([]);
@@ -238,6 +243,20 @@
         phase = revealedResponses.length > 0 ? 'revealed' : 'answered';
     }
 
+    /** Send the participant's chosen name to leave the lobby and enter the meeting. */
+    function joinRoom() {
+        const name = username.trim();
+        if (name.length < MIN_USERNAME_LENGTH || name.length > MAX_USERNAME_LENGTH) {
+            toast.error(
+                `Your name must be between ${MIN_USERNAME_LENGTH} and ${MAX_USERNAME_LENGTH} characters.`,
+            );
+            return;
+        }
+        if (!ws || !wsConnected || ws.readyState !== WebSocket.OPEN) return;
+        joiningRoom = true;
+        ws.send(JSON.stringify({type: MessageTypes.PARTICIPANT_JOIN_ROOM, payload: {username: name}}));
+    }
+
     /**
      * Handles incoming WebSocket messages by dispatching them to the appropriate state update.
      *
@@ -248,13 +267,31 @@
             case MessageTypes.PARTICIPANT_STATE: {
                 const p = msg.payload as Participant;
                 participantId = p.id;
-                username = p.username;
+                username = p.username ?? '';
                 hasAnswered = p.has_answered;
+                isLobby = p.is_lobby;
                 if (phase === 'connecting') {
                     phase = 'waiting';
                 } else if (phase === 'question' && hasAnswered) {
                     phase = 'answered';
                 }
+                break;
+            }
+            case MessageTypes.PARTICIPANT_JOIN_ROOM_SUCCESS: {
+                const payload = msg.payload as ParticipantJoinRoomSuccess;
+                const p = payload.participant;
+                participantId = p.id;
+                username = p.username ?? '';
+                hasAnswered = p.has_answered;
+                isLobby = p.is_lobby;
+                joiningRoom = false;
+                phase = currentQuestion ? (hasAnswered ? 'answered' : 'question') : 'waiting';
+                break;
+            }
+            case MessageTypes.PARTICIPANT_JOIN_ROOM_FAILED: {
+                const payload = msg.payload as ParticipantJoinRoomFailed;
+                joiningRoom = false;
+                toast.error(payload.detail);
                 break;
             }
             case MessageTypes.PARTICIPANT_CONNECTED: {
@@ -327,6 +364,7 @@
                 break;
             case MessageTypes.MEETING_ENDED:
                 phase = 'ended';
+                isLobby = false;
                 toast.info('The meeting has ended.');
                 leaveMeeting();
                 break;
@@ -453,6 +491,7 @@
     function handleWsDisconnect(event: CloseEvent) {
         clearHeartbeat();
         if (destroyed) return;
+        joiningRoom = false;
         if (event.code === CloseCode.PARTICIPANT_RECONNECTED_ELSEWHERE) {
             toast.error(
                 'You joined this meeting from another tab. This connection is now closed.',
@@ -488,9 +527,12 @@
         socket.onopen = () => {
             wsConnected = true;
             reconnectAttempts = 0;
-            // send participant_connected message with the username
+            // send participant_connected message with the meeting id
             socket.send(
-                JSON.stringify({type: MessageTypes.PARTICIPANT_CONNECTED, payload: {username}}),
+                JSON.stringify({
+                    type: MessageTypes.PARTICIPANT_CONNECTED,
+                    payload: {meeting_id: page.params.slug},
+                }),
             );
 
             // Start the heartbeat: ping every ~20s, force-close if pongs are missed.
@@ -532,12 +574,6 @@
     }
 
     onMount(() => {
-        // read username from query param (set by join form)
-        const nameParam = page.url.searchParams.get('name');
-        if (nameParam) {
-            username = nameParam;
-        }
-
         // Reconnect when the tab becomes visible again or the network returns.
         const handleVisibility = () => {
             if (document.visibilityState === 'visible') {
@@ -571,6 +607,45 @@
     });
 </script>
 
+{#if isLobby}
+    <div class="flex min-h-[calc(100vh-56px)] items-center justify-center px-4">
+        <div class="w-full max-w-sm rounded-2xl border border-border bg-card p-6">
+            <div class="mb-6 text-center">
+                <div
+                    class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10"
+                >
+                    <Users class="h-6 w-6 text-primary" />
+                </div>
+                <h1 class="mb-2 text-xl font-semibold text-(--text-heading)">Join the meeting</h1>
+                <p class="text-sm text-muted-foreground">Enter your name to join the meeting.</p>
+            </div>
+            <div class="flex flex-col gap-3">
+                <input
+                    type="text"
+                    placeholder="Your name"
+                    maxlength={MAX_USERNAME_LENGTH}
+                    bind:value={username}
+                    disabled={joiningRoom}
+                    onkeydown={(e) => e.key === 'Enter' && joinRoom()}
+                    class="h-10 w-full rounded-lg border border-border bg-background px-4 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+                />
+                <button
+                    onclick={joinRoom}
+                    disabled={joiningRoom}
+                    class="h-10 w-full rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50"
+                >
+                    {#if joiningRoom}
+                        <div
+                            class="mx-auto h-4 w-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin"
+                        ></div>
+                    {:else}
+                        Join Meeting
+                    {/if}
+                </button>
+            </div>
+        </div>
+    </div>
+{:else}
 <div class="grid lg:grid-cols-[1fr_320px] h-[calc(100vh-56px)] overflow-hidden">
     <!-- Main content area -->
     <div class="overflow-y-auto">
@@ -1151,3 +1226,4 @@
         onclose={() => (participantsOpen = false)}
         {participants}
 />
+{/if}

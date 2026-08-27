@@ -63,6 +63,13 @@ class LiveManager:
                 await self.handle_participant_full_connect(
                     meeting_id=meeting_id, p_id=p_id, payload=message.payload, ws=ws
                 )
+            case InboundMessageTypes.PARTICIPANT_JOIN_ROOM:
+                room = self.__rooms.get(meeting_id, None)
+                if room is None:
+                    return
+                await room.participant_join_room(
+                    p_id=p_id, ws=ws, payload=message.payload
+                )
             case InboundMessageTypes.RESPONSE_RECEIVED:
                 room = self.__rooms.get(meeting_id, None)
                 if room is None:
@@ -255,7 +262,6 @@ class LiveManager:
             meeting_id: UUID of the meeting the participant is joining.
             p_id: UUID of the participant attempting to connect.
             payload: ParticipantConnectedPayload with connection details
-                     (e.g., username).
             ws: WebSocket connection to accept.
         """
         logger.debug(
@@ -263,7 +269,6 @@ class LiveManager:
             extra={
                 "meeting_id": meeting_id,
                 "participant_id": p_id,
-                "username": payload.username,
             },
         )
         room = self.__rooms.get(meeting_id, None)
@@ -273,7 +278,6 @@ class LiveManager:
                 extra={
                     "meeting_id": str(meeting_id),
                     "participant_id": str(p_id),
-                    "username": payload.username,
                 },
             )
             await ws.close(

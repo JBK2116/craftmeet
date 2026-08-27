@@ -6,7 +6,7 @@ import datetime
 import uuid
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.constants import (
     MAX_DESCRIPTION_LENGTH,
@@ -39,7 +39,6 @@ def validate_username(value: str) -> str:
 class JoinMeetingPayload(BaseModel):
     """Model representing a join meeting request payload"""
 
-    username: Annotated[str, AfterValidator(validate_username)]
     code: str = Field(min_length=MEETING_CODE_LENGTH, max_length=MEETING_CODE_LENGTH)
 
 

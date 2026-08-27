@@ -42,6 +42,9 @@ export enum MessageTypes {
     PARTICIPANT_DISCONNECTED = 'participant_disconnected',
     PARTICIPANT_STATE = 'participant_state',
     PARTICIPANTS_STATE = 'participants_state',
+    PARTICIPANT_JOIN_ROOM = 'participant_join_room',
+    PARTICIPANT_JOIN_ROOM_SUCCESS = 'participant_join_room_success',
+    PARTICIPANT_JOIN_ROOM_FAILED = 'participant_join_room_failed',
     // chat state
     CHAT_RECEIVED = 'chat_received',
     CHAT_STATE = 'chat_state',
@@ -96,6 +99,24 @@ export interface ParticipantDisconnectedPayload {
 export interface ParticipantsStatePayload {
     /** List of all participants registered in the meeting */
     participants: Participant[];
+}
+
+/** Payload for a participant attempting to enter a room */
+export interface ParticipantJoinRoomPayload {
+    /** Requested username of the participant */
+    username: string;
+}
+
+/** Payload for when a participant successfully enters a room */
+export interface ParticipantJoinRoomSuccess {
+    /** Updated participant object sent from backend */
+    participant: Participant;
+}
+
+/** Payload for when a participant fails to enter a room */
+export interface ParticipantJoinRoomFailed {
+    /** Reason for the failure */
+    detail: string;
 }
 
 /** Payload for the current snapshot of the meeting state */
@@ -187,6 +208,8 @@ interface PayloadMap {
     [MessageTypes.PARTICIPANT_DISCONNECTED]: ParticipantDisconnectedPayload;
     [MessageTypes.PARTICIPANT_STATE]: Participant;
     [MessageTypes.PARTICIPANTS_STATE]: ParticipantsStatePayload;
+    [MessageTypes.PARTICIPANT_JOIN_ROOM_SUCCESS]: ParticipantJoinRoomSuccess;
+    [MessageTypes.PARTICIPANT_JOIN_ROOM_FAILED]: ParticipantJoinRoomFailed;
     [MessageTypes.HOST_DISCONNECTED]: undefined;
     [MessageTypes.HOST_RECONNECTED]: undefined;
     [MessageTypes.MEETING_ENDED]: undefined;
@@ -219,6 +242,8 @@ export type WebIn =
     | WebInMessage<MessageTypes.PARTICIPANT_DISCONNECTED>
     | WebInMessage<MessageTypes.PARTICIPANT_STATE>
     | WebInMessage<MessageTypes.PARTICIPANTS_STATE>
+    | WebInMessage<MessageTypes.PARTICIPANT_JOIN_ROOM_SUCCESS>
+    | WebInMessage<MessageTypes.PARTICIPANT_JOIN_ROOM_FAILED>
     | WebInMessage<MessageTypes.CURRENT_QUESTION>
     | WebInMessage<MessageTypes.RESPONSE_RECEIVED>
     | WebInMessage<MessageTypes.CHAT_RECEIVED>

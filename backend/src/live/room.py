@@ -23,6 +23,9 @@ from src.live.schemas import (
     ParticipantConnectedPayload,
     ParticipantDisconnectedPayload,
     ParticipantEntry,
+    ParticipantJoinRoomFailed,
+    ParticipantJoinRoomPayload,
+    ParticipantJoinRoomSuccess,
     ParticipantsStatePayload,
     ResponseReceivedPayload,
     RevealMeetingPayload,
@@ -247,15 +250,13 @@ class LiveRoom:
         existing = self.participants.get(p_id, None)
         if existing:
             old_ws = existing.ws
-            existing.participant.username = payload.username
             existing.participant.connected = True
             existing.ws = ws
             logger.debug(
-                "participant reconnected to room",
+                "participant reconnected to meeting",
                 extra={
                     "room_id": str(self.room_id),
                     "participant_id": str(p_id),
-                    "username": payload.username,
                 },
             )
             if old_ws and old_ws is not ws:
@@ -270,19 +271,19 @@ class LiveRoom:
         else:
             new_participant = Participant(
                 id=p_id,
-                username=payload.username,
+                username=None,
                 connected=True,
                 has_answered=False,
+                is_lobby=True,
             )
             self.participants[p_id] = ParticipantEntry(
                 participant=new_participant, ws=ws
             )
             logger.debug(
-                "participant connected to room",
+                "participant connected to meeting",
                 extra={
                     "room_id": str(self.room_id),
                     "participant_id": str(p_id),
-                    "username": payload.username,
                 },
             )
         asyncio.create_task(
@@ -380,6 +381,62 @@ class LiveRoom:
                 )
             )
 
+    async def participant_join_room(
+        self, p_id: uuid.UUID, ws: WebSocket, payload: ParticipantJoinRoomPayload
+    ) -> None:
+        """Add a participant to a live meeting room."""
+        existing = self.participants.get(p_id)
+        if existing is None:
+            payload = ParticipantJoinRoomFailed(
+                detail="Unable to join meeting, please restart the join meeting process"
+            )
+            await ws.send_json(
+                {
+                    "type": OutboundMessageTypes.PARTICIPANT_JOIN_ROOM_FAILED,
+                    "payload": payload.model_dump(mode="json"),
+                }
+            )
+            return
+        if self.name_exists(payload.username, exclude_id=p_id):
+            payload = ParticipantJoinRoomFailed(
+                detail="A participant already exists with that username"
+            )
+            await ws.send_json(
+                {
+                    "type": OutboundMessageTypes.PARTICIPANT_JOIN_ROOM_FAILED,
+                    "payload": payload.model_dump(mode="json"),
+                }
+            )
+            return
+        existing.participant.username = payload.username
+        existing.participant.is_lobby = False
+        payload = ParticipantJoinRoomSuccess(participant=existing.participant)
+        await ws.send_json(
+            {
+                "type": OutboundMessageTypes.PARTICIPANT_JOIN_ROOM_SUCCESS,
+                "payload": payload.model_dump(mode="json"),
+            }
+        )
+        if self.host:
+            await self.host.send_json(
+                {
+                    "type": OutboundMessageTypes.PARTICIPANT_CONNECTED,
+                    "payload": existing.participant.model_dump(mode="json"),
+                }
+            )
+        await self._broadcast(
+            task=_send_message,
+            message={
+                "type": OutboundMessageTypes.PARTICIPANTS_STATE,
+                "payload": ParticipantsStatePayload(
+                    participants=[
+                        entry.participant for entry in self.participants.values()
+                    ]
+                ).model_dump(mode="json"),
+            },
+        )
+        return
+
     async def check_participant_cap(self, p_id: uuid.UUID) -> bool:
         """
         Checks the room to see if there is space for the participant to join
@@ -391,17 +448,31 @@ class LiveRoom:
         if existing:
             return True
         connected = sum(
-            1 for p in self.participants.values() if p.participant.connected
+            1
+            for p in self.participants.values()
+            if p.participant.connected and not p.participant.is_lobby
         )
         cap = getattr(self.service, "participant_cap", None)
         if cap is None:
             cap = await self.service.get_meeting_participant_cap()
         return cap > connected
 
+    def name_exists(self, name: str, exclude_id: uuid.UUID | None = None) -> bool:
+        """Checks if a participant with the given name already exists"""
+        for v in self.participants.values():
+            if v.participant.id == exclude_id:
+                continue
+            if v.participant.username:
+                if v.participant.username.lower() == name.lower():
+                    return True
+        return False
+
     async def response_received(self, payload: ResponseReceivedPayload) -> None:
         """Register a new response for the current question"""
         participant = self.participants.get(payload.response.participant_id)
         if participant is None:
+            return
+        if participant.participant.is_lobby:
             return
         if participant.participant.has_answered:
             return
@@ -456,6 +527,10 @@ class LiveRoom:
     async def chat_received(self, payload: ChatReceivedPayload) -> None:
         """Register the received chat and broadcast it to everyone else"""
         chat = payload.chat
+        if not chat.is_host:
+            sender = self.participants.get(chat.u_id)
+            if sender is not None and sender.participant.is_lobby:
+                return
         self.chat.append(chat)
         if self.host is not None:
             asyncio.create_task(

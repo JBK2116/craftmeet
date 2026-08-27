@@ -96,12 +96,14 @@ class Participant(BaseModel):
         username: The display name of the participant.
         connected: Whether the participant is currently connected.
         has_answered: Whether the participant has submitted an answer to the current question.
+        is_lobby: Whether or not the participant has entered the main meeting
     """
 
     id: uuid.UUID
-    username: str
+    username: str | None
     connected: bool
     has_answered: bool
+    is_lobby: bool
 
 
 @dataclass
@@ -116,22 +118,49 @@ class ParticipantConnectedPayload(BaseModel):
     """Payload for when a participant connects.
 
     Attributes:
-        username: The username of the joining participant
+        meeting_id: The id of the meeting
 
     Note:
         The participant ID is retrieved from their access token
 
     """
 
-    username: str = Field(
-        min_length=MIN_USERNAME_LENGTH, max_length=MAX_USERNAME_LENGTH
-    )
+    meeting_id: uuid.UUID
 
 
 class ParticipantDisconnectedPayload(BaseModel):
     """Payload for when a participant disconnects"""
 
     id: uuid.UUID
+
+
+class ParticipantJoinRoomPayload(BaseModel):
+    """
+    Payload for when a participant attempts to join a room
+
+    Attributes:
+        username: The username of the participant.
+    """
+
+    username: str = Field(
+        min_length=MIN_USERNAME_LENGTH, max_length=MAX_USERNAME_LENGTH
+    )
+
+class ParticipantJoinRoomSuccess(BaseModel):
+    """Payload for when a participant successfully joins a room
+
+    Attributes:
+        participant: The updated participant object.
+    """
+    participant: Participant
+
+class ParticipantJoinRoomFailed(BaseModel):
+    """Payload for when a participant fails to join a room
+
+    Attributes:
+        detail: The reason of the failure
+    """
+    detail: str
 
 
 class WebIn(BaseModel):
@@ -169,7 +198,7 @@ class MeetingStatePayload(BaseModel):
     question: QuestionOut | None
     responses: list[ResponseIn]
     participants: list[Participant]
-    started_at: datetime.datetime
+    started_at: datetime.datetime | None
 
 
 class ParticipantsStatePayload(BaseModel):
@@ -276,6 +305,7 @@ INBOUND_PAYLOAD_MODELS: dict[InboundMessageTypes, type[BaseModel]] = {
     InboundMessageTypes.GET_SNAPSHOT: GetSnapshotPayload,
     InboundMessageTypes.ADD_QUESTION: AddQuestionPayload,
     InboundMessageTypes.PARTICIPANT_CONNECTED: ParticipantConnectedPayload,
+    InboundMessageTypes.PARTICIPANT_JOIN_ROOM: ParticipantJoinRoomPayload,
     InboundMessageTypes.MEETING_STARTED: MeetingStartedPayload,
     InboundMessageTypes.NEXT_QUESTION: NextQuestionPayload,
     InboundMessageTypes.RESPONSE_RECEIVED: ResponseReceivedPayload,

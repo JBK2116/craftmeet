@@ -25,6 +25,17 @@
             onclose?.();
         }
     }
+
+    function displayName(p: Participant): string {
+        if (p.is_lobby) {
+            return 'In Lobby';
+        }
+        return p.username ?? 'Unknown';
+    }
+
+    function displayInitial(p: Participant): string {
+        return p.username ? p.username.charAt(0).toUpperCase() : '?';
+    }
 </script>
 
 <svelte:window onkeydown={variant === 'modal' ? handleKeydown : undefined} />
@@ -34,7 +45,7 @@
         <!-- Header -->
         <div class="flex items-center gap-2 border-b border-border px-4 py-3">
             <Users class="h-4 w-4 text-muted-foreground" />
-            <h2 class="text-sm font-semibold text-[var(--text-heading)]">
+            <h2 class="text-sm font-semibold text-(--text-heading)">
                 Participants ({participants.length})
             </h2>
         </div>
@@ -58,11 +69,11 @@
                             <div
                                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
                             >
-                                {p.username.charAt(0).toUpperCase()}
+                                {displayInitial(p)}
                             </div>
                             <div class="min-w-0 flex-1">
                                 <p class="truncate text-sm font-medium text-foreground">
-                                    {p.username}
+                                    {displayName(p)}
                                 </p>
                             </div>
                             <span
@@ -102,7 +113,7 @@
             <div class="flex items-center justify-between border-b border-border px-5 py-4">
                 <div class="flex items-center gap-2">
                     <Users class="h-4 w-4 text-muted-foreground" />
-                    <h2 class="text-sm font-semibold text-[var(--text-heading)]">
+                    <h2 class="text-sm font-semibold text-(--text-heading)">
                         Participants ({participants.length})
                     </h2>
                 </div>
@@ -134,11 +145,11 @@
                                 <div
                                     class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
                                 >
-                                    {p.username.charAt(0).toUpperCase()}
+                                    {displayInitial(p)}
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate text-sm font-medium text-foreground">
-                                        {p.username}
+                                        {displayName(p)}
                                     </p>
                                 </div>
                                 <span

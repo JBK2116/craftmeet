@@ -190,7 +190,7 @@ async def handle_create_meeting(
         )
         sub_loaded = await insert_sub_question(db=db, question=sub_loaded)
         # avoid lazy loading for responses as since this meeting is just created
-        # it is guarenteed that responses for each sub question will be None
+        # it is guaranteed that responses for each sub question will be None
         sub_loaded.__dict__["responses"] = []
         questions_out.append(
             build_question_out(question=q_loaded, sub_question=sub_loaded)
@@ -284,6 +284,7 @@ async def handle_get_meeting(
 
     Args:
         db: The active asynchronous database session.
+        request: The incoming FastAPI request, which carries the authenticated user via ``request.state.user``.
         m_id: The UUID of the meeting to retrieve.
 
     Raises:
@@ -356,6 +357,7 @@ async def handle_update_meeting(
 
     Args:
         db: The active asynchronous database session.
+        request: The incoming FastAPI request, which carries the authenticated user via ``request.state.user``.
         meeting_update: The validated update payload containing the new
             title, description, duration, participant cap, and question list.
         m_id: The UUID of the meeting to update.
@@ -456,7 +458,7 @@ async def handle_delete_meeting(
         user.id,
     )
     result = await delete_meeting(db=db, m_id=m_id, u_id=user.id)
-    if result is False:
+    if not result:
         logger.debug(
             "meeting %s not found for user %s — nothing to delete",
             m_id,

@@ -1,11 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { Button } from '$lib/components/ui/button';
-    import {
-        MAX_USERNAME_LENGTH,
-        MEETING_CODE_LENGTH,
-        MIN_USERNAME_LENGTH,
-    } from '$lib/utils/constants';
+    import { MEETING_CODE_LENGTH } from '$lib/utils/constants';
     import {
         ChartBarBig,
         ChevronRight,
@@ -50,7 +46,6 @@
 
     // join meeting functionality
     let code = $state('');
-    let name = $state('');
     $effect(() => {
         code = code.replace(/\D/g, '').slice(0, 8);
     });
@@ -64,25 +59,9 @@
         return true;
     }
 
-    /** Validate the participant username */
-    function validateName(): boolean {
-        if (!name.trim()) {
-            toast.error('Please enter your name.');
-            return false;
-        }
-        const len = name.trim().length;
-        if (len < MIN_USERNAME_LENGTH || len > MAX_USERNAME_LENGTH) {
-            toast.error(
-                `Your name must be between ${MIN_USERNAME_LENGTH} and ${MAX_USERNAME_LENGTH} characters.`,
-            );
-            return false;
-        }
-        return true;
-    }
-
     /** Handle joining a live meeting session */
     async function handleJoin(): Promise<void> {
-        if (!validateCode() || !validateName()) {
+        if (!validateCode()) {
             return;
         }
         try {
@@ -92,7 +71,7 @@
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code, username: name.trim() }),
+                body: JSON.stringify({ code }),
             });
             if (!res.ok) {
                 if (res.status === 404) {
@@ -106,7 +85,7 @@
             }
             const body = await res.json();
             const meetingId = body.meeting_id as string;
-            goto(`/meetings/${meetingId}/participant?name=${encodeURIComponent(name.trim())}`, {
+            await goto(`/meetings/${meetingId}/participant`, {
                 replaceState: true,
             });
         } catch {
@@ -275,13 +254,6 @@
                         placeholder="Room code"
                         maxlength="8"
                         bind:value={code}
-                        class="h-10 w-full rounded-full border border-border bg-card px-5 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
-                    />
-                    <input
-                        type="text"
-                        placeholder="Your name"
-                        maxlength="50"
-                        bind:value={name}
                         class="h-10 w-full rounded-full border border-border bg-card px-5 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
                     />
                 </div>
