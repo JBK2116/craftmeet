@@ -1,9 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { Button } from '$lib/components/ui/button';
-    import {
-        MEETING_CODE_LENGTH,
-    } from '$lib/utils/constants';
+    import { MEETING_CODE_LENGTH } from '$lib/utils/constants';
     import { LogIn, Plus, X } from '@lucide/svelte';
     import { toast } from 'svelte-sonner';
 
@@ -55,9 +53,7 @@
                 return;
             }
             const meetingId = body.meeting_id as string;
-            await goto(`/meetings/${meetingId}/participant`, {
-                replaceState: true,
-            });
+            await goto(`/meetings/${meetingId}/participant`, { replaceState: true });
         } catch {
             toast.error('Unable to join meeting. Please try again.');
         } finally {

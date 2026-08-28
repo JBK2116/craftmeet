@@ -67,9 +67,7 @@ def generate_csv(meeting: Meeting, file_path: str):
         writer.writerow(headers)
         for row in csv_rows:
             writer.writerow(astuple(row))
-    if not _verify_generation(
-        file_path=tmp_path, expected_row_count=1 + len(csv_rows)
-    ):
+    if not _verify_generation(file_path=tmp_path, expected_row_count=1 + len(csv_rows)):
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
         raise CSVGenerationError

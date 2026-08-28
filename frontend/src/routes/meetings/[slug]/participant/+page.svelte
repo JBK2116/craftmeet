@@ -1,11 +1,11 @@
 <script lang="ts">
-    import {browser} from '$app/environment';
-    import {goto} from '$app/navigation';
-    import {page} from '$app/state';
+    import { browser } from '$app/environment';
+    import { goto } from '$app/navigation';
+    import { page } from '$app/state';
     import ChatBar from '$lib/components/chat/ChatBar.svelte';
     import HostParticipants from '$lib/components/host/HostParticipants.svelte';
-    import {Button} from '$lib/components/ui/button';
-    import type {Participant} from '$lib/types/participant';
+    import { Button } from '$lib/components/ui/button';
+    import type { Participant } from '$lib/types/participant';
     import type {
         LongAnswerQuestionIn,
         MultipleChoiceQuestionIn,
@@ -37,10 +37,10 @@
         type RevealMeetingPayload,
         type WebIn,
     } from '$lib/types/websocket';
-    import {MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH} from '$lib/utils/constants';
-    import {Users} from '@lucide/svelte';
-    import {onMount} from 'svelte';
-    import {toast} from 'svelte-sonner';
+    import { MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH } from '$lib/utils/constants';
+    import { Users } from '@lucide/svelte';
+    import { onMount } from 'svelte';
+    import { toast } from 'svelte-sonner';
 
     // Participant state sourced from server messages
     let username = $state('');
@@ -80,8 +80,7 @@
         fetch(`/api/v1/meetings/${page.params.slug}/leave`, {
             method: 'POST',
             credentials: 'include',
-        }).catch(() => {
-        });
+        }).catch(() => {});
     }
 
     // Reveal aggregations
@@ -112,7 +111,7 @@
     let yesNoCounts = $derived.by(() => {
         if (!currentQuestion || currentQuestion.type !== 'yes_no') return null;
         const yes = (revealedResponses as YesNoResponseOut[]).filter((r) => r.value).length;
-        return {yes, no: revealedResponses.length - yes, total: revealedResponses.length};
+        return { yes, no: revealedResponses.length - yes, total: revealedResponses.length };
     });
 
     let rankedFirst = $derived.by(() => {
@@ -140,7 +139,7 @@
         rank_2: number;
         rank_3: number | null;
         rank_4: number | null;
-    }>({rank_1: 1, rank_2: 2, rank_3: 3, rank_4: 4});
+    }>({ rank_1: 1, rank_2: 2, rank_3: 3, rank_4: 4 });
     let ratingValue = $state<number>(0);
     let yesNoValue = $state<boolean | null>(null);
 
@@ -166,7 +165,7 @@
     function resetAnswerState() {
         mcSelected = [];
         longAnswerText = '';
-        rankedRanks = {rank_1: 1, rank_2: 2, rank_3: 3, rank_4: 4};
+        rankedRanks = { rank_1: 1, rank_2: 2, rank_3: 3, rank_4: 4 };
         ratingValue = 0;
         yesNoValue = null;
         hasAnswered = false;
@@ -237,7 +236,7 @@
                 return;
         }
 
-        ws.send(JSON.stringify({type: MessageTypes.RESPONSE_RECEIVED, payload: {response}}));
+        ws.send(JSON.stringify({ type: MessageTypes.RESPONSE_RECEIVED, payload: { response } }));
         hasAnswered = true;
         // If the host already revealed while we were answering, go straight to revealed
         phase = revealedResponses.length > 0 ? 'revealed' : 'answered';
@@ -254,7 +253,12 @@
         }
         if (!ws || !wsConnected || ws.readyState !== WebSocket.OPEN) return;
         joiningRoom = true;
-        ws.send(JSON.stringify({type: MessageTypes.PARTICIPANT_JOIN_ROOM, payload: {username: name}}));
+        ws.send(
+            JSON.stringify({
+                type: MessageTypes.PARTICIPANT_JOIN_ROOM,
+                payload: { username: name },
+            }),
+        );
     }
 
     /**
@@ -407,7 +411,7 @@
             message: message,
             is_host: false,
         } as ChatMessage;
-        const payload = {type: MessageTypes.CHAT_RECEIVED, payload: {chat: chatMessage}};
+        const payload = { type: MessageTypes.CHAT_RECEIVED, payload: { chat: chatMessage } };
         ws.send(JSON.stringify(payload));
     }
 
@@ -461,8 +465,8 @@
         if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
             console.warn('[ws] giving up after reconnection attempts');
             leaveMeeting();
-            toast.error('Unable to connect to meeting.', {duration: Infinity});
-            goto('/', {replaceState: true});
+            toast.error('Unable to connect to meeting.', { duration: Infinity });
+            goto('/', { replaceState: true });
             return;
         }
 
@@ -496,19 +500,19 @@
             toast.error('Unable to join meeting. Please check your link and try again.', {
                 duration: Infinity,
             });
-            goto('/', {replaceState: true});
+            goto('/', { replaceState: true });
             return;
         }
         if (event.code === CloseCode.PARTICIPANT_RECONNECTED_ELSEWHERE) {
             toast.error(
                 'You joined this meeting from another tab. This connection is now closed.',
-                {duration: 6000},
+                { duration: 6000 },
             );
             return;
         }
         if (event.code === CloseCode.INVALID_TOKEN) {
-            toast.error('Your session has expired. Please rejoin the meeting.', {duration: 6000});
-            goto('/', {replaceState: true});
+            toast.error('Your session has expired. Please rejoin the meeting.', { duration: 6000 });
+            goto('/', { replaceState: true });
             return;
         }
         if (phase !== 'ended') {
@@ -538,7 +542,7 @@
             socket.send(
                 JSON.stringify({
                     type: MessageTypes.PARTICIPANT_CONNECTED,
-                    payload: {meeting_id: page.params.slug},
+                    payload: { meeting_id: page.params.slug },
                 }),
             );
 
@@ -555,7 +559,7 @@
                     socket.close();
                     return;
                 }
-                socket.send(JSON.stringify({type: MessageTypes.PING}));
+                socket.send(JSON.stringify({ type: MessageTypes.PING }));
             }, HEARTBEAT_INTERVAL_MS);
         };
 
@@ -653,219 +657,226 @@
         </div>
     </div>
 {:else}
-<div class="grid lg:grid-cols-[1fr_320px] h-[calc(100vh-56px)] overflow-hidden">
-    <!-- Main content area -->
-    <div class="overflow-y-auto">
-        <!-- Mobile header -->
-        <div class="flex items-center justify-between border-b border-border px-4 py-3 lg:hidden">
-            <span class="text-sm font-medium text-muted-foreground">{username}</span>
-            <div class="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onclick={() => (participantsOpen = true)}>
-                    <Users class="size-5"/>
-                </Button>
-                <ChatBar variant="sheet" bind:open={chatOpen} {chats} onsend={handleChatSend}/>
+    <div class="grid lg:grid-cols-[1fr_320px] h-[calc(100vh-56px)] overflow-hidden">
+        <!-- Main content area -->
+        <div class="overflow-y-auto">
+            <!-- Mobile header -->
+            <div
+                class="flex items-center justify-between border-b border-border px-4 py-3 lg:hidden"
+            >
+                <span class="text-sm font-medium text-muted-foreground">{username}</span>
+                <div class="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" onclick={() => (participantsOpen = true)}>
+                        <Users class="size-5" />
+                    </Button>
+                    <ChatBar variant="sheet" bind:open={chatOpen} {chats} onsend={handleChatSend} />
+                </div>
             </div>
-        </div>
 
-        <div class="mx-auto max-w-2xl px-4 py-10">
-            {#if phase === 'connecting'}
-                <div class="flex flex-col items-center py-20">
-                    <div
+            <div class="mx-auto max-w-2xl px-4 py-10">
+                {#if phase === 'connecting'}
+                    <div class="flex flex-col items-center py-20">
+                        <div
                             class="h-8 w-8 rounded-full border-2 border-muted border-t-primary animate-spin"
-                    ></div>
-                    <p class="mt-4 text-sm text-muted-foreground">Connecting to meeting…</p>
-                </div>
-            {:else if phase === 'waiting'}
-                <div class="flex flex-col items-center py-20 text-center">
-                    <div
+                        ></div>
+                        <p class="mt-4 text-sm text-muted-foreground">Connecting to meeting…</p>
+                    </div>
+                {:else if phase === 'waiting'}
+                    <div class="flex flex-col items-center py-20 text-center">
+                        <div
                             class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10"
-                    >
-                        <span class="relative flex h-4 w-4">
-                            <span
-                                    class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"
-                            ></span>
-                            <span class="relative inline-flex h-4 w-4 rounded-full bg-primary"
-                            ></span>
-                        </span>
-                    </div>
-                    <h1 class="mb-2 text-2xl font-bold text-(--text-heading)">You're in!</h1>
-                    <p class="text-sm text-muted-foreground">
-                        Joined as <span class="font-medium text-foreground">{username}</span>.
-                        Waiting for the host to start the meeting…
-                    </p>
-                    <div
-                            class="mt-6 flex items-center gap-3 rounded-full border border-border bg-card px-4 py-1.5 text-xs text-muted-foreground"
-                    >
-                        <Users class="h-3.5 w-3.5"/>
-                        <span>{participants.length} waiting</span>
-                    </div>
-                </div>
-            {:else if phase === 'question' && currentQuestion}
-                <div class="space-y-6">
-                    <!-- Question header -->
-                    <div class="rounded-2xl border border-border bg-card p-6">
-                        <span
-                                class="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
                         >
-                            Question {currentQuestion.position}
-                        </span>
-                        <h2 class="mt-3 text-xl font-semibold text-(--text-heading)">
-                            {currentQuestion.prompt}
-                        </h2>
-                        {#if highestPosition > 1}
-                            <div class="mt-4 flex items-center gap-1.5">
-                                {#each Array.from({length: highestPosition}) as _, i}
-                                    {@const pos = i + 1}
-                                    <span
-                                            class="h-1.5 flex-1 rounded-full transition-colors {pos <=
-                                    currentQuestion.position
-                                        ? 'bg-primary'
-                                        : 'bg-muted'}"
-                                    ></span>
-                                {/each}
-                            </div>
-                        {/if}
+                            <span class="relative flex h-4 w-4">
+                                <span
+                                    class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"
+                                ></span>
+                                <span class="relative inline-flex h-4 w-4 rounded-full bg-primary"
+                                ></span>
+                            </span>
+                        </div>
+                        <h1 class="mb-2 text-2xl font-bold text-(--text-heading)">You're in!</h1>
+                        <p class="text-sm text-muted-foreground">
+                            Joined as <span class="font-medium text-foreground">{username}</span>.
+                            Waiting for the host to start the meeting…
+                        </p>
+                        <div
+                            class="mt-6 flex items-center gap-3 rounded-full border border-border bg-card px-4 py-1.5 text-xs text-muted-foreground"
+                        >
+                            <Users class="h-3.5 w-3.5" />
+                            <span>{participants.length} waiting</span>
+                        </div>
                     </div>
-                    <!-- Answer input by type -->
-                    <div class="rounded-2xl border border-border bg-card p-6">
-                        {#if currentQuestion.type === 'multiple_choice'}
-                            {@const sub = currentQuestion.sub_question as MultipleChoiceQuestionIn}
-                            <div class="space-y-3">
-                                {#each [sub.option_1, sub.option_2, sub.option_3, sub.option_4].filter(Boolean) as option, i}
-                                    <label
+                {:else if phase === 'question' && currentQuestion}
+                    <div class="space-y-6">
+                        <!-- Question header -->
+                        <div class="rounded-2xl border border-border bg-card p-6">
+                            <span
+                                class="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                            >
+                                Question {currentQuestion.position}
+                            </span>
+                            <h2 class="mt-3 text-xl font-semibold text-(--text-heading)">
+                                {currentQuestion.prompt}
+                            </h2>
+                            {#if highestPosition > 1}
+                                <div class="mt-4 flex items-center gap-1.5">
+                                    {#each Array.from({ length: highestPosition }) as _, i}
+                                        {@const pos = i + 1}
+                                        <span
+                                            class="h-1.5 flex-1 rounded-full transition-colors {pos <=
+                                            currentQuestion.position
+                                                ? 'bg-primary'
+                                                : 'bg-muted'}"
+                                        ></span>
+                                    {/each}
+                                </div>
+                            {/if}
+                        </div>
+                        <!-- Answer input by type -->
+                        <div class="rounded-2xl border border-border bg-card p-6">
+                            {#if currentQuestion.type === 'multiple_choice'}
+                                {@const sub =
+                                    currentQuestion.sub_question as MultipleChoiceQuestionIn}
+                                <div class="space-y-3">
+                                    {#each [sub.option_1, sub.option_2, sub.option_3, sub.option_4].filter(Boolean) as option, i}
+                                        <label
                                             class="flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors hover:bg-accent {mcSelected.includes(
-                                            i + 1,
-                                        )
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border'}"
-                                    >
-                                        {#if sub.allow_multiple}
-                                            <input
+                                                i + 1,
+                                            )
+                                                ? 'border-primary bg-primary/5'
+                                                : 'border-border'}"
+                                        >
+                                            {#if sub.allow_multiple}
+                                                <input
                                                     type="checkbox"
                                                     class="h-4 w-4 rounded accent-primary"
                                                     checked={mcSelected.includes(i + 1)}
                                                     onchange={(e) => {
-                                                    const checked = e.currentTarget.checked;
-                                                    if (checked) {
-                                                        mcSelected = [...mcSelected, i + 1];
-                                                    } else {
-                                                        mcSelected = mcSelected.filter(
-                                                            (v) => v !== i + 1,
-                                                        );
-                                                    }
-                                                }}
-                                            />
-                                        {:else}
-                                            <input
+                                                        const checked = e.currentTarget.checked;
+                                                        if (checked) {
+                                                            mcSelected = [...mcSelected, i + 1];
+                                                        } else {
+                                                            mcSelected = mcSelected.filter(
+                                                                (v) => v !== i + 1,
+                                                            );
+                                                        }
+                                                    }}
+                                                />
+                                            {:else}
+                                                <input
                                                     type="radio"
                                                     name="mc"
                                                     class="h-4 w-4 accent-primary"
                                                     checked={mcSelected.includes(i + 1)}
                                                     onchange={() => {
-                                                    mcSelected = [i + 1];
-                                                }}
-                                            />
-                                        {/if}
-                                        <span class="text-sm text-foreground">{option}</span>
-                                    </label>
-                                {/each}
-                            </div>
-                        {:else if currentQuestion.type === 'long_answer'}
-                            {@const sub = currentQuestion.sub_question as LongAnswerQuestionIn}
-                            <textarea
+                                                        mcSelected = [i + 1];
+                                                    }}
+                                                />
+                                            {/if}
+                                            <span class="text-sm text-foreground">{option}</span>
+                                        </label>
+                                    {/each}
+                                </div>
+                            {:else if currentQuestion.type === 'long_answer'}
+                                {@const sub = currentQuestion.sub_question as LongAnswerQuestionIn}
+                                <textarea
                                     bind:value={longAnswerText}
                                     maxlength={sub.max_length}
                                     rows={4}
                                     placeholder="Type your answer…"
                                     class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20 resize-none"
-                            ></textarea>
-                            <p class="mt-2 text-xs text-muted-foreground text-right">
-                                {longAnswerText.length}/{sub.max_length}
-                            </p>
-                        {:else if currentQuestion.type === 'ranked_voting'}
-                            {@const sub = currentQuestion.sub_question as RankedVotingQuestionIn}
-                            {@const items = [sub.item_1, sub.item_2, sub.item_3, sub.item_4].filter(
-                                Boolean,
-                            )}
-                            <p class="mb-3 text-sm text-muted-foreground">
-                                Rank the following items (1 = best):
-                            </p>
-                            <div class="space-y-3">
-                                {#each items as item, i}
-                                    <div
+                                ></textarea>
+                                <p class="mt-2 text-xs text-muted-foreground text-right">
+                                    {longAnswerText.length}/{sub.max_length}
+                                </p>
+                            {:else if currentQuestion.type === 'ranked_voting'}
+                                {@const sub =
+                                    currentQuestion.sub_question as RankedVotingQuestionIn}
+                                {@const items = [
+                                    sub.item_1,
+                                    sub.item_2,
+                                    sub.item_3,
+                                    sub.item_4,
+                                ].filter(Boolean)}
+                                <p class="mb-3 text-sm text-muted-foreground">
+                                    Rank the following items (1 = best):
+                                </p>
+                                <div class="space-y-3">
+                                    {#each items as item, i}
+                                        <div
                                             class="flex items-center gap-3 rounded-xl border border-border p-4"
-                                    >
-                                        <span class="text-sm font-medium text-foreground flex-1"
-                                        >{item}</span
                                         >
-                                        <select
+                                            <span class="text-sm font-medium text-foreground flex-1"
+                                                >{item}</span
+                                            >
+                                            <select
                                                 class="h-9 rounded-lg border border-border bg-background py-2 pl-3 pr-8 text-sm text-foreground outline-none focus:border-primary/40 appearance-none bg-no-repeat"
                                                 style="background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E'); background-position: right 0.5rem center; background-size: 1rem;"
                                                 value={i === 0
-                                                ? rankedRanks.rank_1
-                                                : i === 1
-                                                  ? rankedRanks.rank_2
-                                                  : i === 2
-                                                    ? (rankedRanks.rank_3 ?? '')
-                                                    : (rankedRanks.rank_4 ?? '')}
+                                                    ? rankedRanks.rank_1
+                                                    : i === 1
+                                                      ? rankedRanks.rank_2
+                                                      : i === 2
+                                                        ? (rankedRanks.rank_3 ?? '')
+                                                        : (rankedRanks.rank_4 ?? '')}
                                                 onchange={(e) => {
-                                                const newVal = e.currentTarget.value
-                                                    ? parseInt(e.currentTarget.value)
-                                                    : null;
-                                                const oldVal =
-                                                    i === 0
-                                                        ? rankedRanks.rank_1
-                                                        : i === 1
-                                                          ? rankedRanks.rank_2
-                                                          : i === 2
-                                                            ? rankedRanks.rank_3
-                                                            : rankedRanks.rank_4;
-                                                // Prevent duplicate ranks: if another item already
-                                                // has this rank, swap values.
-                                                if (newVal !== null && oldVal !== null) {
-                                                    const conflictIdx = [
-                                                        rankedRanks.rank_1,
-                                                        rankedRanks.rank_2,
-                                                        rankedRanks.rank_3,
-                                                        rankedRanks.rank_4,
-                                                    ].findIndex(
-                                                        (r, idx) => idx !== i && r === newVal,
-                                                    );
-                                                    if (conflictIdx !== -1) {
-                                                        if (conflictIdx === 0)
-                                                            rankedRanks.rank_1 = oldVal;
-                                                        else if (conflictIdx === 1)
-                                                            rankedRanks.rank_2 = oldVal;
-                                                        else if (conflictIdx === 2)
-                                                            rankedRanks.rank_3 = oldVal;
-                                                        else rankedRanks.rank_4 = oldVal;
+                                                    const newVal = e.currentTarget.value
+                                                        ? parseInt(e.currentTarget.value)
+                                                        : null;
+                                                    const oldVal =
+                                                        i === 0
+                                                            ? rankedRanks.rank_1
+                                                            : i === 1
+                                                              ? rankedRanks.rank_2
+                                                              : i === 2
+                                                                ? rankedRanks.rank_3
+                                                                : rankedRanks.rank_4;
+                                                    // Prevent duplicate ranks: if another item already
+                                                    // has this rank, swap values.
+                                                    if (newVal !== null && oldVal !== null) {
+                                                        const conflictIdx = [
+                                                            rankedRanks.rank_1,
+                                                            rankedRanks.rank_2,
+                                                            rankedRanks.rank_3,
+                                                            rankedRanks.rank_4,
+                                                        ].findIndex(
+                                                            (r, idx) => idx !== i && r === newVal,
+                                                        );
+                                                        if (conflictIdx !== -1) {
+                                                            if (conflictIdx === 0)
+                                                                rankedRanks.rank_1 = oldVal;
+                                                            else if (conflictIdx === 1)
+                                                                rankedRanks.rank_2 = oldVal;
+                                                            else if (conflictIdx === 2)
+                                                                rankedRanks.rank_3 = oldVal;
+                                                            else rankedRanks.rank_4 = oldVal;
+                                                        }
                                                     }
-                                                }
-                                                if (i === 0) rankedRanks.rank_1 = newVal!;
-                                                else if (i === 1) rankedRanks.rank_2 = newVal!;
-                                                else if (i === 2) rankedRanks.rank_3 = newVal;
-                                                else rankedRanks.rank_4 = newVal;
-                                            }}
-                                        >
-                                            <option value="">-</option>
-                                            {#each items as _, ri}
-                                                <option value={ri + 1}>{ri + 1}</option>
-                                            {/each}
-                                        </select>
-                                    </div>
-                                {/each}
-                            </div>
-                        {:else if currentQuestion.type === 'rating_scale'}
-                            {@const sub = currentQuestion.sub_question as RatingScaleQuestionIn}
-                            <p class="mb-3 text-sm text-muted-foreground">
-                                Select your rating ({sub.min}–{sub.max}):
-                            </p>
-                            <div class="flex flex-wrap gap-2">
-                                {#each Array.from({length: sub.max - sub.min + 1}, (_, i) => sub.min + i) as val}
-                                    <button
+                                                    if (i === 0) rankedRanks.rank_1 = newVal!;
+                                                    else if (i === 1) rankedRanks.rank_2 = newVal!;
+                                                    else if (i === 2) rankedRanks.rank_3 = newVal;
+                                                    else rankedRanks.rank_4 = newVal;
+                                                }}
+                                            >
+                                                <option value="">-</option>
+                                                {#each items as _, ri}
+                                                    <option value={ri + 1}>{ri + 1}</option>
+                                                {/each}
+                                            </select>
+                                        </div>
+                                    {/each}
+                                </div>
+                            {:else if currentQuestion.type === 'rating_scale'}
+                                {@const sub = currentQuestion.sub_question as RatingScaleQuestionIn}
+                                <p class="mb-3 text-sm text-muted-foreground">
+                                    Select your rating ({sub.min}–{sub.max}):
+                                </p>
+                                <div class="flex flex-wrap gap-2">
+                                    {#each Array.from({ length: sub.max - sub.min + 1 }, (_, i) => sub.min + i) as val}
+                                        <button
                                             onclick={() => {
-                                            ratingValue = val;
-                                        }}
+                                                ratingValue = val;
+                                            }}
                                             class="h-12 w-12 rounded-xl border text-sm font-medium transition-colors"
                                             class:border-primary={ratingValue === val}
                                             class:bg-primary={ratingValue === val}
@@ -874,363 +885,370 @@
                                             class:bg-card={ratingValue !== val}
                                             class:text-foreground={ratingValue !== val}
                                             class:hover:bg-accent={ratingValue !== val}
+                                        >
+                                            {val}
+                                        </button>
+                                    {/each}
+                                </div>
+                            {:else if currentQuestion.type === 'yes_no'}
+                                <div class="flex gap-4">
+                                    <button
+                                        onclick={() => {
+                                            yesNoValue = true;
+                                        }}
+                                        class="flex-1 rounded-xl border px-6 py-4 text-sm font-medium transition-colors {yesNoValue ===
+                                        true
+                                            ? 'border-green-500 bg-green-500/10 text-green-600'
+                                            : 'border-border bg-card text-foreground hover:bg-accent'}"
                                     >
-                                        {val}
+                                        Yes
                                     </button>
-                                {/each}
-                            </div>
-                        {:else if currentQuestion.type === 'yes_no'}
-                            <div class="flex gap-4">
-                                <button
+                                    <button
                                         onclick={() => {
-                                        yesNoValue = true;
-                                    }}
+                                            yesNoValue = false;
+                                        }}
                                         class="flex-1 rounded-xl border px-6 py-4 text-sm font-medium transition-colors {yesNoValue ===
-                                    true
-                                        ? 'border-green-500 bg-green-500/10 text-green-600'
-                                        : 'border-border bg-card text-foreground hover:bg-accent'}"
-                                >
-                                    Yes
-                                </button>
-                                <button
-                                        onclick={() => {
-                                        yesNoValue = false;
-                                    }}
-                                        class="flex-1 rounded-xl border px-6 py-4 text-sm font-medium transition-colors {yesNoValue ===
-                                    false
-                                        ? 'border-red-500 bg-red-500/10 text-red-600'
-                                        : 'border-border bg-card text-foreground hover:bg-accent'}"
-                                >
-                                    No
-                                </button>
-                            </div>
-                        {/if}
+                                        false
+                                            ? 'border-red-500 bg-red-500/10 text-red-600'
+                                            : 'border-border bg-card text-foreground hover:bg-accent'}"
+                                    >
+                                        No
+                                    </button>
+                                </div>
+                            {/if}
 
-                        <div
+                            <div
                                 class="sticky bottom-0 bg-background/80 backdrop-blur-sm pt-3 -mx-6 px-6 pb-6 -mb-6"
-                        >
-                            <button
+                            >
+                                <button
                                     onclick={submitAnswer}
                                     class="w-full rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
-                            >
-                                Submit Answer
-                            </button>
+                                >
+                                    Submit Answer
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            {:else if phase === 'answered'}
-                <div class="flex flex-col items-center py-20 text-center">
-                    <div
+                {:else if phase === 'answered'}
+                    <div class="flex flex-col items-center py-20 text-center">
+                        <div
                             class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10"
-                    >
-                        <svg
+                        >
+                            <svg
                                 class="h-10 w-10 text-primary"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
                                 stroke-width="2"
-                        >
-                            <path
+                            >
+                                <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
                                     d="M5 13l4 4L19 7"
-                            />
-                        </svg>
-                    </div>
-                    <h2 class="mb-2 text-xl font-semibold text-(--text-heading)">
-                        Answer submitted!
-                    </h2>
-                    <p class="text-sm text-muted-foreground">
-                        Waiting for the host to move on or reveal responses…
-                    </p>
-                </div>
-            {:else if phase === 'revealed' && currentQuestion}
-                {@const sub = currentQuestion.sub_question}
-                <div class="space-y-6">
-                    <!-- Question header -->
-                    <div class="rounded-2xl border border-border bg-card p-6">
-                        <span
-                                class="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-                        >
-                            Question {currentQuestion.position}
-                        </span>
-                        <h2 class="mt-3 text-xl font-semibold text-(--text-heading)">
-                            {currentQuestion.prompt}
+                                />
+                            </svg>
+                        </div>
+                        <h2 class="mb-2 text-xl font-semibold text-(--text-heading)">
+                            Answer submitted!
                         </h2>
-                    </div>
-
-                    <!-- Question sub-details + aggregated results -->
-                    <div class="rounded-2xl border border-border bg-card p-6">
-                        {#if currentQuestion.type === 'multiple_choice'}
-                            {@const mc = sub as MultipleChoiceQuestionIn}
-                            {@const options = [
-                                mc.option_1,
-                                mc.option_2,
-                                mc.option_3,
-                                mc.option_4,
-                            ].filter(Boolean) as string[]}
-                            <div class="space-y-3">
-                                {#each options as option, i}
-                                    {@const count = mcCounts[i + 1] ?? 0}
-                                    {@const pct =
-                                        totalResp > 0 ? Math.round((count / totalResp) * 100) : 0}
-                                    {@const isMine = mcSelected.includes(i + 1)}
-                                    <div>
-                                        <div
-                                                class="flex items-center gap-3 rounded-lg border bg-background p-4 {isMine
-                                        ? 'border-primary ring-1 ring-primary/30'
-                                        : 'border-border'}"
-                                        >
-                                            <span
-                                                    class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
-                                            >
-                                                {String.fromCharCode(65 + i)}
-                                            </span>
-                                            <span class="flex-1 text-sm">{option}</span>
-                                            {#if isMine}
-                                                <span class="text-xs font-medium text-primary"
-                                                >Your answer</span
-                                                >
-                                            {/if}
-                                            {#if mc.allow_multiple}
-                                                <span class="text-xs text-muted-foreground"
-                                                >(multiple)</span
-                                                >
-                                            {/if}
-                                            {#if totalResp > 0}
-                                                <span class="tabular-nums text-sm font-semibold"
-                                                >{count}</span
-                                                >
-                                            {/if}
-                                        </div>
-                                        {#if totalResp > 0}
-                                            <div class="mt-1 h-1.5 rounded-full bg-muted">
-                                                <div
-                                                        class="h-full rounded-full bg-primary transition-all duration-300"
-                                                        style="width: {pct}%"
-                                                ></div>
-                                            </div>
-                                        {/if}
-                                    </div>
-                                {/each}
-                            </div>
-                        {:else if currentQuestion.type === 'rating_scale'}
-                            {@const rs = sub as RatingScaleQuestionIn}
-                            <div class="flex flex-col items-center gap-3">
-                                <div class="flex items-center gap-3">
-                                    {#each Array(rs.max - rs.min + 1) as _, i}
-                                        {@const val = rs.min + i}
-                                        <div
-                                                class="flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium {val ===
-                                        ratingValue
-                                            ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
-                                            : 'bg-muted text-foreground'}"
-                                        >
-                                            {val}
-                                        </div>
-                                    {/each}
-                                </div>
-                                <div
-                                        class="flex w-full justify-between text-xs text-muted-foreground"
-                                >
-                                    <span>{rs.min}</span>
-                                    <span>{rs.max}</span>
-                                </div>
-                                {#if ratingValue > 0}
-                                    <p class="text-xs font-medium text-muted-foreground">
-                                        Your rating: <span
-                                    >{ratingValue}</span
-                                    >
-                                    </p>
-                                {/if}
-                                {#if ratingAvg !== null}
-                                    <p class="text-sm font-medium">
-                                        Average: <span class="tabular-nums text-primary"
-                                    >{ratingAvg}</span
-                                    >
-                                    </p>
-                                {/if}
-                            </div>
-                        {:else if currentQuestion.type === 'yes_no'}
-                            <div class="flex gap-4">
-                                <div
-                                        class="flex-1 rounded-xl border-2 p-6 text-center {yesNoValue ===
-                                    true
-                                        ? 'border-green-500 bg-green-500/10'
-                                        : 'border-green-500/20 bg-green-500/5'}"
-                                >
-                                    <span class="text-3xl font-bold text-green-500">&#10003;</span>
-                                    <p class="mt-1 text-sm font-medium text-foreground">Yes</p>
-                                    {#if yesNoValue === true}
-                                        <p class="mt-1 text-xs font-medium text-green-500"
-                                        >Your answer</p
-                                        >
-                                    {/if}
-                                    {#if yesNoCounts !== null}
-                                        <p class="mt-1 text-lg font-bold tabular-nums">
-                                            {yesNoCounts.yes}
-                                        </p>
-                                    {/if}
-                                </div>
-                                <div
-                                        class="flex-1 rounded-xl border-2 p-6 text-center {yesNoValue ===
-                                    false
-                                        ? 'border-red-500 bg-red-500/10'
-                                        : 'border-red-500/20 bg-red-500/5'}"
-                                >
-                                    <span class="text-3xl font-bold text-red-500">&#10007;</span>
-                                    <p class="mt-1 text-sm font-medium text-foreground">No</p>
-                                    {#if yesNoValue === false}
-                                        <p class="mt-1 text-xs font-medium text-red-500"
-                                        >Your answer</p
-                                        >
-                                    {/if}
-                                    {#if yesNoCounts !== null}
-                                        <p class="mt-1 text-lg font-bold tabular-nums">
-                                            {yesNoCounts.no}
-                                        </p>
-                                    {/if}
-                                </div>
-                            </div>
-                        {:else if currentQuestion.type === 'ranked_voting'}
-                            {@const rv = sub as RankedVotingQuestionIn}
-                            {@const items = [rv.item_1, rv.item_2, rv.item_3, rv.item_4].filter(
-                                Boolean,
-                            ) as string[]}
-                            <div class="space-y-2">
-                                {#each items as item, i}
-                                    {@const count = rankedFirst[i] ?? 0}
-                                    <div
-                                            class="flex items-center gap-3 rounded-lg border border-border bg-background p-4"
-                                    >
-                                        <span
-                                                class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
-                                        >
-                                            {i + 1}
-                                        </span>
-                                        <span class="flex-1 text-sm">{item}</span>
-                                        {#if totalResp > 0}
-                                            <span class="tabular-nums text-xs text-muted-foreground"
-                                            >#1 votes: {count}</span
-                                            >
-                                        {/if}
-                                    </div>
-                                {/each}
-                            </div>
-                        {:else if currentQuestion.type === 'long_answer'}
-                            {#if longAnswers.length > 0}
-                                <div class="max-h-64 space-y-2 overflow-y-auto">
-                                    {#each longAnswers as answer}
-                                        <div
-                                                class="rounded-lg border p-3 text-sm {answer ===
-                                        longAnswerText.trim()
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border bg-muted/30'}"
-                                        >
-                                            {answer}
-                                            {#if answer === longAnswerText.trim()}
-                                                <span class="ml-2 text-xs font-medium text-primary"
-                                                >Your answer</span
-                                                >
-                                            {/if}
-                                        </div>
-                                    {/each}
-                                </div>
-                            {:else}
-                                <div
-                                        class="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center"
-                                >
-                                    <p class="text-sm text-muted-foreground">No responses yet.</p>
-                                </div>
-                            {/if}
-                        {/if}
-
-                        <p class="mt-4 text-center text-xs text-muted-foreground">
-                            {revealedResponses.length} response{revealedResponses.length !== 1
-                            ? 's'
-                            : ''}
+                        <p class="text-sm text-muted-foreground">
+                            Waiting for the host to move on or reveal responses…
                         </p>
                     </div>
-                </div>
-            {:else if phase === 'host_disconnected'}
-                <div class="flex flex-col items-center py-20 text-center">
-                    <div
+                {:else if phase === 'revealed' && currentQuestion}
+                    {@const sub = currentQuestion.sub_question}
+                    <div class="space-y-6">
+                        <!-- Question header -->
+                        <div class="rounded-2xl border border-border bg-card p-6">
+                            <span
+                                class="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                            >
+                                Question {currentQuestion.position}
+                            </span>
+                            <h2 class="mt-3 text-xl font-semibold text-(--text-heading)">
+                                {currentQuestion.prompt}
+                            </h2>
+                        </div>
+
+                        <!-- Question sub-details + aggregated results -->
+                        <div class="rounded-2xl border border-border bg-card p-6">
+                            {#if currentQuestion.type === 'multiple_choice'}
+                                {@const mc = sub as MultipleChoiceQuestionIn}
+                                {@const options = [
+                                    mc.option_1,
+                                    mc.option_2,
+                                    mc.option_3,
+                                    mc.option_4,
+                                ].filter(Boolean) as string[]}
+                                <div class="space-y-3">
+                                    {#each options as option, i}
+                                        {@const count = mcCounts[i + 1] ?? 0}
+                                        {@const pct =
+                                            totalResp > 0
+                                                ? Math.round((count / totalResp) * 100)
+                                                : 0}
+                                        {@const isMine = mcSelected.includes(i + 1)}
+                                        <div>
+                                            <div
+                                                class="flex items-center gap-3 rounded-lg border bg-background p-4 {isMine
+                                                    ? 'border-primary ring-1 ring-primary/30'
+                                                    : 'border-border'}"
+                                            >
+                                                <span
+                                                    class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+                                                >
+                                                    {String.fromCharCode(65 + i)}
+                                                </span>
+                                                <span class="flex-1 text-sm">{option}</span>
+                                                {#if isMine}
+                                                    <span class="text-xs font-medium text-primary"
+                                                        >Your answer</span
+                                                    >
+                                                {/if}
+                                                {#if mc.allow_multiple}
+                                                    <span class="text-xs text-muted-foreground"
+                                                        >(multiple)</span
+                                                    >
+                                                {/if}
+                                                {#if totalResp > 0}
+                                                    <span class="tabular-nums text-sm font-semibold"
+                                                        >{count}</span
+                                                    >
+                                                {/if}
+                                            </div>
+                                            {#if totalResp > 0}
+                                                <div class="mt-1 h-1.5 rounded-full bg-muted">
+                                                    <div
+                                                        class="h-full rounded-full bg-primary transition-all duration-300"
+                                                        style="width: {pct}%"
+                                                    ></div>
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    {/each}
+                                </div>
+                            {:else if currentQuestion.type === 'rating_scale'}
+                                {@const rs = sub as RatingScaleQuestionIn}
+                                <div class="flex flex-col items-center gap-3">
+                                    <div class="flex items-center gap-3">
+                                        {#each Array(rs.max - rs.min + 1) as _, i}
+                                            {@const val = rs.min + i}
+                                            <div
+                                                class="flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium {val ===
+                                                ratingValue
+                                                    ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
+                                                    : 'bg-muted text-foreground'}"
+                                            >
+                                                {val}
+                                            </div>
+                                        {/each}
+                                    </div>
+                                    <div
+                                        class="flex w-full justify-between text-xs text-muted-foreground"
+                                    >
+                                        <span>{rs.min}</span>
+                                        <span>{rs.max}</span>
+                                    </div>
+                                    {#if ratingValue > 0}
+                                        <p class="text-xs font-medium text-muted-foreground">
+                                            Your rating: <span>{ratingValue}</span>
+                                        </p>
+                                    {/if}
+                                    {#if ratingAvg !== null}
+                                        <p class="text-sm font-medium">
+                                            Average: <span class="tabular-nums text-primary"
+                                                >{ratingAvg}</span
+                                            >
+                                        </p>
+                                    {/if}
+                                </div>
+                            {:else if currentQuestion.type === 'yes_no'}
+                                <div class="flex gap-4">
+                                    <div
+                                        class="flex-1 rounded-xl border-2 p-6 text-center {yesNoValue ===
+                                        true
+                                            ? 'border-green-500 bg-green-500/10'
+                                            : 'border-green-500/20 bg-green-500/5'}"
+                                    >
+                                        <span class="text-3xl font-bold text-green-500"
+                                            >&#10003;</span
+                                        >
+                                        <p class="mt-1 text-sm font-medium text-foreground">Yes</p>
+                                        {#if yesNoValue === true}
+                                            <p class="mt-1 text-xs font-medium text-green-500">
+                                                Your answer
+                                            </p>
+                                        {/if}
+                                        {#if yesNoCounts !== null}
+                                            <p class="mt-1 text-lg font-bold tabular-nums">
+                                                {yesNoCounts.yes}
+                                            </p>
+                                        {/if}
+                                    </div>
+                                    <div
+                                        class="flex-1 rounded-xl border-2 p-6 text-center {yesNoValue ===
+                                        false
+                                            ? 'border-red-500 bg-red-500/10'
+                                            : 'border-red-500/20 bg-red-500/5'}"
+                                    >
+                                        <span class="text-3xl font-bold text-red-500">&#10007;</span
+                                        >
+                                        <p class="mt-1 text-sm font-medium text-foreground">No</p>
+                                        {#if yesNoValue === false}
+                                            <p class="mt-1 text-xs font-medium text-red-500">
+                                                Your answer
+                                            </p>
+                                        {/if}
+                                        {#if yesNoCounts !== null}
+                                            <p class="mt-1 text-lg font-bold tabular-nums">
+                                                {yesNoCounts.no}
+                                            </p>
+                                        {/if}
+                                    </div>
+                                </div>
+                            {:else if currentQuestion.type === 'ranked_voting'}
+                                {@const rv = sub as RankedVotingQuestionIn}
+                                {@const items = [rv.item_1, rv.item_2, rv.item_3, rv.item_4].filter(
+                                    Boolean,
+                                ) as string[]}
+                                <div class="space-y-2">
+                                    {#each items as item, i}
+                                        {@const count = rankedFirst[i] ?? 0}
+                                        <div
+                                            class="flex items-center gap-3 rounded-lg border border-border bg-background p-4"
+                                        >
+                                            <span
+                                                class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+                                            >
+                                                {i + 1}
+                                            </span>
+                                            <span class="flex-1 text-sm">{item}</span>
+                                            {#if totalResp > 0}
+                                                <span
+                                                    class="tabular-nums text-xs text-muted-foreground"
+                                                    >#1 votes: {count}</span
+                                                >
+                                            {/if}
+                                        </div>
+                                    {/each}
+                                </div>
+                            {:else if currentQuestion.type === 'long_answer'}
+                                {#if longAnswers.length > 0}
+                                    <div class="max-h-64 space-y-2 overflow-y-auto">
+                                        {#each longAnswers as answer}
+                                            <div
+                                                class="rounded-lg border p-3 text-sm {answer ===
+                                                longAnswerText.trim()
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-border bg-muted/30'}"
+                                            >
+                                                {answer}
+                                                {#if answer === longAnswerText.trim()}
+                                                    <span
+                                                        class="ml-2 text-xs font-medium text-primary"
+                                                        >Your answer</span
+                                                    >
+                                                {/if}
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {:else}
+                                    <div
+                                        class="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center"
+                                    >
+                                        <p class="text-sm text-muted-foreground">
+                                            No responses yet.
+                                        </p>
+                                    </div>
+                                {/if}
+                            {/if}
+
+                            <p class="mt-4 text-center text-xs text-muted-foreground">
+                                {revealedResponses.length} response{revealedResponses.length !== 1
+                                    ? 's'
+                                    : ''}
+                            </p>
+                        </div>
+                    </div>
+                {:else if phase === 'host_disconnected'}
+                    <div class="flex flex-col items-center py-20 text-center">
+                        <div
                             class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/10"
-                    >
-                        <svg
+                        >
+                            <svg
                                 class="h-10 w-10 text-amber-500"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
                                 stroke-width="2"
-                        >
-                            <path
+                            >
+                                <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
                                     d="M12 9v2m0 4h.01M12 3l9.66 16.5H2.34L12 3z"
-                            />
-                        </svg>
+                                />
+                            </svg>
+                        </div>
+                        <h2 class="mb-2 text-xl font-semibold text-(--text-heading)">
+                            Host Disconnected
+                        </h2>
+                        <p class="text-sm text-muted-foreground">
+                            The host has temporarily left. Please wait and you'll rejoin
+                            automatically when they return.
+                        </p>
                     </div>
-                    <h2 class="mb-2 text-xl font-semibold text-(--text-heading)">
-                        Host Disconnected
-                    </h2>
-                    <p class="text-sm text-muted-foreground">
-                        The host has temporarily left. Please wait and you'll rejoin automatically
-                        when they return.
-                    </p>
-                </div>
-            {:else if phase === 'ended'}
-                <div class="flex flex-col items-center py-20 text-center">
-                    <div
+                {:else if phase === 'ended'}
+                    <div class="flex flex-col items-center py-20 text-center">
+                        <div
                             class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted"
-                    >
-                        <svg
+                        >
+                            <svg
                                 class="h-10 w-10 text-muted-foreground"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
                                 stroke-width="2"
-                        >
-                            <path
+                            >
+                                <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
                                     d="M5 13l4 4L19 7"
-                            />
-                        </svg>
-                    </div>
-                    <h2 class="mb-2 text-xl font-semibold text-(--text-heading)">
-                        Meeting Ended
-                    </h2>
-                    <p class="mb-6 text-sm text-muted-foreground">
-                        Thanks for participating! The meeting has now concluded.
-                    </p>
-                    <button
+                                />
+                            </svg>
+                        </div>
+                        <h2 class="mb-2 text-xl font-semibold text-(--text-heading)">
+                            Meeting Ended
+                        </h2>
+                        <p class="mb-6 text-sm text-muted-foreground">
+                            Thanks for participating! The meeting has now concluded.
+                        </p>
+                        <button
                             onclick={() => goto('/')}
                             class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                        Go Home
-                    </button>
-                </div>
-            {/if}
+                        >
+                            Go Home
+                        </button>
+                    </div>
+                {/if}
+            </div>
+        </div>
+
+        <!-- Sidebar: Participants + Chat (desktop only) -->
+        <div class="hidden lg:flex flex-col border-l border-border">
+            <div class="flex-1 min-h-0 border-b border-border">
+                <HostParticipants variant="inline" {participants} />
+            </div>
+            <div class="flex-1 min-h-0">
+                <ChatBar variant="inline" {chats} onsend={handleChatSend} />
+            </div>
         </div>
     </div>
 
-    <!-- Sidebar: Participants + Chat (desktop only) -->
-    <div class="hidden lg:flex flex-col border-l border-border">
-        <div class="flex-1 min-h-0 border-b border-border">
-            <HostParticipants variant="inline" {participants}/>
-        </div>
-        <div class="flex-1 min-h-0">
-            <ChatBar variant="inline" {chats} onsend={handleChatSend}/>
-        </div>
-    </div>
-</div>
-
-<!-- Mobile: Participants modal -->
-<HostParticipants
+    <!-- Mobile: Participants modal -->
+    <HostParticipants
         variant="modal"
         bind:open={participantsOpen}
         onclose={() => (participantsOpen = false)}
         {participants}
-/>
+    />
 {/if}

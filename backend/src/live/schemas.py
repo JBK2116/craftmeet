@@ -146,13 +146,16 @@ class ParticipantJoinRoomPayload(BaseModel):
         min_length=MIN_USERNAME_LENGTH, max_length=MAX_USERNAME_LENGTH
     )
 
+
 class ParticipantJoinRoomSuccess(BaseModel):
     """Payload for when a participant successfully joins a room
 
     Attributes:
         participant: The updated participant object.
     """
+
     participant: Participant
+
 
 class ParticipantJoinRoomFailed(BaseModel):
     """Payload for when a participant fails to join a room
@@ -160,6 +163,7 @@ class ParticipantJoinRoomFailed(BaseModel):
     Attributes:
         detail: The reason of the failure
     """
+
     detail: str
 
 

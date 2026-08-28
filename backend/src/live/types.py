@@ -51,7 +51,7 @@ class InboundMessageTypes(Enum):
     RESPONSE_RECEIVED = "response_received"  # sent from participants
     REVEAL = "reveal"  # sent from host
     PARTICIPANT_CONNECTED = "participant_connected"  # sent from participants
-    PARTICIPANT_JOIN_ROOM = "participant_join_room" # sent from participants
+    PARTICIPANT_JOIN_ROOM = "participant_join_room"  # sent from participants
     CHAT_RECEIVED = "chat_received"  # sent from host or participant
     PING = "ping"  # sent from participants (heartbeat)
 
@@ -74,8 +74,12 @@ class OutboundMessageTypes(StrEnum):
     HOST_RECONNECTED = "host_reconnected"  # sent to participants
     PARTICIPANT_CONNECTED = "participant_connected"  # sent to host
     PARTICIPANT_DISCONNECTED = "participant_disconnected"  # sent to host
-    PARTICIPANT_JOIN_ROOM_SUCCESS = "participant_join_room_success" # sent to participants
-    PARTICIPANT_JOIN_ROOM_FAILED = "participant_join_room_failed" # sent to participants
+    PARTICIPANT_JOIN_ROOM_SUCCESS = (
+        "participant_join_room_success"  # sent to participants
+    )
+    PARTICIPANT_JOIN_ROOM_FAILED = (
+        "participant_join_room_failed"  # sent to participants
+    )
     PARTICIPANT_STATE = "participant_state"  # sent to participant
     PARTICIPANTS_STATE = "participants_state"  # sent to participants
     CHAT_RECEIVED = "chat_received"  # sent to host or participant

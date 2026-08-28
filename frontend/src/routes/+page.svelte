@@ -85,9 +85,7 @@
             }
             const body = await res.json();
             const meetingId = body.meeting_id as string;
-            await goto(`/meetings/${meetingId}/participant`, {
-                replaceState: true,
-            });
+            await goto(`/meetings/${meetingId}/participant`, { replaceState: true });
         } catch {
             toast.error('Unable to join meeting. Please try again.');
         } finally {

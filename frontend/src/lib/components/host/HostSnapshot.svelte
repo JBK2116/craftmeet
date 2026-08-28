@@ -1,17 +1,13 @@
 <script lang="ts">
     import { Button } from '$lib/components/ui/button';
     import type { MeetingSnapshot, Mood } from '$lib/types/meeting';
-    import { TriangleAlert, Lightbulb, RefreshCw, Sparkles } from '@lucide/svelte';
+    import { Lightbulb, RefreshCw, Sparkles, TriangleAlert } from '@lucide/svelte';
 
     let {
         snapshot = null,
         loading = false,
         ongenerate,
-    }: {
-        snapshot: MeetingSnapshot | null;
-        loading: boolean;
-        ongenerate: () => void;
-    } = $props();
+    }: { snapshot: MeetingSnapshot | null; loading: boolean; ongenerate: () => void } = $props();
 
     const MOOD_STYLES: Record<Mood, string> = {
         positive: 'bg-green-500/10 text-green-600',
@@ -53,7 +49,9 @@
             <div class="flex items-center justify-between gap-2">
                 <span class="text-xs uppercase tracking-wide text-muted-foreground">Mood</span>
                 <span
-                    class="rounded-full px-2 py-0.5 text-xs font-medium capitalize {MOOD_STYLES[snapshot.mood]}"
+                    class="rounded-full px-2 py-0.5 text-xs font-medium capitalize {MOOD_STYLES[
+                        snapshot.mood
+                    ]}"
                 >
                     {snapshot.mood}
                 </span>

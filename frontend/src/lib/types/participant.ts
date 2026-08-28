@@ -9,5 +9,5 @@ export type Participant = {
     /** Whether the participant has answered the current question. */
     has_answered: boolean;
     /** Whether the participant has joined the actual meeting */
-    is_lobby: boolean
+    is_lobby: boolean;
 };

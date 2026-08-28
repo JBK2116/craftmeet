@@ -24,10 +24,22 @@
     } = $props();
 
     const QUESTION_TYPES: { type: QuestionTypes; label: string; description: string }[] = [
-        { type: 'multiple_choice', label: 'Multiple Choice', description: 'Pick from defined options' },
+        {
+            type: 'multiple_choice',
+            label: 'Multiple Choice',
+            description: 'Pick from defined options',
+        },
         { type: 'long_answer', label: 'Long Answer', description: 'Open text response' },
-        { type: 'ranked_voting', label: 'Ranked Voting', description: 'Prioritize a list of items' },
-        { type: 'rating_scale', label: 'Rating Scale', description: 'Numeric score within a range' },
+        {
+            type: 'ranked_voting',
+            label: 'Ranked Voting',
+            description: 'Prioritize a list of items',
+        },
+        {
+            type: 'rating_scale',
+            label: 'Rating Scale',
+            description: 'Numeric score within a range',
+        },
         { type: 'yes_no', label: 'Yes / No', description: 'Simple binary vote' },
     ];
 
@@ -40,9 +52,7 @@
     };
 
     let selectedType = $state<QuestionTypes | null>(null);
-    let questionRef = $state<{ validate: () => boolean; getData: () => QuestionOut } | null>(
-        null,
-    );
+    let questionRef = $state<{ validate: () => boolean; getData: () => QuestionOut } | null>(null);
 
     $effect(() => {
         if (open) {
