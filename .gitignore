@@ -343,3 +343,6 @@ storage
 k6/test-data.json
 # More Intellij
 /.idea/.gitignore
+
+# Local scripts
+/scripts
