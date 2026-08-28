@@ -14,6 +14,7 @@ from src.auth.router import (  # noqa: F401 - ensures oauth is registered at app
     auth_router,
     oauth,
 )
+from src.background import setup_scheduler, stop_scheduler
 from src.cache import close_redis, setup_redis
 from src.config import get_settings
 from src.limiter import limiter
@@ -35,9 +36,13 @@ logger = get_logger(__name__)
 # initialise redis
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # before app startup
     await setup_redis()  # NOTE: ensure that redis server is started locally
+    setup_scheduler()
     yield
+    # before app termination
     await close_redis()
+    stop_scheduler()
 
 
 app = FastAPI(
