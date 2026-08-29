@@ -387,34 +387,34 @@ class LiveRoom:
         """Add a participant to a live meeting room."""
         existing = self.participants.get(p_id)
         if existing is None:
-            payload = ParticipantJoinRoomFailed(
+            out = ParticipantJoinRoomFailed(
                 detail="Unable to join meeting, please restart the join meeting process"
             )
             await ws.send_json(
                 {
                     "type": OutboundMessageTypes.PARTICIPANT_JOIN_ROOM_FAILED,
-                    "payload": payload.model_dump(mode="json"),
+                    "payload": out.model_dump(mode="json"),
                 }
             )
             return
         if self.name_exists(payload.username, exclude_id=p_id):
-            payload = ParticipantJoinRoomFailed(
+            out = ParticipantJoinRoomFailed(
                 detail="A participant already exists with that username"
             )
             await ws.send_json(
                 {
                     "type": OutboundMessageTypes.PARTICIPANT_JOIN_ROOM_FAILED,
-                    "payload": payload.model_dump(mode="json"),
+                    "payload": out.model_dump(mode="json"),
                 }
             )
             return
         existing.participant.username = payload.username
         existing.participant.is_lobby = False
-        payload = ParticipantJoinRoomSuccess(participant=existing.participant)
+        out = ParticipantJoinRoomSuccess(participant=existing.participant)
         await ws.send_json(
             {
                 "type": OutboundMessageTypes.PARTICIPANT_JOIN_ROOM_SUCCESS,
-                "payload": payload.model_dump(mode="json"),
+                "payload": out.model_dump(mode="json"),
             }
         )
         if self.host:
