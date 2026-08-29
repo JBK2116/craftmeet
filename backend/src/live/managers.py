@@ -50,6 +50,8 @@ class LiveManager:
                 await room.get_snapshot(payload=message.payload)
             case InboundMessageTypes.ADD_QUESTION:
                 await room.add_question(payload=message.payload)
+            case InboundMessageTypes.KICK_PARTICIPANT:
+                await room.kick_participant(payload=message.payload)
             case InboundMessageTypes.REVEAL:
                 await room.reveal()
             case InboundMessageTypes.CHAT_RECEIVED:
@@ -243,8 +245,21 @@ class LiveManager:
                 reason=CloseCode.MEETING_NOT_FOUND.message,
             )
             return False
+        is_blocked = room.is_participant_blocked(p_id=p_id)
+        if is_blocked:
+            await ws.accept()
+            await ws.close(
+                code=CloseCode.PARTICIPANT_KICKED_FROM_MEETING.code,
+                reason=CloseCode.PARTICIPANT_KICKED_FROM_MEETING.message,
+            )
+            return False
         has_space = await room.check_participant_cap(p_id=p_id)
         if not has_space:
+            await ws.accept()
+            await ws.close(
+                code=CloseCode.MEETING_IS_FULL.code,
+                reason=CloseCode.MEETING_IS_FULL.message,
+            )
             return False
         await ws.accept()
         return True

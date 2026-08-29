@@ -26,6 +26,8 @@
         type GetSnapshotFailedPayload,
         type GetSnapshotPayload,
         type GetSnapshotSuccessPayload,
+        type KickParticipantPayload,
+        type KickParticipantResultPayload,
         type MeetingStartedPayload,
         type MeetingStatePayload,
         MessageTypes,
@@ -270,6 +272,9 @@
             case MessageTypes.MEETING_STATE:
                 handleMeetingState(msg.payload as MeetingStatePayload);
                 break;
+            case (MessageTypes.KICK_PARTICIPANT_FAILED, MessageTypes.KICK_PARTICIPANT_SUCCESS):
+                handleKickParticipantResult(msg.payload as KickParticipantResultPayload);
+                break;
             case MessageTypes.MEETING_ENDED:
                 meetingStatus = 'ended';
                 toast.info('Meeting has ended.');
@@ -388,6 +393,34 @@
             }
         };
     });
+
+    /** Handles kicking a participant from the live meeting. */
+    function handleKickParticipant(id: string) {
+        if (!wsConnected || !ws) return;
+        const payload = JSON.stringify({
+            type: MessageTypes.KICK_PARTICIPANT,
+            payload: { id } as KickParticipantPayload,
+        });
+        ws.send(payload);
+    }
+
+    /** Handles the outcome from a kick participant request */
+    function handleKickParticipantResult(payload: KickParticipantResultPayload) {
+        if (!payload.kicked) {
+            if (payload.detail) {
+                toast.error(payload.detail);
+            } else {
+                toast.error('Unable to kick the participant.');
+            }
+            return;
+        }
+        const idx = participants.findIndex((p) => p.id === payload.id);
+        if (idx !== -1) {
+            participants.splice(idx, 1);
+        }
+        toast.success('Participant kicked from meeting');
+        return;
+    }
 
     /** Send an add-question request to the backend over the live WebSocket. */
     function handleAddQuestion(question: QuestionOut) {
@@ -682,7 +715,11 @@
             <!-- Sidebar: Participants + Chat (desktop only) -->
             <div class="hidden lg:flex flex-col border-l border-border">
                 <div class="flex-1 min-h-0 border-b border-border">
-                    <HostParticipants variant="inline" {participants} />
+                    <HostParticipants
+                        variant="inline"
+                        {participants}
+                        onkick={handleKickParticipant}
+                    />
                 </div>
                 <div class="flex-1 min-h-0">
                     <ChatBar variant="inline" {chats} onsend={handleChatSend} />
@@ -698,6 +735,7 @@
     bind:open={participantsOpen}
     onclose={() => (participantsOpen = false)}
     {participants}
+    onkick={handleKickParticipant}
 />
 
 <!-- Add Question modal -->

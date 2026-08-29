@@ -1,16 +1,18 @@
 <script lang="ts">
     import type { Participant } from '$lib/types/participant';
-    import { Users, X } from '@lucide/svelte';
+    import { UserX, Users, X } from '@lucide/svelte';
 
     let {
         open = $bindable(false),
         participants,
         onclose,
+        onkick,
         variant = 'modal' as 'modal' | 'inline',
     }: {
         open?: boolean;
         participants: Participant[];
         onclose?: () => void;
+        onkick?: (id: string) => void;
         variant?: 'modal' | 'inline';
     } = $props();
 
@@ -76,6 +78,16 @@
                                     {displayName(p)}
                                 </p>
                             </div>
+                            {#if onkick}
+                                <button
+                                    onclick={() => onkick(p.id)}
+                                    class="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                    aria-label={`Kick ${displayName(p)}`}
+                                    title="Kick participant"
+                                >
+                                    <UserX class="h-4 w-4" />
+                                </button>
+                            {/if}
                             <span
                                 class="flex items-center gap-1.5 text-xs {p.connected
                                     ? 'text-green-500'
@@ -152,6 +164,16 @@
                                         {displayName(p)}
                                     </p>
                                 </div>
+                                {#if onkick}
+                                    <button
+                                        onclick={() => onkick(p.id)}
+                                        class="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                        aria-label={`Kick ${displayName(p)}`}
+                                        title="Kick participant"
+                                    >
+                                        <UserX class="h-4 w-4" />
+                                    </button>
+                                {/if}
                                 <span
                                     class="flex items-center gap-1.5 text-xs {p.connected
                                         ? 'text-green-500'

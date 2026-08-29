@@ -14,10 +14,18 @@ export enum CloseCode {
     PARTICIPANT_RECONNECTED_ELSEWHERE = 1008,
     /** The meeting does not exist or is not joinable. */
     MEETING_NOT_FOUND = 4001,
+    /** Participant kicked from meeting */
+    PARTICIPANT_KICKED_FROM_MEETING = 4002,
+    /** Meeting is full */
+    MEETING_IS_FULL = 4003,
 }
 
 /** Types of messages that can be sent in the meeting system. */
 export enum MessageTypes {
+    // kick participant feature
+    KICK_PARTICIPANT = 'kick_participant',
+    KICK_PARTICIPANT_FAILED = 'kick_participant_failed',
+    KICK_PARTICIPANT_SUCCESS = 'kick_participant_success',
     // meeting snapshot feature
     GET_SNAPSHOT = 'get_snapshot',
     GET_SNAPSHOT_SUCCESS = 'get_snapshot_success',
@@ -53,6 +61,22 @@ export enum MessageTypes {
     // heartbeat
     PING = 'ping',
     PONG = 'pong',
+}
+
+/** Payload for when requesting to kick out a participant */
+export interface KickParticipantPayload {
+    /** id of the participant to kick */
+    id: string;
+}
+
+/** Payload for when requesting to kick out a participant fails */
+export interface KickParticipantResultPayload {
+    /** The reason of the failure if one occurs  */
+    detail: string | null;
+    /** boolean indicating result of the kick attempt */
+    kicked: boolean;
+    /** The id of the kicked participant */
+    id: string;
 }
 
 /** Payload for when requesting a snapshot of a live meeting */
@@ -193,6 +217,8 @@ export interface RevealMeetingPayload {
 
 /** Maps each MessageType to its corresponding payload shape. */
 interface PayloadMap {
+    [MessageTypes.KICK_PARTICIPANT_FAILED]: KickParticipantResultPayload;
+    [MessageTypes.KICK_PARTICIPANT_SUCCESS]: KickParticipantResultPayload;
     [MessageTypes.GET_SNAPSHOT_SUCCESS]: GetSnapshotSuccessPayload;
     [MessageTypes.GET_SNAPSHOT_FAILED]: GetSnapshotFailedPayload;
     [MessageTypes.ADD_QUESTION]: AddQuestionPayload;
@@ -233,6 +259,8 @@ type WebInMessage<T extends MessageTypes> = { type: T; payload: WebInPayload<T> 
 
 /** Union of all possible incoming WebSocket messages. */
 export type WebIn =
+    | WebInMessage<MessageTypes.KICK_PARTICIPANT_FAILED>
+    | WebInMessage<MessageTypes.KICK_PARTICIPANT_SUCCESS>
     | WebInMessage<MessageTypes.GET_SNAPSHOT_SUCCESS>
     | WebInMessage<MessageTypes.GET_SNAPSHOT_FAILED>
     | WebInMessage<MessageTypes.ADD_QUESTION_SUCCESS>

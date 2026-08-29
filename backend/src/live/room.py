@@ -16,6 +16,8 @@ from src.live.schemas import (
     CurrentQuestionPayload,
     GetSnapshotPayload,
     GetSnapshotSuccessPayload,
+    KickParticipantPayload,
+    KickParticipantResultPayload,
     MeetingStartedPayload,
     MeetingStatePayload,
     NextQuestionPayload,
@@ -54,6 +56,9 @@ class LiveRoom:
         self.participants: dict[
             uuid.UUID, ParticipantEntry
         ] = {}  # all connected participants
+        self.blocked_participants: set[uuid.UUID] = (
+            set()
+        )  # id of all blocked participants
         self.chat: list[ChatMessage] = []  # list of all chat messages
         self.service = LiveService(
             host_id=host.state.user.id, meeting_id=room_id
@@ -456,6 +461,106 @@ class LiveRoom:
         if cap is None:
             cap = await self.service.get_meeting_participant_cap()
         return cap > connected
+
+    async def kick_participant(self, payload: KickParticipantPayload) -> None:
+        """Kicks a participant from the meeting"""
+        exists = self.participants.get(payload.id)
+        if exists is None:
+            logger.debug(
+                "kick failed: participant not found in room",
+                extra={
+                    "room_id": str(self.room_id),
+                    "participant_id": str(payload.id),
+                },
+            )
+            if self.host:
+                logger.debug(
+                    "kick_participant_failed sent to host",
+                    extra={
+                        "room_id": str(self.room_id),
+                        "participant_id": str(payload.id),
+                    },
+                )
+                out = KickParticipantResultPayload(
+                    detail="Participant not found. They may have already left the meeting.",
+                    kicked=False,
+                    id=payload.id,
+                )
+                await self.host.send_json(
+                    {
+                        "type": OutboundMessageTypes.KICK_PARTICIPANT_FAILED,
+                        "payload": out.model_dump(mode="json"),
+                    }
+                )
+                return
+            logger.debug(
+                "kick_participant_failed dropped: host not connected",
+                extra={
+                    "room_id": str(self.room_id),
+                    "participant_id": str(payload.id),
+                },
+            )
+            return
+        logger.debug(
+            "kicking participant from meeting",
+            extra={
+                "room_id": str(self.room_id),
+                "participant_id": str(payload.id),
+            },
+        )
+        self.blocked_participants.add(exists.participant.id)
+        self.participants.pop(exists.participant.id)
+        if exists.ws:
+            try:
+                await exists.ws.close(
+                    code=CloseCode.PARTICIPANT_KICKED_FROM_MEETING.code,
+                    reason="You have been kicked from the meeting.",
+                )
+            except RuntimeError:
+                logger.info(
+                    "Runtime error occurred when kicking participant from meeting",
+                    extra={
+                        "room_id": str(self.room_id),
+                        "participant_id": str(exists.participant.id),
+                    },
+                )
+                pass
+        await self._broadcast(
+            task=_send_message,
+            message={
+                "type": OutboundMessageTypes.PARTICIPANTS_STATE,
+                "payload": ParticipantsStatePayload(
+                    participants=[
+                        entry.participant for entry in self.participants.values()
+                    ]
+                ).model_dump(mode="json"),
+            },
+        )
+        if self.host:
+            logger.debug(
+                "kick_participant_success sent to host",
+                extra={
+                    "room_id": str(self.room_id),
+                    "participant_id": str(payload.id),
+                },
+            )
+            out = KickParticipantResultPayload(
+                detail="The participant has been kicked from the meeting.",
+                kicked=True,
+                id=payload.id,
+            )
+            await self.host.send_json(
+                {
+                    "type": OutboundMessageTypes.KICK_PARTICIPANT_SUCCESS,
+                    "payload": out.model_dump(mode="json"),
+                }
+            )
+            return
+        return
+
+    def is_participant_blocked(self, p_id: uuid.UUID) -> bool:
+        """Checks if a participant with the provided id is blocked from joining the meeting."""
+        return p_id in self.blocked_participants
 
     def name_exists(self, name: str, exclude_id: uuid.UUID | None = None) -> bool:
         """Checks if a participant with the given name already exists"""

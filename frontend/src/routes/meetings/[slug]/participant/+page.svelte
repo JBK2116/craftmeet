@@ -38,7 +38,7 @@
         type WebIn,
     } from '$lib/types/websocket';
     import { MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH } from '$lib/utils/constants';
-    import { Users } from '@lucide/svelte';
+    import { UserX, Users } from '@lucide/svelte';
     import { onMount } from 'svelte';
     import { toast } from 'svelte-sonner';
 
@@ -64,6 +64,7 @@
         | 'answered'
         | 'revealed'
         | 'host_disconnected'
+        | 'kicked'
         | 'ended'
     >('connecting');
     let currentQuestion = $state<QuestionIn | null>(null);
@@ -515,6 +516,18 @@
             goto('/', { replaceState: true });
             return;
         }
+        if (event.code === CloseCode.PARTICIPANT_KICKED_FROM_MEETING) {
+            // Do not reconnect or clear the participant cookie: the cookie
+            // carries the banned identity, so the server keeps rejecting it.
+            phase = 'kicked';
+            isLobby = false;
+            return;
+        }
+        if (event.code === CloseCode.MEETING_IS_FULL) {
+            toast.error('This meeting has reached its participant limit.', { duration: Infinity });
+            goto('/', { replaceState: true });
+            return;
+        }
         if (phase !== 'ended') {
             toast.warning('Connection lost. Reconnecting…');
         }
@@ -588,13 +601,13 @@
         // Reconnect when the tab becomes visible again or the network returns.
         const handleVisibility = () => {
             if (document.visibilityState === 'visible') {
-                if (ws?.readyState !== WebSocket.OPEN && !destroyed) {
+                if (ws?.readyState !== WebSocket.OPEN && !destroyed && phase !== 'kicked') {
                     void connectWs();
                 }
             }
         };
         const handleOnline = () => {
-            if (ws?.readyState !== WebSocket.OPEN && !destroyed) {
+            if (ws?.readyState !== WebSocket.OPEN && !destroyed && phase !== 'kicked') {
                 void connectWs();
             }
         };
@@ -1196,6 +1209,27 @@
                             The host has temporarily left. Please wait and you'll rejoin
                             automatically when they return.
                         </p>
+                    </div>
+                {:else if phase === 'kicked'}
+                    <div class="flex flex-col items-center py-20 text-center">
+                        <div
+                            class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10"
+                        >
+                            <UserX class="h-10 w-10 text-destructive" />
+                        </div>
+                        <h2 class="mb-2 text-xl font-semibold text-(--text-heading)">
+                            You were removed from this meeting
+                        </h2>
+                        <p class="mb-6 text-sm text-muted-foreground">
+                            The host has removed you from the meeting. If you believe this was a
+                            mistake, please contact the meeting host.
+                        </p>
+                        <button
+                            onclick={() => goto('/')}
+                            class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                            Go Home
+                        </button>
                     </div>
                 {:else if phase === 'ended'}
                     <div class="flex flex-col items-center py-20 text-center">

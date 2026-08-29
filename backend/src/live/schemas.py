@@ -11,6 +11,32 @@ from src.live.types import InboundMessageTypes, Mood
 from src.meeting.schemas import QuestionIn, QuestionOut, ResponseIn
 
 
+class KickParticipantPayload(BaseModel):
+    """
+    Represents a payload for when the host attempts to kick a participant from a live meeting.
+
+    Attributes:
+        id: The uuid of the participant to kick.
+    """
+
+    id: uuid.UUID
+
+
+class KickParticipantResultPayload(BaseModel):
+    """
+    Represents a payload containing the result information of a Kick participant request.
+
+    Attributes:
+        detail: The reason of the failure, if one occurs.
+        kicked: The overall result of the request.
+        id: The uuid of the participant that was kicked.
+    """
+
+    detail: str | None
+    kicked: bool
+    id: uuid.UUID
+
+
 class MeetingSnapshot(BaseModel):
     """Current snapshot of a live meeting
 
@@ -306,6 +332,7 @@ class RevealMeetingPayload(BaseModel):
 
 
 INBOUND_PAYLOAD_MODELS: dict[InboundMessageTypes, type[BaseModel]] = {
+    InboundMessageTypes.KICK_PARTICIPANT: KickParticipantPayload,
     InboundMessageTypes.GET_SNAPSHOT: GetSnapshotPayload,
     InboundMessageTypes.ADD_QUESTION: AddQuestionPayload,
     InboundMessageTypes.PARTICIPANT_CONNECTED: ParticipantConnectedPayload,

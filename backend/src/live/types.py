@@ -24,6 +24,8 @@ class CloseCode(Enum):
     )
     INVALID_TOKEN = (status.WS_1008_POLICY_VIOLATION, "invalid access token provided")
     MEETING_NOT_FOUND = (4001, "meeting not found")
+    MEETING_IS_FULL = (4003, "meeting is full")
+    PARTICIPANT_KICKED_FROM_MEETING = (4002, "participant kicked from meeting")
 
     def __init__(self, code: int, message: str):
         self.code = code
@@ -43,6 +45,7 @@ class Mood(StrEnum):
 class InboundMessageTypes(Enum):
     """Enumeration of websocket messages sent from client side"""
 
+    KICK_PARTICIPANT = "kick_participant"  # sent from host
     GET_SNAPSHOT = "get_snapshot"  # sent from host
     ADD_QUESTION = "add_question"  # sent from host
     MEETING_STARTED = "meeting_started"  # sent from host
@@ -59,6 +62,8 @@ class InboundMessageTypes(Enum):
 class OutboundMessageTypes(StrEnum):
     """Enumeration of websocket messages sent from server side"""
 
+    KICK_PARTICIPANT_SUCCESS = "kick_participant_success"  # sent to host
+    KICK_PARTICIPANT_FAILED = "kick_participant_failed"  # sent to host
     GET_SNAPSHOT_SUCCESS = "get_snapshot_success"  # sent to host
     GET_SNAPSHOT_FAILED = "get_snapshot_failed"  # sent to host
     ADD_QUESTION_SUCCESS = "add_question_success"  # sent to host
