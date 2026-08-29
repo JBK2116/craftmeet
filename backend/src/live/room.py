@@ -450,17 +450,19 @@ class LiveRoom:
             True if there is space for another participant, else False
         """
         existing = self.participants.get(p_id, None)
-        if existing:
+        if existing is not None and (
+            existing.participant.connected or existing.participant.username is not None
+        ):
             return True
-        connected = sum(
+        used = sum(
             1
             for p in self.participants.values()
-            if p.participant.connected and not p.participant.is_lobby
+            if p.participant.connected or p.participant.username is not None
         )
         cap = getattr(self.service, "participant_cap", None)
         if cap is None:
             cap = await self.service.get_meeting_participant_cap()
-        return cap > connected
+        return cap > used
 
     async def kick_participant(self, payload: KickParticipantPayload) -> None:
         """Kicks a participant from the meeting"""
