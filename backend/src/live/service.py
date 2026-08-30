@@ -197,7 +197,7 @@ class LiveService:
                     )
                     sub_question = generate_sub_question(
                         question_id=question_model_database.id,
-                        type=question_model_database.type,
+                        question_type=question_model_database.type,
                         question=payload.question.sub_question,
                     )
                     sub_question_model_database = await insert_sub_question(

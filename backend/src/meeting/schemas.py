@@ -48,6 +48,16 @@ class JoinMeetingResponse(BaseModel):
     meeting_id: uuid.UUID
 
 
+class CopyMeetingPayload(BaseModel):
+    """Model representing a copy meeting request"""
+
+    title: str = Field(
+        min_length=1,
+        max_length=MAX_TITLE_LENGTH,
+        description="The title of the new meeting",
+    )
+
+
 # DATA TO FRONTEND
 # Includes
 # - Questions

@@ -30,11 +30,13 @@ from src.meeting.repository import (
     insert_sub_question,
 )
 from src.meeting.schemas import (
+    CopyMeetingPayload,
     JoinMeetingPayload,
     JoinMeetingResponse,
     MeetingIn,
     MeetingOut,
     MeetingUpdate,
+    QuestionIn,
     QuestionOut,
 )
 from src.meeting.utils import (
@@ -43,6 +45,7 @@ from src.meeting.utils import (
     _update_sub_question,
     build_meeting_out,
     build_question_out,
+    build_sub_question_in,
     generate_meeting_model,
     generate_question_model,
     generate_stat_model,
@@ -185,7 +188,7 @@ async def handle_create_meeting(
         q_loaded = await insert_question(db=db, question=q_loaded)
         sub_loaded = generate_sub_question(
             question_id=q_loaded.id,
-            type=q.type,
+            question_type=q.type,
             question=q.sub_question,
         )
         sub_loaded = await insert_sub_question(db=db, question=sub_loaded)
@@ -391,7 +394,7 @@ async def handle_update_meeting(
     for q_up in meeting_update.questions:
         if q_up.id in db_ids:
             # update the existing question
-            q_db = db_ids[q_up.id]
+            q_db = db_ids[q_up.id]  # ty: ignore[invalid-argument-type]
             q_db.prompt = q_up.prompt
             q_db.position = q_up.position
             sub_loaded = await _update_sub_question(q_db=q_db, sub_q=q_up.sub_question)
@@ -403,7 +406,7 @@ async def handle_update_meeting(
             q_loaded = await insert_question(db=db, question=q_loaded)
             sub_loaded = generate_sub_question(
                 question_id=q_loaded.id,
-                type=q_up.type,
+                question_type=q_up.type,
                 question=q_up.sub_question,
             )
             sub_loaded = await insert_sub_question(db=db, question=sub_loaded)
@@ -490,3 +493,58 @@ async def handle_delete_meetings(db: AsyncSession, request: Request) -> None:
         "all meetings deleted for user %s",
         user.id,
     )
+
+
+async def handle_copy_meeting(
+    db: AsyncSession,
+    request: Request,
+    meeting_id: uuid.UUID,
+    payload: CopyMeetingPayload,
+) -> None:
+    """Create a copy of the meeting with the specified id.
+
+    The copied meeting keeps the source meeting's description, duration,
+    participant cap, and questions, but uses the provided title. Statistics
+    are freshly initialized and the room code is newly generated.
+
+    Args:
+        db: The active asynchronous database session.
+        request: The incoming FastAPI request, which carries the
+            authenticated user via ``request.state.user``.
+        meeting_id: The meeting id to copy.
+        payload: The details to include in the copied meeting.
+
+    Raises:
+        MeetingNotFoundError: If no meeting with the given ID exists.
+        InvalidTokenError: If the meeting does not belong to the user.
+    """
+    user: User = request.state.user
+    meeting = await get_meeting(db=db, m_id=meeting_id)
+    if meeting is None:
+        raise MeetingNotFoundError(str(meeting_id))
+    if meeting.user_id != user.id:
+        raise InvalidTokenError
+    questions: list[QuestionIn] = []
+    for q in meeting.questions:
+        sub_question: SubQuestion = getattr(q, SUB_QUESTION_ATTR[q.type])
+        assert sub_question is not None  # noqa: S101
+        questions.append(
+            QuestionIn.model_validate(
+                {
+                    "type": q.type,
+                    "prompt": q.prompt,
+                    "position": q.position,
+                    "sub_question": build_sub_question_in(
+                        question=q, sub_question=sub_question
+                    ),
+                }
+            )
+        )
+    meeting_in = MeetingIn(
+        title=payload.title,
+        description=meeting.description,
+        participant_cap=meeting.participant_cap,
+        duration=meeting.duration,
+        questions=questions,
+    )
+    await handle_create_meeting(db=db, request=request, payload=meeting_in)

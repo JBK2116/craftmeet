@@ -5,11 +5,13 @@
     import type { MeetingIn, Stat } from '$lib/types/meeting';
     import type { QuestionTypes } from '$lib/types/question';
     import { formatDuration } from '$lib/utils/time';
+    import { MAX_TITLE_LENGTH } from '$lib/utils/constants';
     import {
         AlignStartVertical,
         ChartBar,
         CheckCheck,
         Clock,
+        Copy,
         FileSpreadsheet,
         FileText,
         Hash,
@@ -20,6 +22,7 @@
         ToggleLeft,
         Users,
     } from '@lucide/svelte';
+    import { error } from '@sveltejs/kit';
     import { untrack } from 'svelte';
     import { toast } from 'svelte-sonner';
 
@@ -34,6 +37,9 @@
     let showDeleteConfirm = $state(false);
     let deleting = $state(false);
     let isMeetingOver = $derived(meeting.status === 'completed');
+    let copyTitle = $state('');
+    let copyError = $state('');
+    let showCopyModal = $state(false);
 
     // Stat display cards
     type StatCard = { icon: typeof Users; label: string; value: string | number; subtext?: string };
@@ -201,7 +207,81 @@
             deleting = false;
         }
     }
+
+    async function handleCopyMeeting() {
+        if (!validateCopyTitle()) {
+            return;
+        }
+        copyError = ''; // reset it for future use
+        const payload = JSON.stringify({ title: copyTitle });
+        const url = `/api/v1/meetings/${meeting.id}/copy`;
+        const opts: RequestInit = {
+            method: 'POST',
+            credentials: 'include',
+            body: payload,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        try {
+            const res = await apiFetch(url, opts);
+            if (!res.ok) {
+                if (res.status === 404) {
+                    // should never happen but good to handle it here.
+                    toast.info('Meeting not found, it can no longer be copied.');
+                    return;
+                }
+                if (res.status === 500) {
+                    error(500, 'Sorry an unexpected server error occurred.');
+                }
+                toast.error('Sorry an unexpected server error occurred.');
+                return;
+            }
+            showCopyModal = false;
+            copyTitle = '';
+            toast.success('Meeting successfully copied!');
+            return;
+        } catch (err: any) {
+            if (err instanceof AuthError) {
+                return;
+            }
+            if (err instanceof RateLimitedError) {
+                toast.error(err.message);
+                return;
+            }
+        }
+    }
+
+    // opens the copy meeting dialog
+    function openCopyModal() {
+        copyTitle = '';
+        copyError = '';
+        showCopyModal = true;
+    }
+
+    // close the copy dialog on Escape
+    function handleCopyModalKeydown(e: KeyboardEvent) {
+        if (e.key === 'Escape') showCopyModal = false;
+    }
+
+    /** Validates the copyTitle used in copy meeting requests. */
+    function validateCopyTitle(): boolean {
+        copyTitle = copyTitle.trim();
+        if (copyTitle === '') {
+            copyError = 'Title is required.';
+            return false;
+        }
+        if (copyTitle.length > MAX_TITLE_LENGTH) {
+            copyError = `Title cannot exceed ${MAX_TITLE_LENGTH} characters.`;
+            return false;
+        }
+        if (copyTitle === meeting.title) {
+            copyError = `A meeting with the title ${meeting.title} already exists.`;
+            return false;
+        }
+        return true;
+    }
 </script>
+
+<svelte:window onkeydown={showCopyModal ? handleCopyModalKeydown : undefined} />
 
 <div class="mx-auto max-w-3xl px-4 py-8 md:px-6">
     <!-- Header -->
@@ -367,6 +447,13 @@
             Back to Dashboard
         </button>
         <button
+            onclick={openCopyModal}
+            class="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+            <Copy class="h-4 w-4" />
+            Copy Meeting
+        </button>
+        <button
             onclick={() => (showDeleteConfirm = true)}
             class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 focus:outline-none focus:ring-2 focus:ring-ring"
         >
@@ -417,6 +504,62 @@
                     class="flex-1 rounded-xl bg-destructive px-4 py-2.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                     Delete
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}
+
+{#if showCopyModal}
+    <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
+        onclick={() => (showCopyModal = false)}
+        role="presentation"
+    >
+        <div
+            class="w-full max-w-[380px] rounded-2xl border border-border bg-card p-8 shadow-overlay"
+            onclick={(e) => e.stopPropagation()}
+            onkeydown={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="copy-modal-title"
+            tabindex="-1"
+        >
+            <h2
+                id="copy-modal-title"
+                class="mb-1.5 text-center text-subheading font-semibold tracking-tight text-foreground"
+            >
+                Copy Meeting
+            </h2>
+            <p class="mb-6 text-center text-small text-muted-foreground">
+                Choose a title for the copied meeting.
+            </p>
+            <input
+                id="copy-title"
+                type="text"
+                bind:value={copyTitle}
+                maxlength={MAX_TITLE_LENGTH}
+                placeholder="e.g. Q3 Team Retrospective"
+                class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                class:border-destructive={copyError !== ''}
+            />
+            {#if copyError}
+                <p class="mt-1 text-[var(--text-label)] text-destructive">{copyError}</p>
+            {/if}
+            <div class="mt-6 flex gap-3">
+                <button
+                    type="button"
+                    onclick={() => (showCopyModal = false)}
+                    class="flex flex-1 items-center justify-center rounded-lg border border-border bg-card px-4 py-2.5 text-small font-medium text-foreground transition hover:bg-accent active:scale-[0.98]"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    onclick={handleCopyMeeting}
+                    class="flex flex-1 items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-small font-medium text-primary-foreground transition hover:bg-primary/90 active:scale-[0.98]"
+                >
+                    Copy
                 </button>
             </div>
         </div>

@@ -9,6 +9,7 @@ from src.exceptions import DatabaseError
 from src.limiter import limiter
 from src.meeting.exceptions import MeetingNotFoundError, MeetingNotLiveError
 from src.meeting.schemas import (
+    CopyMeetingPayload,
     JoinMeetingPayload,
     JoinMeetingResponse,
     MeetingIn,
@@ -16,6 +17,7 @@ from src.meeting.schemas import (
     MeetingUpdate,
 )
 from src.meeting.service import (
+    handle_copy_meeting,
     handle_create_meeting,
     handle_delete_meeting,
     handle_delete_meetings,
@@ -110,6 +112,41 @@ async def create_meeting(request: Request, db: DB, payload: MeetingIn):
             db=db, request=request, payload=payload
         )
         return meeting_out
+    except (DatabaseError, ValidationError):
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.SERVER.type,
+                "message": ErrorTypes.SERVER.message,
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@meeting_router.post(
+    "/{meeting_id}/copy",
+    status_code=status.HTTP_201_CREATED,
+)
+@limiter.limit("10/hour", key_func=ip_or_user_key_func)
+async def copy_meeting(
+    request: Request, db: DB, meeting_id: MEETING_ID, payload: CopyMeetingPayload
+):
+    logger.debug(
+        "received copy meeting payload",
+        extra={"meeting_id": str(meeting_id), "payload": payload},
+    )
+    try:
+        await handle_copy_meeting(
+            db=db, request=request, meeting_id=meeting_id, payload=payload
+        )
+    except MeetingNotFoundError:
+        return JSONResponse(
+            content="Resource not found", status_code=status.HTTP_404_NOT_FOUND
+        )
+    except InvalidTokenError:
+        return JSONResponse(
+            content="Invalid token provided",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
     except (DatabaseError, ValidationError):
         return JSONResponse(
             content={

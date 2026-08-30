@@ -6,18 +6,20 @@
     import { AuthError, ErrorTypes, RateLimitedError } from '$lib/types/errors';
     import type { MeetingIn, MeetingUpdate } from '$lib/types/meeting';
     import type { QuestionTypes, QuestionUpdate } from '$lib/types/question';
-    import { MAX_QUESTION_CAP } from '$lib/utils/constants';
+    import { MAX_QUESTION_CAP, MAX_TITLE_LENGTH } from '$lib/utils/constants';
     import {
         AlignStartVertical,
         ChartBar,
         ChevronDown,
         CircleAlert,
+        Copy,
         ListChecks,
         Play,
         Plus,
         Star,
         ToggleLeft,
     } from '@lucide/svelte';
+    import { error } from '@sveltejs/kit';
     import { untrack } from 'svelte';
     import { toast } from 'svelte-sonner';
 
@@ -68,6 +70,9 @@
     let showTypeMenu = $state(false);
     let backendError = $state<string | null>(null);
     let questionCount = $derived(questions.length);
+    let copyTitle = $state('');
+    let copyError = $state('');
+    let showCopyModal = $state(false);
 
     // refs used for building meeting related components
     let meetingSetupRef = $state<{ validate: () => boolean; getData: () => any } | null>(null);
@@ -195,13 +200,13 @@
             const res = await apiFetch(url, opts);
             if (!res.ok) {
                 if (res.status === 404) {
-                    toast.info('Meeting not found, it may have already been deleted');
+                    toast.info('Meeting not found, it may have already been deleted.');
                     return;
                 }
                 throw new Error('Failed to delete meeting. Please try again.');
             }
             toast.success('Meeting deleted successfully');
-            goto('/dashboard');
+            await goto('/dashboard');
             return;
         } catch (err: any) {
             if (err instanceof AuthError) {
@@ -214,10 +219,84 @@
         }
     }
 
+    async function handleCopyMeeting() {
+        if (!validateCopyTitle()) {
+            return;
+        }
+        copyError = ''; // reset it for future use
+        const payload = JSON.stringify({ title: copyTitle });
+        const url = `/api/v1/meetings/${meeting.id}/copy`;
+        const opts: RequestInit = {
+            method: 'POST',
+            credentials: 'include',
+            body: payload,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        try {
+            const res = await apiFetch(url, opts);
+            if (!res.ok) {
+                if (res.status === 404) {
+                    // should never happen but good to handle it here.
+                    toast.info('Meeting not found, it can no longer be copied.');
+                    return;
+                }
+                if (res.status === 500) {
+                    error(500, 'Sorry an unexpected server error occurred.');
+                }
+                toast.error('Sorry an unexpected server error occurred.');
+                return;
+            }
+            showCopyModal = false;
+            copyTitle = '';
+            toast.success('Meeting successfully copied!');
+            return;
+        } catch (err: any) {
+            if (err instanceof AuthError) {
+                return;
+            }
+            if (err instanceof RateLimitedError) {
+                toast.error(err.message);
+                return;
+            }
+        }
+    }
+
+    // opens the copy meeting dialog
+    function openCopyModal() {
+        copyTitle = '';
+        copyError = '';
+        showCopyModal = true;
+    }
+
+    // close the copy dialog on Escape
+    function handleCopyModalKeydown(e: KeyboardEvent) {
+        if (e.key === 'Escape') showCopyModal = false;
+    }
+
+    /** Validates the copyTitle used in copy meeting requests. */
+    function validateCopyTitle(): boolean {
+        copyTitle = copyTitle.trim();
+        if (copyTitle === '') {
+            copyError = 'Title is required.';
+            return false;
+        }
+        if (copyTitle.length > MAX_TITLE_LENGTH) {
+            copyError = `Title cannot exceed ${MAX_TITLE_LENGTH} characters.`;
+            return false;
+        }
+        if (copyTitle === meeting.title) {
+            copyError = `A meeting with the title ${meeting.title} already exists.`;
+            return false;
+        }
+        return true;
+    }
+
     async function handleLaunchMeeting() {
-        goto(`/meetings/${meeting.id}/host`);
+        await goto(`/meetings/${meeting.id}/host`);
     }
 </script>
+
+<svelte:window onkeydown={showCopyModal ? handleCopyModalKeydown : undefined} />
 
 {#if meeting.status === 'draft'}
     <form
@@ -230,7 +309,7 @@
         <div class="mb-8 flex items-start justify-between gap-4 flex-wrap">
             <div>
                 <h1
-                    class="text-[var(--text-heading)] font-bold leading-tight tracking-tight break-words"
+                    class="text-(--text-heading) font-bold leading-tight tracking-tight wrap-break-word"
                 >
                     {meeting.title}
                 </h1>
@@ -260,7 +339,7 @@
         <MeetingSetup bind:this={meetingSetupRef} initial={meeting} />
 
         <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-[var(--text-subheading)] font-semibold">
+            <h2 class="text-(--text-subheading) font-semibold">
                 Questions
                 {#if questionCount > 0}
                     <span
@@ -334,6 +413,14 @@
                 Delete Meeting
             </button>
             <button
+                type="button"
+                onclick={openCopyModal}
+                class="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+                <Copy class="h-4 w-4" />
+                Copy Meeting
+            </button>
+            <button
                 type="submit"
                 class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
             >
@@ -341,6 +428,62 @@
             </button>
         </div>
     </form>
+
+    {#if showCopyModal}
+        <div
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
+            onclick={() => (showCopyModal = false)}
+            role="presentation"
+        >
+            <div
+                class="w-full max-w-[380px] rounded-2xl border border-border bg-card p-8 shadow-overlay"
+                onclick={(e) => e.stopPropagation()}
+                onkeydown={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="copy-modal-title"
+                tabindex="-1"
+            >
+                <h2
+                    id="copy-modal-title"
+                    class="mb-1.5 text-center text-subheading font-semibold tracking-tight text-foreground"
+                >
+                    Copy Meeting
+                </h2>
+                <p class="mb-6 text-center text-small text-muted-foreground">
+                    Choose a title for the copied meeting.
+                </p>
+                <input
+                    id="copy-title"
+                    type="text"
+                    bind:value={copyTitle}
+                    maxlength={MAX_TITLE_LENGTH}
+                    placeholder="e.g. Q3 Team Retrospective"
+                    class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    class:border-destructive={copyError !== ''}
+                />
+                {#if copyError}
+                    <p class="mt-1 text-[var(--text-label)] text-destructive">{copyError}</p>
+                {/if}
+                <div class="mt-6 flex gap-3">
+                    <button
+                        type="button"
+                        onclick={() => (showCopyModal = false)}
+                        class="flex flex-1 items-center justify-center rounded-lg border border-border bg-card px-4 py-2.5 text-small font-medium text-foreground transition hover:bg-accent active:scale-[0.98]"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onclick={handleCopyMeeting}
+                        class="flex flex-1 items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-small font-medium text-primary-foreground transition hover:bg-primary/90 active:scale-[0.98]"
+                    >
+                        Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+    {/if}
 {:else if meeting.status === 'live'}
     <div class="mx-auto flex max-w-2xl flex-col items-center px-4 py-16 text-center">
         <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
@@ -351,7 +494,7 @@
                 <span class="relative inline-flex h-4 w-4 rounded-full bg-primary"></span>
             </span>
         </div>
-        <h1 class="mb-2 text-2xl font-bold text-[var(--text-heading)]">Meeting is Live</h1>
+        <h1 class="mb-2 text-2xl font-bold text-(--text-heading)">Meeting is Live</h1>
         <p class="mb-2 text-sm text-muted-foreground">
             &ldquo;{meeting.title}&rdquo; is currently running. You are already hosting it in
             another tab.
@@ -379,7 +522,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
         </div>
-        <h1 class="mb-2 text-2xl font-bold text-[var(--text-heading)]">Meeting Completed</h1>
+        <h1 class="mb-2 text-2xl font-bold text-(--text-heading)">Meeting Completed</h1>
         <p class="mb-8 text-sm text-muted-foreground">
             &ldquo;{meeting.title}&rdquo; has ended. You can review the summary or return to your
             dashboard.

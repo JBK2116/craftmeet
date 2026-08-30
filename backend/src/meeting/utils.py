@@ -200,6 +200,49 @@ async def _update_sub_question(q_db: Question, sub_q: SubQuestionIn) -> SubQuest
             return q_db.yes_no
 
 
+def build_sub_question_in(question: Question, sub_question: SubQuestion) -> dict:
+    """Convert a sub-question model into its input-schema field dict.
+
+    Maps the type-specific sub-question model (e.g. MultipleChoiceQuestion)
+    back into the corresponding QuestionIn ``sub_question`` payload, so the
+    copy-meeting flow can rebuild questions through the standard create path.
+
+    Args:
+        question: The parent question model instance.
+        sub_question: The sub-question model instance corresponding to the question type.
+
+    Returns:
+        A dict of sub-question input fields understood by QuestionIn's parser.
+    """
+    match question.type.value:
+        case QuestionType.MULTIPLE_CHOICE.value:
+            assert isinstance(sub_question, MultipleChoiceQuestion)  # noqa: S101
+            return {
+                "option_1": sub_question.option_1,
+                "option_2": sub_question.option_2,
+                "option_3": sub_question.option_3,
+                "option_4": sub_question.option_4,
+                "allow_multiple": sub_question.allow_multiple,
+            }
+        case QuestionType.LONG_ANSWER.value:
+            assert isinstance(sub_question, LongAnswerQuestion)  # noqa: S101
+            return {"max_length": sub_question.max_length}
+        case QuestionType.RANKED_VOTING.value:
+            assert isinstance(sub_question, RankedVotingQuestion)  # noqa: S101
+            return {
+                "item_1": sub_question.item_1,
+                "item_2": sub_question.item_2,
+                "item_3": sub_question.item_3,
+                "item_4": sub_question.item_4,
+            }
+        case QuestionType.RATING_SCALE.value:
+            assert isinstance(sub_question, RatingScaleQuestion)  # noqa: S101
+            return {"min": sub_question.min, "max": sub_question.max}
+        case QuestionType.YES_NO.value:
+            assert isinstance(sub_question, YesNoQuestion)  # noqa: S101
+            return {}
+
+
 def generate_meeting_model(u_id: uuid.UUID, meeting: MeetingIn) -> Meeting:
     """Create a Meeting instance from a user and payload.
 
@@ -260,7 +303,7 @@ def generate_question_model(
 
 def generate_sub_question(
     question_id: uuid.UUID,
-    type: QuestionType,
+    question_type: QuestionType,
     question: SubQuestionIn,
 ) -> SubQuestion:
     """Create a sub-question model (e.g. MultipleChoice, LongAnswer) based on question type.
@@ -271,7 +314,7 @@ def generate_sub_question(
 
     Args:
         question_id: The UUID of the parent question to associate with.
-        type: The type of question being created (e.g. multiple choice,
+        question_type: The type of question being created (e.g. multiple choice,
             long answer, ranked voting, rating scale, yes/no).
         question: The validated input data for the sub-question, which must
             correspond to the specified type.
@@ -285,7 +328,7 @@ def generate_sub_question(
         "question_type and question",
         extra={"question_type": QuestionType, "question": question},
     )
-    match type.value:
+    match question_type.value:
         case QuestionType.MULTIPLE_CHOICE.value:
             assert isinstance(question, MultipleChoiceQuestionIn)  # noqa: S101
             return MultipleChoiceQuestion(
