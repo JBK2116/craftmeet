@@ -436,7 +436,7 @@
             role="presentation"
         >
             <div
-                class="w-full max-w-[380px] rounded-2xl border border-border bg-card p-8 shadow-overlay"
+                class="w-full max-w-95 rounded-2xl border border-border bg-card p-8 shadow-overlay"
                 onclick={(e) => e.stopPropagation()}
                 onkeydown={(e) => e.stopPropagation()}
                 role="dialog"
@@ -463,7 +463,7 @@
                     class:border-destructive={copyError !== ''}
                 />
                 {#if copyError}
-                    <p class="mt-1 text-[var(--text-label)] text-destructive">{copyError}</p>
+                    <p class="mt-1 text-destructive">{copyError}</p>
                 {/if}
                 <div class="mt-6 flex gap-3">
                     <button
