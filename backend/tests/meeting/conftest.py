@@ -79,7 +79,7 @@ async def authenticated_client(
     client: AsyncClient, verified_meeting_user: User
 ) -> AsyncClient:
     """Return an HTTP client with valid ``access_token`` cookie for
-    ``meeting_user``.
+    ``verified_meeting_user``.
 
     Logs in the user via the login endpoint and copies the resulting
     cookies (``access_token``, ``refresh_token``) onto the client so
@@ -428,3 +428,9 @@ async def join_meeting_payload_nonexistent() -> dict[str, Any]:
         "username": "testuser",
         "code": "NONEXIST",
     }
+
+
+@pytest_asyncio.fixture
+async def copy_meeting_payload() -> dict[str, Any]:
+    """A copy meeting payload that points to a valid meeting"""
+    return {"title": "Newly Copied Meeting"}
