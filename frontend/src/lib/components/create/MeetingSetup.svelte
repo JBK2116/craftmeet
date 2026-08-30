@@ -51,7 +51,7 @@
     }
 </script>
 
-<section class="mb-4 rounded-xl border border-border bg-card p-6 shadow-card">
+<section class="mb-4 w-full rounded-xl border border-border bg-card p-6 shadow-card">
     <h2 class="mb-5 text-[var(--text-subheading)] font-semibold">Meeting Setup</h2>
 
     <div class="mb-4">

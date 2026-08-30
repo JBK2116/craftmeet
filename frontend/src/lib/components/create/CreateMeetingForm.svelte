@@ -180,7 +180,7 @@
         e.preventDefault();
         handleCreate();
     }}
-    class="mx-auto max-w-2xl px-4 py-10"
+    class="mx-auto w-full max-w-2xl px-4 py-10"
 >
     <div class="mb-8">
         <h1 class="text-(--text-heading) font-bold leading-tight tracking-tight">Create Meeting</h1>

@@ -105,7 +105,7 @@
 
 <div
     transition:slide={{ duration: 200 }}
-    class="mb-3 rounded-xl border border-border bg-card shadow-card"
+    class="mb-3 w-full rounded-xl border border-border bg-card shadow-card"
 >
     <div class="flex items-center gap-3 border-b border-border px-4 py-3">
         <div class="flex shrink-0 flex-col">

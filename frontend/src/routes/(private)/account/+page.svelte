@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { goto } from '$app/navigation';
     import { apiFetch } from '$lib/api/auth';
     import { user } from '$lib/stores/stores';
     import { AuthError, ErrorTypes, RateLimitedError } from '$lib/types/errors';
@@ -172,7 +171,7 @@
     }
 </script>
 
-<div class="mx-auto max-w-5xl space-y-5 px-4 py-6 md:px-6">
+<div class="mx-auto w-full max-w-5xl space-y-5 px-4 py-6 md:px-6">
     <!-- Page header -->
     <header>
         <h2 class="text-lg font-semibold text-foreground">Account</h2>

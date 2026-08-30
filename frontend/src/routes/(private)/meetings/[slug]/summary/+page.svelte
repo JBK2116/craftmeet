@@ -283,7 +283,7 @@
 
 <svelte:window onkeydown={showCopyModal ? handleCopyModalKeydown : undefined} />
 
-<div class="mx-auto max-w-3xl px-4 py-8 md:px-6">
+<div class="mx-auto w-full max-w-3xl px-4 py-8 md:px-6">
     <!-- Header -->
     <div class="mb-8">
         <div class="mb-3 flex flex-wrap items-center gap-3">

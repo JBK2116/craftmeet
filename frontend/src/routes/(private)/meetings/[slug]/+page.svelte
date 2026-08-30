@@ -304,7 +304,7 @@
             e.preventDefault();
             handleUpdate();
         }}
-        class="mx-auto max-w-2xl px-4 py-10"
+        class="mx-auto w-full max-w-2xl px-4 py-10"
     >
         <div class="mb-8 flex items-start justify-between gap-4 flex-wrap">
             <div>
@@ -485,7 +485,7 @@
         </div>
     {/if}
 {:else if meeting.status === 'live'}
-    <div class="mx-auto flex max-w-2xl flex-col items-center px-4 py-16 text-center">
+    <div class="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 text-center">
         <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
             <span class="relative flex h-4 w-4">
                 <span
@@ -510,7 +510,7 @@
         </button>
     </div>
 {:else if meeting.status === 'completed'}
-    <div class="mx-auto flex max-w-2xl flex-col items-center px-4 py-16 text-center">
+    <div class="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 text-center">
         <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
             <svg
                 class="h-10 w-10 text-muted-foreground"
