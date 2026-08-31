@@ -18,7 +18,7 @@ from src.background import setup_scheduler, stop_scheduler
 from src.cache import close_redis, setup_redis
 from src.config import get_settings
 from src.limiter import limiter
-from src.live.router import websocket_router
+from src.live.router import manager, websocket_router
 from src.logging_config import get_logger, setup_logging
 from src.meeting.router import meeting_public_router, meeting_router
 from src.middleware.request_logging import RequestLoggingMiddleware
@@ -42,6 +42,7 @@ async def lifespan(app: FastAPI):
     yield
     # before app termination
     await close_redis()
+    await manager.close_rooms()
     stop_scheduler()
 
 

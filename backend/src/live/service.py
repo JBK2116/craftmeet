@@ -144,6 +144,22 @@ class LiveService:
             extra={"meeting_id": str(self.meeting_id), "host_id": str(self.host_id)},
         )
 
+    async def handle_sigterm_signal(self) -> None:
+        """
+        Handles graceful shutdown when the server receives a SIGTERM signal.
+        """
+        async with AsyncSessionLocal() as db:
+            await db.begin()
+            await update_meeting(
+                db=db, m_id=self.meeting_id, started_at=None, status=MeetingStatus.DRAFT
+            )
+            await update_user(db=db, u_id=self.host_id, live_meeting=False)
+            await db.commit()
+        logger.debug(
+            "meeting ended in service layer due to sigterm cancellation signal.",
+            extra={"meeting_id": str(self.meeting_id), "host_id": str(self.host_id)},
+        )
+
     def add_response(self, response: ResponseIn) -> None:
         """
         Add a new response to the current questions response array

@@ -18,6 +18,8 @@ export enum CloseCode {
     PARTICIPANT_KICKED_FROM_MEETING = 4002,
     /** Meeting is full */
     MEETING_IS_FULL = 4003,
+    /** Server is shutting down */
+    SIGTERM_SIGNAL = 1012,
 }
 
 /** Types of messages that can be sent in the meeting system. */

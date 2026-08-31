@@ -248,6 +248,33 @@ class LiveRoom:
         if self._on_destroy:
             await self._on_destroy()
 
+    async def handle_sigterm_signal(self) -> None:
+        """
+        Handles the SIGTERM signal by ending the meeting and closing all
+        websockets for both host and participants.
+        """
+        await self.service.handle_sigterm_signal()
+        # Notify the host that the meeting ended
+        if self.host:
+            asyncio.create_task(
+                self.host.close(
+                    code=CloseCode.SIGTERM_SIGNAL.code,
+                    reason=CloseCode.SIGTERM_SIGNAL.message,
+                ),
+            )
+        # Notify the participants that the meeting has ended
+        sockets = [*(p.ws for p in self.participants.values() if p.ws)]
+        await asyncio.gather(
+            *(
+                s.close(
+                    code=CloseCode.SIGTERM_SIGNAL.code,
+                    reason=CloseCode.SIGTERM_SIGNAL.message,
+                )
+                for s in sockets
+            ),
+            return_exceptions=True,
+        )
+
     async def participant_connected(
         self, payload: ParticipantConnectedPayload, p_id: uuid.UUID, ws: WebSocket
     ) -> None:

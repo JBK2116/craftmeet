@@ -99,6 +99,7 @@
     let endingMeeting = $state(false);
     let endTimeout: ReturnType<typeof setTimeout> | null = null;
     let isRevealed = $state(false);
+    let interrupted = $state(false);
 
     // derived: status array for HostQuestion progress dots
     let questionStates = $derived(questions.map((q) => ({ status: q.status })));
@@ -316,6 +317,11 @@
                 duration: 5000,
             });
             goto('/dashboard', { replaceState: true });
+            return;
+        }
+        if (event.code === CloseCode.SIGTERM_SIGNAL) {
+            meetingStatus = 'ended'; // stops the timer and any pending reconnect timeouts
+            interrupted = true;
             return;
         }
         console.warn('[ws] disconnected, attempting reconnect in 3s…');
@@ -783,6 +789,28 @@
                     End Meeting
                 </button>
             </div>
+        </div>
+    </div>
+{/if}
+
+{#if interrupted}
+    <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+    >
+        <div
+            class="mx-4 w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-overlay"
+        >
+            <h3 class="mb-2 text-lg font-semibold text-(--text-heading)">Meeting interrupted</h3>
+            <p class="mb-6 text-sm text-muted-foreground">
+                An unexpected error interrupted your meeting. Try launching it again in a few
+                minutes.
+            </p>
+            <button
+                onclick={() => goto(`/meetings/${page.params.slug}`)}
+                class="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+                Back to Meeting
+            </button>
         </div>
     </div>
 {/if}

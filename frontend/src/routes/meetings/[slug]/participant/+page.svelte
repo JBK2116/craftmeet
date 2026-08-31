@@ -71,6 +71,7 @@
     let revealedResponses = $state<ResponseOut[]>([]);
     let hasAnswered = $state(false);
     let hasLeft = false;
+    let interrupted = $state(false);
     // Highest question position seen so far, used to render a progress bar.
     let highestPosition = $state(0);
 
@@ -528,6 +529,11 @@
             goto('/', { replaceState: true });
             return;
         }
+        if (event.code === CloseCode.SIGTERM_SIGNAL) {
+            phase = 'ended'; // stops pending reconnect timers and tab-visibility reconnects
+            interrupted = true;
+            return;
+        }
         if (phase !== 'ended') {
             toast.warning('Connection lost. Reconnecting…');
         }
@@ -601,13 +607,23 @@
         // Reconnect when the tab becomes visible again or the network returns.
         const handleVisibility = () => {
             if (document.visibilityState === 'visible') {
-                if (ws?.readyState !== WebSocket.OPEN && !destroyed && phase !== 'kicked') {
+                if (
+                    ws?.readyState !== WebSocket.OPEN &&
+                    !destroyed &&
+                    phase !== 'kicked' &&
+                    phase !== 'ended'
+                ) {
                     void connectWs();
                 }
             }
         };
         const handleOnline = () => {
-            if (ws?.readyState !== WebSocket.OPEN && !destroyed && phase !== 'kicked') {
+            if (
+                ws?.readyState !== WebSocket.OPEN &&
+                !destroyed &&
+                phase !== 'kicked' &&
+                phase !== 'ended'
+            ) {
                 void connectWs();
             }
         };
@@ -1285,4 +1301,26 @@
         onclose={() => (participantsOpen = false)}
         {participants}
     />
+{/if}
+
+{#if interrupted}
+    <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+    >
+        <div
+            class="mx-4 w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-overlay"
+        >
+            <h3 class="mb-2 text-lg font-semibold text-(--text-heading)">Meeting interrupted</h3>
+            <p class="mb-6 text-sm text-muted-foreground">
+                An unexpected error interrupted the meeting. Please wait for the host to start it
+                again.
+            </p>
+            <button
+                onclick={() => goto('/')}
+                class="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+                Go Home
+            </button>
+        </div>
+    </div>
 {/if}

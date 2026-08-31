@@ -23,6 +23,21 @@ class LiveManager:
         self.__rooms: dict[uuid.UUID, LiveRoom] = {}
         self.__destroy_tasks: dict[uuid.UUID, asyncio.Task] = {}
 
+    async def close_rooms(self) -> None:
+        """
+        Handle the SIGTERM signal by gracefully closing all meeting rooms.
+
+        Iterates through all active live rooms and terminates their host and
+        participant connections, then clears the rooms and destroy tasks.
+        """
+        for room in self.__rooms.values():
+            await room.handle_sigterm_signal()
+        self.__rooms.clear()
+
+        for task in self.__destroy_tasks.values():
+            task.cancel()
+        self.__destroy_tasks.clear()
+
     async def handle_host_message(self, meeting_id: uuid.UUID, message: WebIn):
         """
         Handle an incoming WebSocket host message for a given meeting.

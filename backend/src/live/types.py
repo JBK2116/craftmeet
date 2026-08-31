@@ -26,6 +26,7 @@ class CloseCode(Enum):
     MEETING_NOT_FOUND = (4001, "meeting not found")
     MEETING_IS_FULL = (4003, "meeting is full")
     PARTICIPANT_KICKED_FROM_MEETING = (4002, "participant kicked from meeting")
+    SIGTERM_SIGNAL = (1012, "meeting ended due to server shutdown")
 
     def __init__(self, code: int, message: str):
         self.code = code
