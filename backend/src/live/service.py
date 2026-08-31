@@ -135,7 +135,7 @@ class LiveService:
                 db=db,
                 m_id=self.meeting_id,
                 started_at=None,
-                status=MeetingStatus.COMPLETED,
+                status=MeetingStatus.DRAFT,
             )
             await update_user(db=db, u_id=self.host_id, live_meeting=False)
             await db.commit()
