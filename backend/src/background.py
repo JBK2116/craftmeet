@@ -57,6 +57,7 @@ async def _reset_monthly_meetings_count_job() -> None:
             result = cast(
                 CursorResult[Any], await db.execute(stmt)
             )  # cast here is purely for type checker
+            await db.commit()
             logger.info(
                 "Reset all values to 0 in database field",
                 extra={
@@ -67,6 +68,7 @@ async def _reset_monthly_meetings_count_job() -> None:
             )
             return
         except Exception:
+            await db.rollback()
             logger.error(
                 "Failed to reset field in database",
                 extra={"table": "Users", "field": "total_meetings_month"},
@@ -99,6 +101,7 @@ async def _reset_malformed_meetings() -> None:
             result = cast(
                 CursorResult[Any], await db.execute(stmt)
             )  # cast here is purely for type checker
+            await db.commit()
             logger.info(
                 "Reset all malformed meetings in the database",
                 extra={
@@ -108,6 +111,7 @@ async def _reset_malformed_meetings() -> None:
                 },
             )
         except Exception:
+            await db.rollback()
             logger.error(
                 "Failed to reset malformed meetings in database",
                 extra={"table": "Meetings"},
