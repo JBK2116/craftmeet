@@ -32,7 +32,7 @@
         type MeetingStatePayload,
         MessageTypes,
         type NextQuestionPayload,
-        type ParticipantDisconnectedPayload,
+        type ParticipantDisconnectedPayload, type RateLimitedPayload,
         type ResponseReceivedPayload,
         type WebIn,
     } from '$lib/types/websocket';
@@ -275,6 +275,9 @@
                 break;
             case (MessageTypes.KICK_PARTICIPANT_FAILED, MessageTypes.KICK_PARTICIPANT_SUCCESS):
                 handleKickParticipantResult(msg.payload as KickParticipantResultPayload);
+                break;
+            case MessageTypes.RATE_LIMITED:
+                handleRateLimited(msg.payload as RateLimitedPayload)
                 break;
             case MessageTypes.MEETING_ENDED:
                 meetingStatus = 'ended';
@@ -519,6 +522,15 @@
         if (isRevealed) {
             ws?.send(JSON.stringify({ type: MessageTypes.REVEAL }));
         }
+    }
+
+    /**
+     * Handles displaying a rate limited response to the user
+     * @param payload - The rate limit response.
+     */
+    function handleRateLimited(payload: RateLimitedPayload) {
+        toast.error(payload.message)
+        return
     }
 
     /**

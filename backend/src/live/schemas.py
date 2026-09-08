@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, model_validator
 from starlette.websockets import WebSocket
 
 from src.constants import MAX_CHAT_LENGTH, MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH
+from src.live.limiter import WebsocketRateLimiter
 from src.live.types import InboundMessageTypes, Mood
 from src.meeting.schemas import QuestionIn, QuestionOut, ResponseIn
 
@@ -137,6 +138,7 @@ class ParticipantEntry:
     """Represents a singular participant entry tracked in a live meeting session server-side."""
 
     participant: Participant
+    chat_limiter: WebsocketRateLimiter
     ws: WebSocket | None = None
 
 
@@ -329,6 +331,16 @@ class RevealMeetingPayload(BaseModel):
     """
 
     responses: list[ResponseIn]
+
+
+class RateLimitedPayload(BaseModel):
+    """Payload for sending a rate limited response to a user.
+
+    Attributes:
+        message: The rate limit message to display to the user.
+    """
+
+    message: str
 
 
 INBOUND_PAYLOAD_MODELS: dict[InboundMessageTypes, type[BaseModel]] = {

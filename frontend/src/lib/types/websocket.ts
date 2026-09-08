@@ -63,6 +63,8 @@ export enum MessageTypes {
     // heartbeat
     PING = 'ping',
     PONG = 'pong',
+    // rate limiting
+    RATE_LIMITED = 'rate_limited'
 }
 
 /** Payload for when requesting to kick out a participant */
@@ -215,6 +217,12 @@ export interface RevealMeetingPayload {
     responses: ResponseOut[];
 }
 
+/** Payload received when user has been rate limited */
+export interface RateLimitedPayload {
+    /** The rate limited message */
+    message: string
+}
+
 // NOTE: Add other interfaces in here as needed
 
 /** Maps each MessageType to its corresponding payload shape. */
@@ -240,6 +248,7 @@ interface PayloadMap {
     [MessageTypes.PARTICIPANTS_STATE]: ParticipantsStatePayload;
     [MessageTypes.PARTICIPANT_JOIN_ROOM_SUCCESS]: ParticipantJoinRoomSuccess;
     [MessageTypes.PARTICIPANT_JOIN_ROOM_FAILED]: ParticipantJoinRoomFailed;
+    [MessageTypes.RATE_LIMITED]: RateLimitedPayload;
     [MessageTypes.HOST_DISCONNECTED]: undefined;
     [MessageTypes.HOST_RECONNECTED]: undefined;
     [MessageTypes.MEETING_ENDED]: undefined;
@@ -277,6 +286,7 @@ export type WebIn =
     | WebInMessage<MessageTypes.PARTICIPANT_JOIN_ROOM_SUCCESS>
     | WebInMessage<MessageTypes.PARTICIPANT_JOIN_ROOM_FAILED>
     | WebInMessage<MessageTypes.CURRENT_QUESTION>
+    | WebInMessage<MessageTypes.RATE_LIMITED>
     | WebInMessage<MessageTypes.RESPONSE_RECEIVED>
     | WebInMessage<MessageTypes.CHAT_RECEIVED>
     | WebInMessage<MessageTypes.CHAT_STATE>

@@ -6,6 +6,7 @@ from typing import Any
 
 from fastapi import WebSocket, status
 
+from src.live.limiter import WebsocketRateLimiter
 from src.live.schemas import (
     AddQuestionFailed,
     AddQuestionPayload,
@@ -29,6 +30,7 @@ from src.live.schemas import (
     ParticipantJoinRoomPayload,
     ParticipantJoinRoomSuccess,
     ParticipantsStatePayload,
+    RateLimitedPayload,
     ResponseReceivedPayload,
     RevealMeetingPayload,
 )
@@ -41,6 +43,9 @@ logger = logging.getLogger(__name__)
 
 
 class LiveRoom:
+    CHAT_RATE_LIMIT_RATE = 20
+    CHAT_RATE_LIMIT_CAPACITY = 60
+
     def __init__(
         self,
         room_id: uuid.UUID,
@@ -52,6 +57,9 @@ class LiveRoom:
         )
         self.host: WebSocket | None = (
             host  # host websocket connection, becomes None on disconnects/connection drops
+        )
+        self.host_chat_limiter: WebsocketRateLimiter = WebsocketRateLimiter(
+            rate=self.CHAT_RATE_LIMIT_RATE, capacity=self.CHAT_RATE_LIMIT_CAPACITY
         )
         self.participants: dict[
             uuid.UUID, ParticipantEntry
@@ -309,7 +317,12 @@ class LiveRoom:
                 is_lobby=True,
             )
             self.participants[p_id] = ParticipantEntry(
-                participant=new_participant, ws=ws
+                participant=new_participant,
+                chat_limiter=WebsocketRateLimiter(
+                    rate=self.CHAT_RATE_LIMIT_RATE,
+                    capacity=self.CHAT_RATE_LIMIT_CAPACITY,
+                ),
+                ws=ws,
             )
             logger.debug(
                 "participant connected to meeting",
@@ -661,10 +674,44 @@ class LiveRoom:
     async def chat_received(self, payload: ChatReceivedPayload) -> None:
         """Register the received chat and broadcast it to everyone else"""
         chat = payload.chat
-        if not chat.is_host:
-            sender = self.participants.get(chat.u_id)
-            if sender is not None and sender.participant.is_lobby:
+        if chat.is_host:
+            if not self.host_chat_limiter.allow_request():
+                logger.debug(
+                    "host has been chat rate limited",
+                    extra={"room_id": str(self.room_id)},
+                )
+                if self.host:
+                    out = RateLimitedPayload(
+                        message="You have been rate limited. Try again soon."
+                    )
+                    await self.host.send_json(
+                        data={
+                            "type": OutboundMessageTypes.RATE_LIMITED,
+                            "payload": out.model_dump(mode="json"),
+                        }
+                    )
                 return
+        else:
+            sender = self.participants.get(chat.u_id)
+            if sender is None or sender.participant.is_lobby:
+                return
+            if not sender.chat_limiter.allow_request():
+                logger.debug(
+                    "participant has been chat rate limited",
+                    extra={"room_id": str(self.room_id)},
+                )
+                if sender.ws:
+                    out = RateLimitedPayload(
+                        message="You have been rate limited. Try again soon."
+                    )
+                    await sender.ws.send_json(
+                        data={
+                            "type": OutboundMessageTypes.RATE_LIMITED,
+                            "payload": out.model_dump(mode="json"),
+                        }
+                    )
+                return
+
         self.chat.append(chat)
         if self.host is not None:
             asyncio.create_task(

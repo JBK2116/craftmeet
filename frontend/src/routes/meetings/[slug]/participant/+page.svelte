@@ -34,6 +34,7 @@
         type ParticipantJoinRoomFailed,
         type ParticipantJoinRoomSuccess,
         type ParticipantsStatePayload,
+        type RateLimitedPayload,
         type RevealMeetingPayload,
         type WebIn,
     } from '$lib/types/websocket';
@@ -374,12 +375,25 @@
                 toast.info('The meeting has ended.');
                 leaveMeeting();
                 break;
+            case MessageTypes.RATE_LIMITED:
+                handleRateLimited(msg.payload as RateLimitedPayload)
+                break;
             case MessageTypes.PONG:
                 missedPongs = 0;
                 break;
             default:
                 console.warn('[ws] unknown message type:', msg.type);
         }
+    }
+
+
+    /**
+     * Handles displaying a rate limited response to the user
+     * @param payload - The rate limit response.
+     */
+    function handleRateLimited(payload: RateLimitedPayload) {
+        toast.error(payload.message)
+        return
     }
 
     /** Append the incoming chat to the chat bar */

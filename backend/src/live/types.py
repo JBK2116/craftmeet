@@ -91,3 +91,4 @@ class OutboundMessageTypes(StrEnum):
     CHAT_RECEIVED = "chat_received"  # sent to host or participant
     CHAT_STATE = "chat_state"  # sent to host or participant
     PONG = "pong"  # sent to participants (heartbeat reply)
+    RATE_LIMITED = "rate_limited"  # sent to host or participants
