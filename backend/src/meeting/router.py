@@ -24,6 +24,7 @@ from src.meeting.service import (
     handle_get_meeting,
     handle_get_meetings,
     handle_join_meeting,
+    handle_join_meeting_by_id,
     handle_leave_meeting,
     handle_meeting_qr,
     handle_update_meeting,
@@ -65,6 +66,40 @@ async def join_meeting(
             db=db, request=request, response=response, payload=payload
         )
         return response_payload
+    except MeetingNotFoundError:
+        return JSONResponse(
+            content="resource not found", status_code=status.HTTP_404_NOT_FOUND
+        )
+    except MeetingNotLiveError:
+        return JSONResponse(
+            content="meeting is not live", status_code=status.HTTP_400_BAD_REQUEST
+        )
+    except DatabaseError:
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.SERVER.type,
+                "message": ErrorTypes.SERVER.message,
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@meeting_public_router.post(
+    "/{meeting_id}/join",
+    response_model=JoinMeetingResponse,
+    status_code=status.HTTP_200_OK,
+)
+@limiter.limit("10/minute", key_func=ip_or_user_key_func)
+async def join_meeting_by_id(
+    request: Request, response: Response, db: DB, meeting_id: MEETING_ID
+):
+    logger.debug(
+        "received join meeting by id request", extra={"meeting_id": str(meeting_id)}
+    )
+    try:
+        return await handle_join_meeting_by_id(
+            db=db, request=request, response=response, meeting_id=meeting_id
+        )
     except MeetingNotFoundError:
         return JSONResponse(
             content="resource not found", status_code=status.HTTP_404_NOT_FOUND

@@ -154,6 +154,7 @@
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
     let missedPongs = 0;
+    let joined = false;
     const MAX_RECONNECT_ATTEMPTS = 4;
     const HEARTBEAT_INTERVAL_MS = 20_000;
     const MAX_MISSED_PONGS = 2;
@@ -555,6 +556,43 @@
     }
 
     /**
+     * Ensure the participant access-token cookie is set before connecting.
+     *
+     * Participants arriving via a QR link land here directly without going
+     * through the room-code join flow, so this registers them by meeting id.
+     * Runs once; subsequent reconnects reuse the already-set cookie.
+     */
+    async function ensureJoined(): Promise<boolean> {
+        if (joined) return true;
+        try {
+            const res = await fetch(`/api/v1/meetings/${page.params.slug}/join`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+            if (res.ok) {
+                joined = true;
+                return true;
+            }
+            if (res.status === 404) {
+                toast.error('Unable to join meeting. Please check your link and try again.', {
+                    duration: Infinity,
+                });
+            } else if (res.status === 400) {
+                toast.error('This meeting is not currently live.', { duration: Infinity });
+            } else if (res.status === 429) {
+                toast.error('Too many requests. Please try again shortly.', { duration: Infinity });
+            } else {
+                toast.error('Unable to join meeting. Please try again.', { duration: Infinity });
+            }
+            goto('/', { replaceState: true });
+            return false;
+        } catch {
+            // Network failure — let the WebSocket attempt surface the error.
+            return false;
+        }
+    }
+
+    /**
      * Establish (or re-establish) the WebSocket connection to the meeting.
      *
      * Skips if not in a browser environment or if a connection is already open.
@@ -564,6 +602,9 @@
     async function connectWs() {
         if (!browser) return;
         if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) return;
+
+        const joinedOk = await ensureJoined();
+        if (!joinedOk) return;
 
         const socket = new WebSocket(getWsUrl());
         ws = socket;

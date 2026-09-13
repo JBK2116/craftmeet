@@ -7,6 +7,7 @@ from src.models import Meeting
 from src.utils import generate_participants_meeting_access_token_key
 
 JOIN_URL = "/meetings/join"
+JOIN_BY_ID_URL = "/meetings/{meeting_id}/join"
 
 
 async def test_join_meeting_success_draft(
@@ -82,3 +83,56 @@ async def test_join_meeting_long_code(
     payload = {"username": "testuser", "code": "TOOLONGCD"}
     response = await client.post(JOIN_URL, json=payload)
     assert response.status_code == 422
+
+
+async def test_join_meeting_by_id_success_live(
+    client: AsyncClient, live_meeting: Meeting
+) -> None:
+    """Join by meeting id (QR flow) for a LIVE meeting -> 200, sets cookie."""
+    response = await client.post(JOIN_BY_ID_URL.format(meeting_id=live_meeting.id))
+    assert response.status_code == 200
+
+    body = response.json()
+    join_response = JoinMeetingResponse.model_validate(body)
+    assert join_response.meeting_id == live_meeting.id
+
+    cookie_key = generate_participants_meeting_access_token_key(
+        m_id=str(live_meeting.id)
+    )
+    assert cookie_key in response.cookies
+
+
+async def test_join_meeting_by_id_success_draft(
+    client: AsyncClient, verified_user_meeting: Meeting
+) -> None:
+    """Join by meeting id for a DRAFT meeting -> 200, sets cookie."""
+    response = await client.post(
+        JOIN_BY_ID_URL.format(meeting_id=verified_user_meeting.id)
+    )
+    assert response.status_code == 200
+
+    cookie_key = generate_participants_meeting_access_token_key(
+        m_id=str(verified_user_meeting.id)
+    )
+    assert cookie_key in response.cookies
+
+
+async def test_join_meeting_by_id_not_found(
+    client: AsyncClient, non_existent_meeting_id
+) -> None:
+    """Meeting id not in database -> 404."""
+    response = await client.post(
+        JOIN_BY_ID_URL.format(meeting_id=non_existent_meeting_id)
+    )
+    assert response.status_code == 404
+
+
+async def test_join_meeting_by_id_not_live(
+    client: AsyncClient, completed_meeting: Meeting
+) -> None:
+    """COMPLETED meeting -> 400."""
+    response = await client.post(
+        JOIN_BY_ID_URL.format(meeting_id=completed_meeting.id)
+    )
+    assert response.status_code == 400
+    assert response.json() == "meeting is not live"

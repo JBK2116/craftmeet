@@ -54,6 +54,7 @@ from src.meeting.utils import (
     generate_sub_question,
 )
 from src.models import (
+    Meeting,
     User,
 )
 from src.types import MeetingStatus
@@ -88,6 +89,38 @@ async def handle_join_meeting(
         raise MeetingNotFoundError
     if meeting.status not in (MeetingStatus.DRAFT, MeetingStatus.LIVE):
         raise MeetingNotLiveError
+    _set_participant_cookie(meeting=meeting, request=request, response=response)
+    return JoinMeetingResponse(meeting_id=meeting.id)
+
+
+async def handle_join_meeting_by_id(
+    db: AsyncSession, request: Request, response: Response, meeting_id: uuid.UUID
+) -> JoinMeetingResponse:
+    """Register a participant joining by meeting id (e.g. via a QR link).
+
+    Sets the same participant access-token cookie as ``handle_join_meeting``
+    but looks the meeting up by its id instead of its room code.
+
+    :raises MeetingNotFoundError: If no meeting with the given ID exists.
+    :raises MeetingNotLiveError: If the meeting is not joinable (completed).
+    """
+    meeting = await get_meeting_lazy(db=db, m_id=meeting_id)
+    if meeting is None:
+        raise MeetingNotFoundError
+    if meeting.status not in (MeetingStatus.DRAFT, MeetingStatus.LIVE):
+        raise MeetingNotLiveError
+    _set_participant_cookie(meeting=meeting, request=request, response=response)
+    return JoinMeetingResponse(meeting_id=meeting.id)
+
+
+def _set_participant_cookie(
+    meeting: Meeting, request: Request, response: Response
+) -> None:
+    """Set the participant access-token cookie for a meeting.
+
+    Reuses the existing participant id when a valid cookie is already
+    present; otherwise the token generator assigns a fresh id.
+    """
     key = generate_participants_meeting_access_token_key(m_id=str(meeting.id))
     existing = request.cookies.get(key, None)
     p_id: uuid.UUID | None = None
@@ -112,7 +145,6 @@ async def handle_join_meeting(
         max_age=duration_seconds,
         path="/api/v1/meetings",
     )
-    return JoinMeetingResponse(meeting_id=meeting.id)
 
 
 async def handle_leave_meeting(response: Response, m_id: uuid.UUID) -> None:
