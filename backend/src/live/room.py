@@ -230,6 +230,8 @@ class LiveRoom:
         await self._broadcast(
             task=_send_message, message={"type": OutboundMessageTypes.MEETING_ENDED}
         )
+        if self.host:
+            await self.host.send_json({"type": OutboundMessageTypes.MEETING_ENDED})
 
     async def end_meeting(self) -> None:
         """End a meeting and close all connected participant websockets"""

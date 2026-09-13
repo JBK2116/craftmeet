@@ -17,11 +17,13 @@ logger = logging.getLogger(__name__)
 
 
 class LiveManager:
-    STALE_TIMEOUT_SECONDS = 60 * 5
+    STALE_HOST_TIMEOUT_SECONDS = 60 * 5
+    STALE_LOBBY_TIMEOUT_SECONDS = 60 * 15
 
     def __init__(self):
         self.__rooms: dict[uuid.UUID, LiveRoom] = {}
-        self.__destroy_tasks: dict[uuid.UUID, asyncio.Task] = {}
+        self._destroy_host_tasks: dict[uuid.UUID, asyncio.Task] = {}
+        self.__destroy_lobby_tasks: dict[uuid.UUID, asyncio.Task] = {}
 
     async def close_rooms(self) -> None:
         """
@@ -34,9 +36,13 @@ class LiveManager:
             await room.handle_sigterm_signal()
         self.__rooms.clear()
 
-        for task in self.__destroy_tasks.values():
+        for task in self._destroy_host_tasks.values():
             task.cancel()
-        self.__destroy_tasks.clear()
+        self._destroy_host_tasks.clear()
+
+        for task in self.__destroy_lobby_tasks.values():
+            task.cancel()
+        self.__destroy_lobby_tasks.clear()
 
     async def handle_host_message(self, meeting_id: uuid.UUID, message: WebIn):
         """
@@ -56,6 +62,9 @@ class LiveManager:
         match message.type:
             case InboundMessageTypes.MEETING_STARTED:
                 await room.start_meeting(payload=message.payload)
+                task = self.__destroy_lobby_tasks.pop(meeting_id, None)
+                if task:
+                    task.cancel()
             case InboundMessageTypes.MEETING_ENDED:
                 await room.end_meeting()
                 await self.__destroy_room(meeting_id)
@@ -123,7 +132,7 @@ class LiveManager:
                 "host websocket attempting to connect",
                 extra={"host": websocket.state.user.email, "meeting_id": meeting_id},
             )
-            task = self.__destroy_tasks.get(meeting_id, None)
+            task = self._destroy_host_tasks.get(meeting_id, None)
             if task is not None:
                 task.cancel()
                 logger.debug(
@@ -147,6 +156,12 @@ class LiveManager:
                         "host": websocket.state.user.email,
                     },
                 )
+                task = set_timeout(
+                    callback=self.__destroy_if_stale_lobby,
+                    delay_seconds=self.STALE_LOBBY_TIMEOUT_SECONDS,
+                    meeting_id=meeting_id,
+                )
+                self.__destroy_lobby_tasks[meeting_id] = task
                 return True
             else:
                 if existing_room.host is None:
@@ -217,14 +232,14 @@ class LiveManager:
         room.host = None
         task = set_timeout(
             callback=self.__destroy_if_stale,
-            delay_seconds=self.STALE_TIMEOUT_SECONDS,
+            delay_seconds=self.STALE_HOST_TIMEOUT_SECONDS,
             meeting_id=meeting_id,
         )
-        self.__destroy_tasks[meeting_id] = task
+        self._destroy_host_tasks[meeting_id] = task
         logger.debug(
             "destroy task created for meeting room",
             extra={
-                "task_timeout_minutes": self.STALE_TIMEOUT_SECONDS // 60,
+                "task_timeout_minutes": self.STALE_HOST_TIMEOUT_SECONDS // 60,
                 "meeting_id": str(meeting_id),
             },
         )
@@ -341,6 +356,32 @@ class LiveManager:
         payload = ParticipantDisconnectedPayload(id=p_id)
         await room.participant_disconnected(payload=payload)
 
+    async def __destroy_if_stale_lobby(self, meeting_id: uuid.UUID) -> None:
+        """
+        Destroy a meeting room if it is considered stale and has remained in the lobby.
+
+        :param meeting_id: ID of the room to destroy
+        :return: None
+        """
+        room = self.__rooms.get(meeting_id)
+        if room is None:
+            logger.debug(
+                "no meeting room destroyed",
+                extra={
+                    "reason": "room not found or host still connected",
+                    "room_id": str(meeting_id),
+                },
+            )
+            return
+        if room.service.started_at is not None:
+            logger.debug(
+                "no meeting room destroyed.",
+                extra={"reason": "meeting has started", "room_id": str(meeting_id)},
+            )
+            return
+        await room.end_stale_meeting()
+        await self.__destroy_room(meeting_id=meeting_id)
+
     async def __destroy_if_stale(self, meeting_id: uuid.UUID) -> None:
         """
         Destroy a meeting room if it is considered stale.
@@ -373,9 +414,12 @@ class LiveManager:
         """
         self.__rooms.pop(meeting_id, None)
         logger.debug("meeting room destroyed", {"room_id": str(meeting_id)})
-        task = self.__destroy_tasks.pop(meeting_id, None)
-        if task is not None:
-            task.cancel()
+        host_task = self._destroy_host_tasks.pop(meeting_id, None)
+        if host_task is not None:
+            host_task.cancel()
             logger.debug(
                 "destroy room task cancelled", extra={"meeting_id": meeting_id}
             )
+        lobby_task = self.__destroy_lobby_tasks.pop(meeting_id, None)
+        if lobby_task is not None:
+            lobby_task.cancel()
