@@ -4,9 +4,11 @@ This module provides meeting-related services and utilities for the application
 including meeting creation, initialization and live logic.
 """
 
+import io
 import logging
 import uuid
 
+import qrcode
 from fastapi import Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -548,3 +550,52 @@ async def handle_copy_meeting(
         questions=questions,
     )
     await handle_create_meeting(db=db, request=request, payload=meeting_in)
+
+
+async def handle_meeting_qr(
+    db: AsyncSession, request: Request, meeting_id: uuid.UUID
+) -> io.BytesIO:
+    """
+    Generate a PNG QR code pointing to the participant URL for a meeting.
+
+    The function validates that the meeting exists, belongs to the requesting
+    user, and is currently live. On success, it
+    builds the frontend URL (development or production) and creates a QR code
+    image in an in-memory buffer.
+
+    :param db: Database session used to retrieve the meeting.
+    :param request: HTTP request containing the authenticated user in state.
+    :param meeting_id: Identifier of the meeting for which to generate the code.
+    :return: In-memory bytes buffer containing the QR code image in PNG format.
+    :raises MeetingNotFoundError: If no meeting with the given ID exists.
+    :raises InvalidTokenError: If the meeting does not belong to the requesting user.
+    :raises MeetingNotLiveError: If the meeting is not live (draft or completed).
+    """
+    user = request.state.user
+    meeting = await get_meeting_lazy(db=db, m_id=meeting_id)
+    # ensure that the meeting is in a valid state to be joined
+    if meeting is None:
+        raise MeetingNotFoundError
+    if meeting.user_id != user.id:
+        raise InvalidTokenError
+    if meeting.status != MeetingStatus.LIVE:
+        raise MeetingNotLiveError
+    # generate the qr code
+    if settings.IS_DEV:
+        url = f"{settings.FRONTEND_URL}/meetings/{str(meeting_id)}/participant"
+    else:
+        url = f"https://{settings.DOMAIN}/meetings/{str(meeting_id)}/participant"
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    # save the qr code in memory to be returned directly to the user
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+    return buffer

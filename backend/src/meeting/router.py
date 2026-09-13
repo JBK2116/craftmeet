@@ -25,6 +25,7 @@ from src.meeting.service import (
     handle_get_meetings,
     handle_join_meeting,
     handle_leave_meeting,
+    handle_meeting_qr,
     handle_update_meeting,
 )
 from src.middleware.jwt import get_current_user
@@ -281,6 +282,39 @@ async def delete_meetings(db: DB, request: Request):
     )
     try:
         await handle_delete_meetings(db=db, request=request)
+    except DatabaseError:
+        return JSONResponse(
+            content={
+                "type": ErrorTypes.SERVER.type,
+                "message": ErrorTypes.SERVER.message,
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@meeting_router.post("/{meeting_id}/qr", status_code=status.HTTP_200_OK)
+@limiter.limit("5/minute", key_func=ip_or_user_key_func)
+async def get_meeting_qr(request: Request, db: DB, meeting_id: MEETING_ID):
+    logger.debug(
+        "received get meeting qr request", extra={"meeting_id": str(meeting_id)}
+    )
+    try:
+        qr_buffer = await handle_meeting_qr(
+            db=db, request=request, meeting_id=meeting_id
+        )
+        return Response(content=qr_buffer.getvalue(), media_type="image/png")
+    except MeetingNotFoundError:
+        return JSONResponse(
+            content="Resource not found", status_code=status.HTTP_404_NOT_FOUND
+        )
+    except InvalidTokenError:
+        return JSONResponse(
+            content="Invalid token provided", status_code=status.HTTP_401_UNAUTHORIZED
+        )
+    except MeetingNotLiveError:
+        return JSONResponse(
+            content="meeting is not live", status_code=status.HTTP_400_BAD_REQUEST
+        )
     except DatabaseError:
         return JSONResponse(
             content={

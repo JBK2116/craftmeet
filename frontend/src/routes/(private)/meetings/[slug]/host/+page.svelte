@@ -2,7 +2,7 @@
     import { browser } from '$app/environment';
     import { goto } from '$app/navigation';
     import { page } from '$app/state';
-    import { refreshTokens } from '$lib/api/auth';
+    import { apiFetch, refreshTokens } from '$lib/api/auth';
     import ChatBar from '$lib/components/chat/ChatBar.svelte';
     import HostAddQuestion from '$lib/components/host/HostAddQuestion.svelte';
     import HostLobby from '$lib/components/host/HostLobby.svelte';
@@ -15,6 +15,7 @@
     import type { Participant } from '$lib/types/participant';
     import type { QuestionIn, QuestionOut, QuestionStatus } from '$lib/types/question';
     import type { ResponseOut } from '$lib/types/response';
+    import { RateLimitedError } from '$lib/types/errors';
     import {
         type AddQuestionFailedPayload,
         type AddQuestionPayload,
@@ -37,7 +38,7 @@
         type WebIn,
     } from '$lib/types/websocket';
     import { MAX_QUESTION_CAP } from '$lib/utils/constants';
-    import { Users } from '@lucide/svelte';
+    import { QrCode, Users, X } from '@lucide/svelte';
     import { onMount, untrack } from 'svelte';
     import { toast } from 'svelte-sonner';
     import { get } from 'svelte/store';
@@ -84,6 +85,11 @@
     // add question modal
     let addQuestionOpen = $state(false);
     let canAddQuestion = $derived(questions.length < MAX_QUESTION_CAP);
+
+    // qr code
+    let qrCodeUrl = $state<string | null>(null);
+    let qrLoading = $state(false);
+    let qrOpen = $state(false);
 
     // timer logic
     let start = $state<number | null>(null);
@@ -400,6 +406,9 @@
                 clearTimeout(endTimeout);
                 endTimeout = null;
             }
+            if (qrCodeUrl) {
+                URL.revokeObjectURL(qrCodeUrl);
+            }
         };
     });
 
@@ -473,6 +482,45 @@
     function handleSnapshotFailed(payload: GetSnapshotFailedPayload) {
         snapshotLoading = false;
         toast.error(payload.detail, { duration: Infinity });
+    }
+
+    /** Fetch (once) and show the meeting QR code in a modal. */
+    async function handleShowQr() {
+        if (qrCodeUrl) {
+            qrOpen = true;
+            return;
+        }
+        qrLoading = true;
+        try {
+            const res = await apiFetch(`/api/v1/meetings/${page.params.slug}/qr`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+            if (!res.ok) {
+                toast.error(
+                    res.status === 400
+                        ? 'The meeting is not live yet.'
+                        : 'Unable to generate QR code.',
+                );
+                return;
+            }
+            const blob = await res.blob();
+            qrCodeUrl = URL.createObjectURL(blob);
+            qrOpen = true;
+        } catch (err) {
+            if (err instanceof RateLimitedError) {
+                toast.error('Too many requests. Please try again shortly.');
+            } else {
+                toast.error('Unable to generate QR code.');
+            }
+        } finally {
+            qrLoading = false;
+        }
+    }
+
+    /** Hide the QR code modal. */
+    function handleCloseQr() {
+        qrOpen = false;
     }
 
     /**
@@ -600,6 +648,19 @@
                 </div>
                 <div>
                     <span class="block text-xs uppercase tracking-wide text-muted-foreground/70"
+                        >QR Code</span
+                    >
+                    <button
+                        class="mt-0.5 inline-flex w-fit items-center gap-1.5 font-medium text-primary cursor-pointer hover:underline disabled:opacity-50"
+                        onclick={handleShowQr}
+                        disabled={qrLoading}
+                    >
+                        <QrCode class="h-4 w-4" />
+                        {qrLoading ? 'Loading…' : 'Show QR code'}
+                    </button>
+                </div>
+                <div>
+                    <span class="block text-xs uppercase tracking-wide text-muted-foreground/70"
                         >Host</span
                     >
                     <span class="text-foreground">{hostUsername}</span>
@@ -656,6 +717,9 @@
                 </button>
                 <Button variant="ghost" size="icon" onclick={() => (participantsOpen = true)}>
                     <Users class="size-5" />
+                </Button>
+                <Button variant="ghost" size="icon" onclick={handleShowQr} aria-label="Show QR code">
+                    <QrCode class="size-5" />
                 </Button>
                 <ChatBar variant="sheet" bind:open={chatOpen} {chats} onsend={handleChatSend} />
             </div>
@@ -823,6 +887,41 @@
             >
                 Back to Meeting
             </button>
+        </div>
+    </div>
+{/if}
+
+{#if qrOpen}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+        onclick={(e) => e.target === e.currentTarget && handleCloseQr()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Meeting QR code"
+        tabindex="-1"
+    >
+        <div class="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-(--text-heading)">Scan to join</h3>
+                <button
+                    onclick={handleCloseQr}
+                    class="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label="Close"
+                >
+                    <X class="h-5 w-5" />
+                </button>
+            </div>
+            {#if qrCodeUrl}
+                <img
+                    src={qrCodeUrl}
+                    alt="QR code to join the meeting"
+                    class="mx-auto h-auto w-full max-w-xs rounded-lg"
+                />
+            {/if}
+            <p class="mt-4 text-center text-xs text-muted-foreground">
+                Participants can scan this code to join the meeting.
+            </p>
         </div>
     </div>
 {/if}
