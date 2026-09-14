@@ -22,6 +22,9 @@ export const load: PageLoad = async ({ fetch, params }) => {
             throw new Error(`Failed to load meeting: ${res.status}`);
         }
         meeting = (await res.json()) as MeetingIn;
+        if (meeting.status === 'draft') {
+            redirect(302, `/meetings/${slug}`);
+        }
     } catch (err: any) {
         if (err instanceof AuthError) throw redirect(302, '/login');
         throw err;
