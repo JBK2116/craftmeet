@@ -80,6 +80,10 @@ class LiveManager:
                 await room.reveal()
             case InboundMessageTypes.CHAT_RECEIVED:
                 await room.chat_received(payload=message.payload)
+            case InboundMessageTypes.LOCK_ROOM:
+                await room.lock_room()
+            case InboundMessageTypes.UNLOCK_ROOM:
+                await room.unlock_room()
 
     async def handle_participant_message(
         self, meeting_id: uuid.UUID, p_id: uuid.UUID, ws: WebSocket, message: WebIn
@@ -291,6 +295,12 @@ class LiveManager:
                 reason=CloseCode.MEETING_IS_FULL.message,
             )
             return False
+        if room.is_locked and not room.is_participant_allowed(participant_id=p_id):
+            await ws.accept()
+            await ws.close(
+                code=CloseCode.MEETING_IS_LOCKED.code,
+                reason=CloseCode.MEETING_IS_LOCKED.message,
+            )
         await ws.accept()
         return True
 

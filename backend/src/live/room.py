@@ -79,6 +79,10 @@ class LiveRoom:
         self._revealed = (
             False  # whether the current question's responses have been revealed
         )
+        self.is_locked: bool = False
+        self.bypasses_lock: set[uuid.UUID] = (
+            set()
+        )  # set of all participants that can rejoin a locked meeting
 
     async def reconnect_host(self, ws: WebSocket) -> None:
         """Reconnect the host to the current meeting"""
@@ -326,6 +330,9 @@ class LiveRoom:
                 ),
                 ws=ws,
             )
+            self.bypasses_lock.add(
+                p_id
+            )  # add the user so they can rejoin even if the host locks the meeting
             logger.debug(
                 "participant connected to meeting",
                 extra={
@@ -484,6 +491,28 @@ class LiveRoom:
         )
         return
 
+    async def lock_room(self) -> None:
+        """Locks the meeting room."""
+        if not self.is_locked:
+            self.is_locked = True
+        await self._broadcast(
+            task=_send_message,
+            message={
+                "type": OutboundMessageTypes.LOCK_ROOM_SUCCESS,
+            },
+        )
+
+    async def unlock_room(self) -> None:
+        """Unlocks the meeting room."""
+        if self.is_locked:
+            self.is_locked = False
+        await self._broadcast(
+            task=_send_message,
+            message={
+                "type": OutboundMessageTypes.UNLOCK_ROOM_SUCCESS,
+            },
+        )
+
     async def check_participant_cap(self, p_id: uuid.UUID) -> bool:
         """
         Checks the room to see if there is space for the participant to join
@@ -554,6 +583,11 @@ class LiveRoom:
         )
         self.blocked_participants.add(exists.participant.id)
         self.participants.pop(exists.participant.id)
+        if (
+            payload.id in self.bypasses_lock
+        ):  # prevent the participant from rejoiningning if they are allowed to rejoin
+            self.bypasses_lock.remove(exists.participant.id)
+
         if exists.ws:
             try:
                 await exists.ws.close(
@@ -601,6 +635,15 @@ class LiveRoom:
             )
             return
         return
+
+    def is_participant_allowed(self, participant_id: uuid.UUID) -> bool:
+        """
+        Checks if a participant with the provided id is allowed to join the meeting room.
+        """
+        if self.is_locked:
+            return participant_id in self.bypasses_lock
+        else:
+            return True
 
     def is_participant_blocked(self, p_id: uuid.UUID) -> bool:
         """Checks if a participant with the provided id is blocked from joining the meeting."""

@@ -18,6 +18,8 @@ export enum CloseCode {
     PARTICIPANT_KICKED_FROM_MEETING = 4002,
     /** Meeting is full */
     MEETING_IS_FULL = 4003,
+    /** Meeting is locked */
+    MEETING_IS_LOCKED = 4005,
     /** Server is shutting down */
     SIGTERM_SIGNAL = 1012,
 }
@@ -64,7 +66,26 @@ export enum MessageTypes {
     PING = 'ping',
     PONG = 'pong',
     // rate limiting
-    RATE_LIMITED = 'rate_limited'
+    RATE_LIMITED = 'rate_limited',
+    // room access
+    LOCK_ROOM = 'lock_room',
+    LOCK_ROOM_FAILED = 'lock_room_failed',
+    LOCK_ROOM_SUCCESS = 'lock_room_success',
+    UNLOCK_ROOM = 'unlock_room',
+    UNLOCK_ROOM_SUCCESS = 'unlock_room_success',
+    UNLOCK_ROOM_FAILED = 'unlock_room_failed',
+}
+
+/** Payload for when a host wants to lock a meeting*/
+export interface LockRoomPayload {
+    /** id of the meeting to lock */
+    meeting_id: string;
+}
+
+/** Payload for when a host wants to unlock a meeting */
+export interface UnlockRoomPayload {
+    /** id of the meeting to unlock */
+    meeting_id: string;
 }
 
 /** Payload for when requesting to kick out a participant */
@@ -129,12 +150,6 @@ export interface ParticipantDisconnectedPayload {
 export interface ParticipantsStatePayload {
     /** List of all participants registered in the meeting */
     participants: Participant[];
-}
-
-/** Payload for a participant attempting to enter a room */
-export interface ParticipantJoinRoomPayload {
-    /** Requested username of the participant */
-    username: string;
 }
 
 /** Payload for when a participant successfully enters a room */
@@ -220,7 +235,7 @@ export interface RevealMeetingPayload {
 /** Payload received when user has been rate limited */
 export interface RateLimitedPayload {
     /** The rate limited message */
-    message: string
+    message: string;
 }
 
 // NOTE: Add other interfaces in here as needed
@@ -253,6 +268,10 @@ interface PayloadMap {
     [MessageTypes.HOST_RECONNECTED]: undefined;
     [MessageTypes.MEETING_ENDED]: undefined;
     [MessageTypes.PONG]: undefined;
+    [MessageTypes.LOCK_ROOM_FAILED]: undefined;
+    [MessageTypes.LOCK_ROOM_SUCCESS]: undefined;
+    [MessageTypes.UNLOCK_ROOM_FAILED]: undefined;
+    [MessageTypes.UNLOCK_ROOM_SUCCESS]: undefined;
 }
 
 // NOTE: Map extra MessageTypes to their corresponding payload shape in here
@@ -294,4 +313,8 @@ export type WebIn =
     | WebInMessage<MessageTypes.MEETING_ENDED>
     | WebInMessage<MessageTypes.HOST_DISCONNECTED>
     | WebInMessage<MessageTypes.HOST_RECONNECTED>
+    | WebInMessage<MessageTypes.LOCK_ROOM_FAILED>
+    | WebInMessage<MessageTypes.LOCK_ROOM_SUCCESS>
+    | WebInMessage<MessageTypes.UNLOCK_ROOM_FAILED>
+    | WebInMessage<MessageTypes.UNLOCK_ROOM_SUCCESS>
     | WebInMessage<MessageTypes.PONG>;

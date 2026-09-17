@@ -1,21 +1,21 @@
 <script lang="ts">
-    import { browser } from '$app/environment';
-    import { goto } from '$app/navigation';
-    import { page } from '$app/state';
-    import { apiFetch, refreshTokens } from '$lib/api/auth';
+    import {browser} from '$app/environment';
+    import {goto} from '$app/navigation';
+    import {page} from '$app/state';
+    import {apiFetch, refreshTokens} from '$lib/api/auth';
     import ChatBar from '$lib/components/chat/ChatBar.svelte';
     import HostAddQuestion from '$lib/components/host/HostAddQuestion.svelte';
     import HostLobby from '$lib/components/host/HostLobby.svelte';
     import HostParticipants from '$lib/components/host/HostParticipants.svelte';
     import HostQuestion from '$lib/components/host/HostQuestion.svelte';
     import HostSnapshot from '$lib/components/host/HostSnapshot.svelte';
-    import { Button } from '$lib/components/ui/button';
-    import { user } from '$lib/stores/stores';
-    import type { LiveMeetingStatus, MeetingSnapshot } from '$lib/types/meeting';
-    import type { Participant } from '$lib/types/participant';
-    import type { QuestionIn, QuestionOut, QuestionStatus } from '$lib/types/question';
-    import type { ResponseOut } from '$lib/types/response';
-    import { RateLimitedError } from '$lib/types/errors';
+    import {Button} from '$lib/components/ui/button';
+    import {user} from '$lib/stores/stores';
+    import {RateLimitedError} from '$lib/types/errors';
+    import type {LiveMeetingStatus, MeetingSnapshot} from '$lib/types/meeting';
+    import type {Participant} from '$lib/types/participant';
+    import type {QuestionIn, QuestionOut, QuestionStatus} from '$lib/types/question';
+    import type {ResponseOut} from '$lib/types/response';
     import {
         type AddQuestionFailedPayload,
         type AddQuestionPayload,
@@ -29,28 +29,31 @@
         type GetSnapshotSuccessPayload,
         type KickParticipantPayload,
         type KickParticipantResultPayload,
+        type LockRoomPayload,
         type MeetingStartedPayload,
         type MeetingStatePayload,
         MessageTypes,
         type NextQuestionPayload,
-        type ParticipantDisconnectedPayload, type RateLimitedPayload,
+        type ParticipantDisconnectedPayload,
+        type RateLimitedPayload,
         type ResponseReceivedPayload,
+        type UnlockRoomPayload,
         type WebIn,
     } from '$lib/types/websocket';
-    import { MAX_QUESTION_CAP } from '$lib/utils/constants';
-    import { QrCode, Users, X } from '@lucide/svelte';
-    import { onMount, untrack } from 'svelte';
-    import { toast } from 'svelte-sonner';
-    import { get } from 'svelte/store';
+    import {MAX_QUESTION_CAP} from '$lib/utils/constants';
+    import {Lock, LockOpen, QrCode, Users, X} from '@lucide/svelte';
+    import {onMount, untrack} from 'svelte';
+    import {toast} from 'svelte-sonner';
+    import {get} from 'svelte/store';
 
-    import type { PageData } from './$types';
+    import type {PageData} from './$types';
 
-    let { data }: { data: PageData } = $props();
+    let {data}: { data: PageData } = $props();
 
     // host info
     let hostUsername = $derived($user?.username ?? 'Host');
     let today = $state(
-        new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        new Date().toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'}),
     );
 
     // root meeting object
@@ -108,15 +111,17 @@
     let interrupted = $state(false);
 
     // derived: status array for HostQuestion progress dots
-    let questionStates = $derived(questions.map((q) => ({ status: q.status })));
+    let questionStates = $derived(questions.map((q) => ({status: q.status})));
     let currResponses = $derived(responses[currQuestion?.id] ?? []);
     let overallElapsed = $derived(elapsedSeconds);
 
     let endTimeDisplay = $derived(
         meetingEndTime
-            ? meetingEndTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+            ? meetingEndTime.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'})
             : null,
     );
+
+    let isLocked = $state<boolean>(false);
 
     // reset chat unread when sheet opens on mobile
     $effect(() => {
@@ -153,7 +158,7 @@
         isRevealed = false;
         const payload = JSON.stringify({
             type: MessageTypes.MEETING_STARTED,
-            payload: { question } as MeetingStartedPayload,
+            payload: {question} as MeetingStartedPayload,
         });
         ws?.send(payload);
     }
@@ -170,7 +175,7 @@
         }
         const payload = JSON.stringify({
             type: MessageTypes.NEXT_QUESTION,
-            payload: { question: currQuestion } as NextQuestionPayload,
+            payload: {question: currQuestion} as NextQuestionPayload,
         });
         ws?.send(payload);
     }
@@ -206,7 +211,7 @@
                 message: message,
                 is_host: true,
             } as ChatMessage;
-            const payload = { type: MessageTypes.CHAT_RECEIVED, payload: { chat: chatMessage } };
+            const payload = {type: MessageTypes.CHAT_RECEIVED, payload: {chat: chatMessage}};
             ws.send(JSON.stringify(payload));
         }
     }
@@ -219,9 +224,9 @@
     function confirmEndMeeting() {
         pendingEnd = false;
         endingMeeting = true;
-        const payload = JSON.stringify({ type: MessageTypes.MEETING_ENDED });
+        const payload = JSON.stringify({type: MessageTypes.MEETING_ENDED});
         ws?.send(payload);
-        goto(`/meetings/${page.params.slug}`, { replaceState: true });
+        goto(`/meetings/${page.params.slug}`, {replaceState: true});
     }
 
     function cancelEndMeeting() {
@@ -231,7 +236,7 @@
     function handleReveal() {
         if (!wsConnected || !ws) return;
         isRevealed = true;
-        ws?.send(JSON.stringify({ type: MessageTypes.REVEAL }));
+        ws?.send(JSON.stringify({type: MessageTypes.REVEAL}));
     }
 
     function getWsUrl(): string {
@@ -283,8 +288,22 @@
                 handleKickParticipantResult(msg.payload as KickParticipantResultPayload);
                 break;
             case MessageTypes.RATE_LIMITED:
-                handleRateLimited(msg.payload as RateLimitedPayload)
+                handleRateLimited(msg.payload as RateLimitedPayload);
                 break;
+            case MessageTypes.LOCK_ROOM_FAILED:
+                toast.error("Failed to lock the meeting room")
+                break
+            case MessageTypes.LOCK_ROOM_SUCCESS:
+                isLocked = true;
+                toast.success("Room is locked")
+                break
+            case MessageTypes.UNLOCK_ROOM_FAILED:
+                toast.error("Failed to unlock the meeting room")
+                break
+            case MessageTypes.UNLOCK_ROOM_SUCCESS:
+                isLocked = false;
+                toast.success("Room is unlocked")
+                break
             case MessageTypes.MEETING_ENDED:
                 meetingStatus = 'ended';
                 toast.info('Meeting has ended.');
@@ -325,7 +344,7 @@
             toast.error('Another host session is already active for this meeting. Redirecting…', {
                 duration: 5000,
             });
-            goto('/dashboard', { replaceState: true });
+            goto('/dashboard', {replaceState: true});
             return;
         }
         if (event.code === CloseCode.SIGTERM_SIGNAL) {
@@ -412,12 +431,22 @@
         };
     });
 
+    /** Handles locking and unlocking the room. */
+    function toggleLockRoom() {
+        if (!ws || !wsConnected) return;
+        const payload = JSON.stringify({
+            type: isLocked ? MessageTypes.UNLOCK_ROOM : MessageTypes.LOCK_ROOM,
+            payload: {meeting_id: meeting.id} as LockRoomPayload | UnlockRoomPayload,
+        });
+        ws.send(payload);
+    }
+
     /** Handles kicking a participant from the live meeting. */
     function handleKickParticipant(id: string) {
         if (!wsConnected || !ws) return;
         const payload = JSON.stringify({
             type: MessageTypes.KICK_PARTICIPANT,
-            payload: { id } as KickParticipantPayload,
+            payload: {id} as KickParticipantPayload,
         });
         ws.send(payload);
     }
@@ -445,20 +474,20 @@
         if (!wsConnected || !ws) return;
         const payload = JSON.stringify({
             type: MessageTypes.ADD_QUESTION,
-            payload: { question } as AddQuestionPayload,
+            payload: {question} as AddQuestionPayload,
         });
         ws.send(payload);
     }
 
     /** Handle a failed add-question request by surfacing the backend's reason. */
     function handleAddQuestionFailed(payload: AddQuestionFailedPayload) {
-        toast.error(payload.detail, { duration: Infinity });
+        toast.error(payload.detail, {duration: Infinity});
     }
 
     /** Append the newly added question to the live questions array in place. */
     function handleAddQuestionSuccess(payload: AddQuestionSuccessPayload) {
         questions.push(payload.question);
-        toast.success('Question has been added.', { duration: Infinity });
+        toast.success('Question has been added.', {duration: Infinity});
     }
 
     /** Send a generate-snapshot request to the backend over the live WebSocket. */
@@ -467,7 +496,7 @@
         snapshotLoading = true;
         const payload = JSON.stringify({
             type: MessageTypes.GET_SNAPSHOT,
-            payload: { meeting_id: page.params.slug } as GetSnapshotPayload,
+            payload: {meeting_id: page.params.slug} as GetSnapshotPayload,
         });
         ws.send(payload);
     }
@@ -481,7 +510,7 @@
     /** Handle a failed snapshot by surfacing the backend's reason as a toast. */
     function handleSnapshotFailed(payload: GetSnapshotFailedPayload) {
         snapshotLoading = false;
-        toast.error(payload.detail, { duration: Infinity });
+        toast.error(payload.detail, {duration: Infinity});
     }
 
     /** Fetch (once) and show the meeting QR code in a modal. */
@@ -568,7 +597,7 @@
         responses[key].push(payload.response);
         // If currently revealing, push updated responses to participants
         if (isRevealed) {
-            ws?.send(JSON.stringify({ type: MessageTypes.REVEAL }));
+            ws?.send(JSON.stringify({type: MessageTypes.REVEAL}));
         }
     }
 
@@ -577,8 +606,8 @@
      * @param payload - The rate limit response.
      */
     function handleRateLimited(payload: RateLimitedPayload) {
-        toast.error(payload.message)
-        return
+        toast.error(payload.message);
+        return;
     }
 
     /**
@@ -633,12 +662,12 @@
             <div class="flex flex-col gap-2">
                 <div>
                     <span class="block text-xs uppercase tracking-wide text-muted-foreground/70"
-                        >Code</span
+                    >Code</span
                     >
                     <button
-                        class="mt-0.5 inline-flex w-fit items-center gap-1 font-mono font-medium text-primary cursor-pointer select-all hover:underline"
-                        title="Click to copy"
-                        onclick={() => {
+                            class="mt-0.5 inline-flex w-fit items-center gap-1 font-mono font-medium text-primary cursor-pointer select-all hover:underline"
+                            title="Click to copy"
+                            onclick={() => {
                             navigator.clipboard.writeText(meeting.room_code);
                             toast.success('Code copied');
                         }}
@@ -648,34 +677,51 @@
                 </div>
                 <div>
                     <span class="block text-xs uppercase tracking-wide text-muted-foreground/70"
-                        >QR Code</span
+                    >QR Code</span
                     >
                     <button
-                        class="mt-0.5 inline-flex w-fit items-center gap-1.5 font-medium text-primary cursor-pointer hover:underline disabled:opacity-50"
-                        onclick={handleShowQr}
-                        disabled={qrLoading}
+                            class="mt-0.5 inline-flex w-fit items-center gap-1.5 font-medium text-primary cursor-pointer hover:underline disabled:opacity-50"
+                            onclick={handleShowQr}
+                            disabled={qrLoading}
                     >
-                        <QrCode class="h-4 w-4" />
+                        <QrCode class="h-4 w-4"/>
                         {qrLoading ? 'Loading…' : 'Show QR code'}
                     </button>
                 </div>
                 <div>
                     <span class="block text-xs uppercase tracking-wide text-muted-foreground/70"
-                        >Host</span
+                    >Room access</span
+                    >
+                    <button
+                            class="mt-0.5 inline-flex w-fit items-center gap-1.5 font-medium text-primary cursor-pointer hover:underline"
+                            onclick={toggleLockRoom}
+                    >
+                        {#if isLocked}
+                            <Lock class="h-4 w-4"/>
+                            Locked
+                        {:else}
+                            <LockOpen class="h-4 w-4"/>
+                            Unlocked
+                        {/if}
+                    </button>
+                </div>
+                <div>
+                    <span class="block text-xs uppercase tracking-wide text-muted-foreground/70"
+                    >Host</span
                     >
                     <span class="text-foreground">{hostUsername}</span>
                 </div>
                 {#if endTimeDisplay}
                     <div>
                         <span class="block text-xs uppercase tracking-wide text-muted-foreground/70"
-                            >Ends at</span
+                        >Ends at</span
                         >
                         <span class="text-foreground">{endTimeDisplay}</span>
                     </div>
                 {/if}
                 <div>
                     <span class="block text-xs uppercase tracking-wide text-muted-foreground/70"
-                        >Date</span
+                    >Date</span
                     >
                     <span class="text-foreground">{today}</span>
                 </div>
@@ -683,9 +729,9 @@
         </div>
         <div class="border-t border-border p-4">
             <HostSnapshot
-                {snapshot}
-                loading={snapshotLoading}
-                ongenerate={handleGenerateSnapshot}
+                    {snapshot}
+                    loading={snapshotLoading}
+                    ongenerate={handleGenerateSnapshot}
             />
         </div>
     </aside>
@@ -694,7 +740,7 @@
     <div class="flex min-w-0 flex-1 flex-col">
         <!-- Mobile: slim header (title + room code + participants/chat) -->
         <div
-            class="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-2.5 lg:hidden"
+                class="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-2.5 lg:hidden"
         >
             <div class="min-w-0">
                 <h1 class="truncate text-sm font-semibold text-(--text-heading)">
@@ -706,9 +752,9 @@
             </div>
             <div class="flex shrink-0 items-center gap-2">
                 <button
-                    class="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-mono font-medium text-primary cursor-pointer select-all"
-                    title="Click to copy"
-                    onclick={() => {
+                        class="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-mono font-medium text-primary cursor-pointer select-all"
+                        title="Click to copy"
+                        onclick={() => {
                         navigator.clipboard.writeText(meeting.room_code);
                         toast.success('Code copied');
                     }}
@@ -716,12 +762,29 @@
                     {meeting.room_code}
                 </button>
                 <Button variant="ghost" size="icon" onclick={() => (participantsOpen = true)}>
-                    <Users class="size-5" />
+                    <Users class="size-5"/>
                 </Button>
-                <Button variant="ghost" size="icon" onclick={handleShowQr} aria-label="Show QR code">
-                    <QrCode class="size-5" />
+                <Button
+                        variant="ghost"
+                        size="icon"
+                        onclick={handleShowQr}
+                        aria-label="Show QR code"
+                >
+                    <QrCode class="size-5"/>
                 </Button>
-                <ChatBar variant="sheet" bind:open={chatOpen} {chats} onsend={handleChatSend} />
+                <Button
+                        variant="ghost"
+                        size="icon"
+                        onclick={toggleLockRoom}
+                        aria-label={isLocked ? 'Unlock room' : 'Lock room'}
+                >
+                    {#if isLocked}
+                        <Lock class="size-5"/>
+                    {:else}
+                        <LockOpen class="size-5"/>
+                    {/if}
+                </Button>
+                <ChatBar variant="sheet" bind:open={chatOpen} {chats} onsend={handleChatSend}/>
             </div>
         </div>
 
@@ -730,47 +793,47 @@
             <div class="overflow-y-auto">
                 {#if meetingStatus === 'lobby'}
                     <HostLobby
-                        {meeting}
-                        overallElapsed={0}
-                        {participants}
-                        onstart={handleStartMeeting}
+                            {meeting}
+                            overallElapsed={0}
+                            {participants}
+                            onstart={handleStartMeeting}
                     />
                 {:else if meetingStatus === 'question'}
                     <HostQuestion
-                        {meeting}
-                        questionIndex={currQuestionIndex}
-                        {elapsedSeconds}
-                        questionState={currQuestionState}
-                        isLast={questionIsLast}
-                        totalQuestions={meeting.questions.length}
-                        participantCount={participants.length}
-                        {questionStates}
-                        responses={currResponses}
-                        {isRevealed}
-                        canAdd={canAddQuestion}
-                        onaddquestion={() => (addQuestionOpen = true)}
-                        onreveal={handleReveal}
-                        onnext={handleNextQuestion}
-                        onend={handleEndMeeting}
+                            {meeting}
+                            questionIndex={currQuestionIndex}
+                            {elapsedSeconds}
+                            questionState={currQuestionState}
+                            isLast={questionIsLast}
+                            totalQuestions={meeting.questions.length}
+                            participantCount={participants.length}
+                            {questionStates}
+                            responses={currResponses}
+                            {isRevealed}
+                            canAdd={canAddQuestion}
+                            onaddquestion={() => (addQuestionOpen = true)}
+                            onreveal={handleReveal}
+                            onnext={handleNextQuestion}
+                            onend={handleEndMeeting}
                     />
                 {:else if meetingStatus === 'ended'}
                     <div
-                        class="mx-auto flex max-w-2xl flex-col items-center px-4 py-16 text-center"
+                            class="mx-auto flex max-w-2xl flex-col items-center px-4 py-16 text-center"
                     >
                         <div
-                            class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10"
+                                class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10"
                         >
                             <svg
-                                class="h-10 w-10 text-primary"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                stroke-width="2"
+                                    class="h-10 w-10 text-primary"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2"
                             >
                                 <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M5 13l4 4L19 7"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M5 13l4 4L19 7"
                                 />
                             </svg>
                         </div>
@@ -784,8 +847,8 @@
                         </p>
                         <div class="flex gap-3">
                             <button
-                                onclick={() => goto(`/meetings/${page.params.slug}/summary`)}
-                                class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+                                    onclick={() => goto(`/meetings/${page.params.slug}/summary`)}
+                                    class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
                             >
                                 View Meeting Summary
                             </button>
@@ -798,13 +861,13 @@
             <div class="hidden lg:flex flex-col border-l border-border">
                 <div class="flex-1 min-h-0 border-b border-border">
                     <HostParticipants
-                        variant="inline"
-                        {participants}
-                        onkick={handleKickParticipant}
+                            variant="inline"
+                            {participants}
+                            onkick={handleKickParticipant}
                     />
                 </div>
                 <div class="flex-1 min-h-0">
-                    <ChatBar variant="inline" {chats} onsend={handleChatSend} />
+                    <ChatBar variant="inline" {chats} onsend={handleChatSend}/>
                 </div>
             </div>
         </div>
@@ -813,28 +876,28 @@
 
 <!-- Mobile: Participants modal -->
 <HostParticipants
-    variant="modal"
-    bind:open={participantsOpen}
-    onclose={() => (participantsOpen = false)}
-    {participants}
-    onkick={handleKickParticipant}
+        variant="modal"
+        bind:open={participantsOpen}
+        onclose={() => (participantsOpen = false)}
+        {participants}
+        onkick={handleKickParticipant}
 />
 
 <!-- Add Question modal -->
 <HostAddQuestion
-    bind:open={addQuestionOpen}
-    questionCount={questions.length}
-    onadd={handleAddQuestion}
-    onclose={() => (addQuestionOpen = false)}
+        bind:open={addQuestionOpen}
+        questionCount={questions.length}
+        onadd={handleAddQuestion}
+        onclose={() => (addQuestionOpen = false)}
 />
 
 {#if endingMeeting}
     <div
-        class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm"
+            class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm"
     >
         <div class="flex flex-col items-center gap-4">
             <div
-                class="h-8 w-8 rounded-full border-2 border-muted border-t-primary animate-spin"
+                    class="h-8 w-8 rounded-full border-2 border-muted border-t-primary animate-spin"
             ></div>
             <p class="text-sm text-muted-foreground">Ending meeting…</p>
         </div>
@@ -842,10 +905,10 @@
 {:else if pendingEnd}
     <!-- End Meeting confirmation overlay -->
     <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
     >
         <div
-            class="mx-4 w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-overlay"
+                class="mx-4 w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-overlay"
         >
             <h3 class="mb-2 text-lg font-semibold text-(--text-heading)">End Meeting?</h3>
             <p class="mb-6 text-sm text-muted-foreground">
@@ -853,14 +916,14 @@
             </p>
             <div class="flex gap-3">
                 <button
-                    onclick={cancelEndMeeting}
-                    class="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                        onclick={cancelEndMeeting}
+                        class="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                     Cancel
                 </button>
                 <button
-                    onclick={confirmEndMeeting}
-                    class="flex-1 rounded-xl bg-destructive px-4 py-2.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-ring"
+                        onclick={confirmEndMeeting}
+                        class="flex-1 rounded-xl bg-destructive px-4 py-2.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                     End Meeting
                 </button>
@@ -871,10 +934,10 @@
 
 {#if interrupted}
     <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
     >
         <div
-            class="mx-4 w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-overlay"
+                class="mx-4 w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-overlay"
         >
             <h3 class="mb-2 text-lg font-semibold text-(--text-heading)">Meeting interrupted</h3>
             <p class="mb-6 text-sm text-muted-foreground">
@@ -882,8 +945,8 @@
                 minutes.
             </p>
             <button
-                onclick={() => goto(`/meetings/${page.params.slug}`)}
-                class="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+                    onclick={() => goto(`/meetings/${page.params.slug}`)}
+                    class="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
             >
                 Back to Meeting
             </button>
@@ -894,29 +957,29 @@
 {#if qrOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-        onclick={(e) => e.target === e.currentTarget && handleCloseQr()}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Meeting QR code"
-        tabindex="-1"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+            onclick={(e) => e.target === e.currentTarget && handleCloseQr()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Meeting QR code"
+            tabindex="-1"
     >
         <div class="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl">
             <div class="mb-4 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-(--text-heading)">Scan to join</h3>
                 <button
-                    onclick={handleCloseQr}
-                    class="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    aria-label="Close"
+                        onclick={handleCloseQr}
+                        class="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        aria-label="Close"
                 >
-                    <X class="h-5 w-5" />
+                    <X class="h-5 w-5"/>
                 </button>
             </div>
             {#if qrCodeUrl}
                 <img
-                    src={qrCodeUrl}
-                    alt="QR code to join the meeting"
-                    class="mx-auto h-auto w-full max-w-xs rounded-lg"
+                        src={qrCodeUrl}
+                        alt="QR code to join the meeting"
+                        class="mx-auto h-auto w-full max-w-xs rounded-lg"
                 />
             {/if}
             <p class="mt-4 text-center text-xs text-muted-foreground">

@@ -11,8 +11,7 @@ class CloseCode(Enum):
 
     Attributes:
         code: A WebSocket close code (int) indicating the reason for closure.
-        message: A descriptive human-readable error message.
-    """
+        message: A descriptive human-readable error message."""
 
     HOST_ALREADY_CONNECTED = (
         status.WS_1008_POLICY_VIOLATION,
@@ -25,6 +24,7 @@ class CloseCode(Enum):
     INVALID_TOKEN = (status.WS_1008_POLICY_VIOLATION, "invalid access token provided")
     MEETING_NOT_FOUND = (4001, "meeting not found")
     MEETING_IS_FULL = (4003, "meeting is full")
+    MEETING_IS_LOCKED = (4005, "meeting is locked")
     PARTICIPANT_KICKED_FROM_MEETING = (4002, "participant kicked from meeting")
     SIGTERM_SIGNAL = (1012, "meeting ended due to server shutdown")
 
@@ -58,6 +58,8 @@ class InboundMessageTypes(Enum):
     PARTICIPANT_JOIN_ROOM = "participant_join_room"  # sent from participants
     CHAT_RECEIVED = "chat_received"  # sent from host or participant
     PING = "ping"  # sent from participants (heartbeat)
+    LOCK_ROOM = "lock_meeting"  # sent from host
+    UNLOCK_ROOM = "unlock_meeting"  # sent from host"
 
 
 class OutboundMessageTypes(StrEnum):
@@ -92,3 +94,7 @@ class OutboundMessageTypes(StrEnum):
     CHAT_STATE = "chat_state"  # sent to host or participant
     PONG = "pong"  # sent to participants (heartbeat reply)
     RATE_LIMITED = "rate_limited"  # sent to host or participants
+    LOCK_ROOM_FAILED = "lock_room_failed"  # sent to host
+    LOCK_ROOM_SUCCESS = "lock_room_success"  # sent to host
+    UNLOCK_ROOM_SUCCESS = "unlock_room_success"  #   # sent to host
+    UNLOCK_ROOM_FAILED = "unlock_room_failed"  # sent to host

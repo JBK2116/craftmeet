@@ -195,6 +195,29 @@ class ParticipantJoinRoomFailed(BaseModel):
     detail: str
 
 
+class LockRoomPayload(BaseModel):
+    """Payload for when a host wants to lock the meeting room
+
+    Attributes:
+        meeting_id: The id of the meeting to lock
+    """
+
+    meeting_id: uuid.UUID
+
+
+class UnlockRoomPayload(BaseModel):
+    """
+    Payload for when a host wants to unlock the meeting room
+
+    Attributes:
+    :
+        meeting_id: The id of the meeting to unlock
+
+    """
+
+    meeting_id: uuid.UUID
+
+
 class WebIn(BaseModel):
     """
     Incoming WebSocket message model.
@@ -354,4 +377,6 @@ INBOUND_PAYLOAD_MODELS: dict[InboundMessageTypes, type[BaseModel]] = {
     InboundMessageTypes.RESPONSE_RECEIVED: ResponseReceivedPayload,
     InboundMessageTypes.CHAT_RECEIVED: ChatReceivedPayload,
     InboundMessageTypes.REVEAL: RevealMeetingPayload,
+    InboundMessageTypes.LOCK_ROOM: LockRoomPayload,
+    InboundMessageTypes.UNLOCK_ROOM: UnlockRoomPayload,
 }
