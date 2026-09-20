@@ -131,8 +131,6 @@ async def test_join_meeting_by_id_not_live(
     client: AsyncClient, completed_meeting: Meeting
 ) -> None:
     """COMPLETED meeting -> 400."""
-    response = await client.post(
-        JOIN_BY_ID_URL.format(meeting_id=completed_meeting.id)
-    )
+    response = await client.post(JOIN_BY_ID_URL.format(meeting_id=completed_meeting.id))
     assert response.status_code == 400
     assert response.json() == "meeting is not live"
