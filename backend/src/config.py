@@ -3,7 +3,7 @@
 This module loads all .env variables into memory and places them
 into a `Settings` object for use throughout the application.
 
-Exmaple Usage
+Example Usage
 
     from src.config import get_settings
 
@@ -19,11 +19,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    "Stores all .env variables loaded into memory for use"
+    """Stores all .env variables loaded into memory for use"""
 
     IS_DEV: bool
     FRONTEND_URL: str
     BACKEND_URL: str
+    MCP_BASE_URL: str
     # AI
     OPENAI_API: str
     # Logging
