@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     FRONTEND_URL: str
     BACKEND_URL: str
     MCP_BASE_URL: str
+    MCP_STORAGE_ENCRYPTION_KEY: str
     # AI
     OPENAI_API: str
     # Logging
