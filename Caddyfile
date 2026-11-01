@@ -1,6 +1,12 @@
 craftmeet.live {
     encode gzip
 
+    # OAuth discovery for MCP clients (must be served from the domain root)
+    @oauth_discovery path /.well-known/oauth-* /.well-known/openid-configuration*
+    handle @oauth_discovery {
+        reverse_proxy backend:8000
+    }
+
     handle_path /api/v1/* {
         reverse_proxy backend:8000
     }
