@@ -267,8 +267,16 @@ class YesNoResponseIn(BaseModel):
 class RatingScaleQuestionIn(BaseModel):
     """Model representing a rating scale question sent by the frontend"""
 
-    min: int = Field(ge=MIN_RATING_SCALE_VALUE, le=MAX_RATING_SCALE_VALUE)
-    max: int = Field(ge=MIN_RATING_SCALE_VALUE, le=MAX_RATING_SCALE_VALUE)
+    min: int = Field(
+        ge=MIN_RATING_SCALE_VALUE,
+        le=MAX_RATING_SCALE_VALUE,
+        description="The lower bound of the rating scale question.",
+    )
+    max: int = Field(
+        ge=MIN_RATING_SCALE_VALUE,
+        le=MAX_RATING_SCALE_VALUE,
+        description="The upper bound of the rating scale question.",
+    )
 
 
 class RatingScaleResponseIn(BaseModel):
@@ -283,10 +291,28 @@ class RatingScaleResponseIn(BaseModel):
 class RankedVotingQuestionIn(BaseModel):
     """Model representing a ranked voting question sent by the frontend"""
 
-    item_1: str = Field(min_length=1, max_length=MAX_OPTION_LENGTH)
-    item_2: str = Field(min_length=1, max_length=MAX_OPTION_LENGTH)
-    item_3: str | None = Field(default=None, min_length=1, max_length=MAX_OPTION_LENGTH)
-    item_4: str | None = Field(default=None, min_length=1, max_length=MAX_OPTION_LENGTH)
+    item_1: str = Field(
+        min_length=1,
+        max_length=MAX_OPTION_LENGTH,
+        description="The first choice in the ranked voting question.",
+    )
+    item_2: str = Field(
+        min_length=1,
+        max_length=MAX_OPTION_LENGTH,
+        description="The second choice in the ranked voting question.",
+    )
+    item_3: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=MAX_OPTION_LENGTH,
+        description="The optional third choice in the ranked voting question.",
+    )
+    item_4: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=MAX_OPTION_LENGTH,
+        description="The optional fourth choice in the ranked voting question.",
+    )
 
 
 class RankedVotingResponseIn(BaseModel):
@@ -305,7 +331,10 @@ class LongAnswerQuestionIn(BaseModel):
     """Model representing a long answer question sent by the frontend"""
 
     max_length: int = Field(
-        ge=1, le=MAX_LONG_ANSWER_LENGTH, default=MAX_LONG_ANSWER_LENGTH
+        ge=1,
+        le=MAX_LONG_ANSWER_LENGTH,
+        default=MAX_LONG_ANSWER_LENGTH,
+        description="The max length of a response to this question.",
     )
 
 
@@ -321,15 +350,32 @@ class LongAnswerResponseIn(BaseModel):
 class MultipleChoiceQuestionIn(BaseModel):
     """Model representing a multiple choice question sent by the frontend"""
 
-    option_1: str = Field(min_length=1, max_length=MAX_OPTION_LENGTH)
-    option_2: str = Field(min_length=1, max_length=MAX_OPTION_LENGTH)
+    option_1: str = Field(
+        min_length=1,
+        max_length=MAX_OPTION_LENGTH,
+        description="The first option in the multiple choice question.",
+    )
+    option_2: str = Field(
+        min_length=1,
+        max_length=MAX_OPTION_LENGTH,
+        description="The second option in the multiple choice question.",
+    )
     option_3: str | None = Field(
-        default=None, min_length=1, max_length=MAX_OPTION_LENGTH
+        default=None,
+        min_length=1,
+        max_length=MAX_OPTION_LENGTH,
+        description="The optional third option in the multiple choice question.",
     )
     option_4: str | None = Field(
-        default=None, min_length=1, max_length=MAX_OPTION_LENGTH
+        default=None,
+        min_length=1,
+        max_length=MAX_OPTION_LENGTH,
+        description="The optional fourth option in the multiple choice question.",
     )
-    allow_multiple: bool = Field(default=False)
+    allow_multiple: bool = Field(
+        default=False,
+        description="Boolean determining if the user can select multiple options as their answer.",
+    )
 
 
 class MultipleChoiceResponseIn(BaseModel):
@@ -354,16 +400,32 @@ ResponseIn = Annotated[
 class QuestionIn(BaseModel):
     """Model representing a question sent by the frontend"""
 
-    type: QuestionType
-    prompt: str = Field(min_length=1, max_length=MAX_PROMPT_LENGTH)
-    position: int = Field(ge=1)
+    type: QuestionType = Field(
+        description=(
+            "The question format. Must match sub_question: "
+            "multiple_choice -> MultipleChoiceQuestionIn, "
+            "long_answer -> LongAnswerQuestionIn, "
+            "ranked_voting -> RankedVotingQuestionIn, "
+            "rating_scale -> RatingScaleQuestionIn, "
+            "yes_no -> YesNoQuestionIn."
+        )
+    )
+    prompt: str = Field(
+        min_length=1,
+        max_length=MAX_PROMPT_LENGTH,
+        description="The question text shown to participants.",
+    )
+    position: int = Field(
+        ge=1,
+        description="1-based order of this question in the meeting. Unique per meeting.",
+    )
     sub_question: (
         MultipleChoiceQuestionIn
         | LongAnswerQuestionIn
         | RankedVotingQuestionIn
         | RatingScaleQuestionIn
         | YesNoQuestionIn
-    )
+    ) = Field(description="Type-specific settings. Its shape must match `type`.")
 
     @model_validator(mode="before")
     @classmethod
@@ -387,15 +449,33 @@ class QuestionIn(BaseModel):
 class MeetingIn(BaseModel):
     """Model representing a meeting sent by the frontend"""
 
-    title: str = Field(min_length=1, max_length=MAX_TITLE_LENGTH)
+    title: str = Field(
+        min_length=1,
+        max_length=MAX_TITLE_LENGTH,
+        description="The title of the meeting.",
+    )
     description: str | None = Field(
-        default=None, min_length=1, max_length=MAX_DESCRIPTION_LENGTH
+        default=None,
+        min_length=1,
+        max_length=MAX_DESCRIPTION_LENGTH,
+        description="The description of the meeting.",
     )
     participant_cap: int = Field(
-        default=MAX_PARTICIPANT_CAP, le=MAX_PARTICIPANT_CAP, ge=1
+        default=MAX_PARTICIPANT_CAP,
+        le=MAX_PARTICIPANT_CAP,
+        ge=1,
+        description="The max amount of unique participants that can join a meeting.",
     )
-    duration: int = Field(ge=1, le=MAX_MEETING_DURATION_MINUTES)
-    questions: list[QuestionIn] = Field(max_length=MAX_QUESTION_CAP, min_length=1)
+    duration: int = Field(
+        ge=1,
+        le=MAX_MEETING_DURATION_MINUTES,
+        description="The duration of the meeting in minutes.",
+    )
+    questions: list[QuestionIn] = Field(
+        max_length=MAX_QUESTION_CAP,
+        min_length=1,
+        description="The questions to be presented in the meeting.",
+    )
 
 
 # DATA SENT FROM FRONTEND TO UPDATE MEETINGS
