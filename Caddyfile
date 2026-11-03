@@ -7,6 +7,10 @@ craftmeet.live {
         reverse_proxy backend:8000
     }
 
+    handle /agent/* {
+        reverse_proxy backend:8000
+    }
+
     handle_path /api/v1/* {
         reverse_proxy backend:8000
     }
