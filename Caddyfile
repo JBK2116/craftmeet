@@ -8,6 +8,7 @@ craftmeet.live {
     }
 
     handle /agent/* {
+        rewrite * /api/v1{uri}
         reverse_proxy backend:8000
     }
 
