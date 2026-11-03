@@ -20,8 +20,9 @@ from src.config import get_settings
 from src.limiter import limiter
 from src.live.router import manager, websocket_router
 from src.logging_config import get_logger, setup_logging
+from src.mcp.server import auth, mcp_app
 from src.meeting.router import meeting_public_router, meeting_router
-from src.middleware.request_logging import RequestLoggingMiddleware
+from src.middleware.request import RequestLoggingMiddleware
 from src.summary.router import summary_router
 
 # initialize settings
@@ -39,7 +40,8 @@ async def lifespan(app: FastAPI):
     # before app startup
     await setup_redis()  # NOTE: ensure that redis server is started locally
     setup_scheduler()
-    yield
+    async with mcp_app.lifespan(app):
+        yield
     # before app termination
     await close_redis()
     await manager.close_rooms()
@@ -69,7 +71,7 @@ app = FastAPI(
 
 # rate limiting integration
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty:ignore[invalid-argument-type]
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty:ignore[invalid-argument-type]  # pyright: ignore[reportArgumentType]
 
 
 # initialize middleware
@@ -111,6 +113,9 @@ app.include_router(websocket_router)
 app.include_router(meeting_router)
 app.include_router(meeting_public_router)
 app.include_router(summary_router)
+
+app.router.routes.extend(auth.get_well_known_routes(mcp_path="/mcp"))
+app.mount("/agent", mcp_app)
 
 if __name__ == "__main__":
     if settings.IS_DEV:
