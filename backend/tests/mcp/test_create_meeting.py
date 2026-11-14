@@ -39,7 +39,7 @@ async def test_tools_count(mcp_client) -> None:
     Tests that the mcp has the correct amount of tools registered.
     """
     list_tools = await mcp_client.list_tools()
-    assert len(list_tools) == 1
+    assert len(list_tools) == 2
 
 
 async def test_create_verified_client(

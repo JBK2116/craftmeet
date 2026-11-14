@@ -1,14 +1,20 @@
-from typing import Any
+from typing import Annotated, Any
 
 from cryptography.fernet import Fernet
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.google import GoogleProvider
 from key_value.aio.stores.redis import RedisStore
 from key_value.aio.wrappers.encryption import FernetEncryptionWrapper
+from pydantic import Field
 
 from src.config import get_settings
 from src.database import AsyncSessionLocal
-from src.mcp.service import create_meeting_for_user, get_mcp_user
+from src.mcp.schemas import ListMeetingsResponse
+from src.mcp.service import (
+    create_meeting_for_user,
+    get_mcp_user,
+    list_meetings_for_user,
+)
 from src.meeting.schemas import MeetingIn
 
 settings = get_settings()
@@ -48,4 +54,32 @@ async def create_meeting(meeting: MeetingIn) -> dict[str, Any]:
         user = await get_mcp_user(db=db)
 
         out = await create_meeting_for_user(db=db, user=user, payload=meeting)
+        return out
+
+
+@mcp.tool
+async def list_meetings(
+    limit: Annotated[
+        int, Field(ge=1, le=50, description="Number of meetings to retrieve (1-50).")
+    ] = 20,
+    offset: Annotated[
+        int, Field(ge=0, description="Number of meetings to skip for pagination.")
+    ] = 0,
+) -> ListMeetingsResponse:
+    """
+    List the authenticated user's CraftMeet meetings as lightweight summaries.
+
+    Use when the user wants to see or page through their existing meetings. Each
+    summary includes the meeting id, title, status, room code, question count,
+    and the host URL. Paginate with ``limit`` and ``offset``.
+
+    :param limit: Maximum number of meetings to return.
+    :param offset: Number of meetings to skip for pagination.
+    :return: Paginated list of meeting summaries.
+    """
+
+    async with AsyncSessionLocal() as db:
+        user = await get_mcp_user(db=db)
+
+        out = await list_meetings_for_user(db=db, user=user, limit=limit, offset=offset)
         return out

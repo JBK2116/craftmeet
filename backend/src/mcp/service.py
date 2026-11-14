@@ -9,7 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.repository import get_user
 from src.config import get_settings
 from src.exceptions import DatabaseError
+from src.mcp.schemas import ListMeetingsResponse, MeetingSummary
 from src.meeting.repository import (
+    get_meetings,
     insert_meeting,
     insert_question,
     insert_stat,
@@ -22,7 +24,7 @@ from src.meeting.utils import (
     generate_stat_model,
     generate_sub_question,
 )
-from src.models import User
+from src.models import Meeting, User
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -126,6 +128,54 @@ async def create_meeting_for_user(
         },
     )
     return out
+
+
+async def list_meetings_for_user(
+    db: AsyncSession, user: User, limit: int, offset: int
+) -> ListMeetingsResponse:
+    """
+    Lists the user's meetings as lightweight summaries.
+    :param db: Database session for database queries.
+    :param user: The user whose meetings to list.
+    :param limit: Maximum number of meetings to return.
+    :param offset: Number of meetings to skip for pagination.
+    :return: Paginated list of meeting summaries.
+    """
+    logger.info(
+        "listing meetings",
+        extra={"user_id": str(user.id), "limit": limit, "offset": offset},
+    )
+    meetings: list[Meeting] = await get_meetings(
+        db=db, u_id=user.id, limit=limit, offset=offset
+    )
+    summaries = [
+        MeetingSummary(
+            id=meeting.id,
+            title=meeting.title,
+            status=meeting.status,
+            room_code=meeting.room_code,
+            created_at=meeting.created_at,
+            question_count=meeting.total_questions,
+            url=build_meeting_url(meeting_id=meeting.id),
+        )
+        for meeting in meetings
+    ]
+    has_more = len(meetings) == limit
+    next_offset = offset + len(meetings) if has_more else None
+    logger.info(
+        "meetings listed via mcp",
+        extra={
+            "user_id": str(user.id),
+            "total_returned": len(summaries),
+            "has_more": has_more,
+        },
+    )
+    return ListMeetingsResponse(
+        meetings=summaries,
+        total_returned=len(summaries),
+        has_more=has_more,
+        next_offset=next_offset,
+    )
 
 
 def build_meeting_url(meeting_id: uuid.UUID) -> str:
